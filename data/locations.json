@@ -1,0 +1,80 @@
+{
+  "id": "starter-pool",
+  "name": "Startpaket · Atacama & USA",
+  "description": "Sechs echte, GPS-dokumentierte 360°-Panoramen von drei Kontinenten-fernen Orten — als Startpunkt gedacht, um weitere Pools zu ergänzen.",
+  "scaleKm": 1400,
+  "locations": [
+    {
+      "id": "cerro-toco",
+      "name": "Cerro Toco, Atacama-Wüste, Chile",
+      "lat": -22.9592,
+      "lng": -67.8108,
+      "coordSource": "exif-gps",
+      "panoramaUrl": "./assets/panoramas/cerro-toco.jpg",
+      "attribution": "Matthew Petroff, CC BY-SA 4.0",
+      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
+      "difficulty": "hard",
+      "tags": ["mountain", "desert", "south-america"]
+    },
+    {
+      "id": "alma-observatory",
+      "name": "ALMA-Observatorium, Atacama-Wüste, Chile",
+      "lat": -23.0294,
+      "lng": -67.7549,
+      "coordSource": "approx-known-site",
+      "panoramaUrl": "./assets/panoramas/alma-observatory.jpg",
+      "attribution": "Matthew Petroff, CC BY-SA 4.0",
+      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
+      "difficulty": "hard",
+      "tags": ["landmark", "desert", "south-america"]
+    },
+    {
+      "id": "lascar-volcano",
+      "name": "Vulkan Láscar, Chile",
+      "lat": -23.3700,
+      "lng": -67.7290,
+      "coordSource": "approx-known-site",
+      "panoramaUrl": "./assets/panoramas/lascar-volcano.jpg",
+      "attribution": "Matthew Petroff, CC BY-SA 4.0",
+      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
+      "difficulty": "medium",
+      "tags": ["mountain", "volcano", "south-america"]
+    },
+    {
+      "id": "tocopilla",
+      "name": "Tocopilla, Chile",
+      "lat": -22.0920,
+      "lng": -70.1980,
+      "coordSource": "approx-known-site",
+      "panoramaUrl": "./assets/panoramas/tocopilla.jpg",
+      "attribution": "Matthew Petroff, CC BY-SA 4.0",
+      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
+      "difficulty": "medium",
+      "tags": ["coast", "urban", "south-america"]
+    },
+    {
+      "id": "jfk-airport",
+      "name": "JFK International Airport, New York, USA",
+      "lat": 40.6413,
+      "lng": -73.7781,
+      "coordSource": "approx-known-site",
+      "panoramaUrl": "./assets/panoramas/jfk-airport.jpg",
+      "attribution": "Matthew Petroff, CC BY-SA 4.0",
+      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
+      "difficulty": "easy",
+      "tags": ["indoor", "urban", "north-america"]
+    },
+    {
+      "id": "johns-hopkins",
+      "name": "Johns Hopkins University, Baltimore, USA",
+      "lat": 39.3299,
+      "lng": -76.6205,
+      "coordSource": "approx-known-site",
+      "panoramaUrl": "./assets/panoramas/johns-hopkins.jpg",
+      "attribution": "Matthew Petroff, CC BY-SA 4.0",
+      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
+      "difficulty": "medium",
+      "tags": ["campus", "urban", "north-america"]
+    }
+  ]
+}
