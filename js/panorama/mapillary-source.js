@@ -1,7 +1,8 @@
 import { MAPILLARY_ACCESS_TOKEN } from '../config.js';
 
-const API_BASE = 'https://graph.mapillary.com/images';
+const API_BASE = 'https://graph.mapillary.com';
 const REQUEST_TIMEOUT_MS = 8000;
+const LIST_LIMIT = 30;
 
 // Mapillary lehnt bbox-Anfragen über 0.010 Quadratgrad ab (per Live-Test
 // bestätigt: "Bounding box area is too large. Maximum allowed area is
@@ -27,32 +28,22 @@ function bboxFromPoint(lat, lng, radiusM) {
 }
 
 /**
- * Fragt echte Mapillary-Aufnahmen in einem kleinen Gebiet ab und liefert ein
- * einzelnes, zufällig gewähltes 360°-Bild (is_pano=true) zurück - oder null,
- * wenn dort keine sphärischen Aufnahmen vorliegen. Bricht nach
- * REQUEST_TIMEOUT_MS selbst ab (Browser-fetch() hat sonst kein Timeout und
- * ein haengender Request wuerde die ganze Rundenauswahl blockieren).
+ * fetch() mit eigenem Timeout (Browser-fetch() hat sonst keins) und
+ * einheitlicher Fehlermeldung inkl. der von Mapillary gelieferten
+ * Fehlerbeschreibung, falls vorhanden.
  */
-export async function fetchPanoramaForRegion(region) {
-  const [west, south, east, north] = bboxFromPoint(region.lat, region.lng, region.radiusM || 400);
-  const params = new URLSearchParams({
-    access_token: MAPILLARY_ACCESS_TOKEN,
-    fields: 'id,geometry,is_pano,thumb_2048_url',
-    bbox: `${west},${south},${east},${north}`,
-    limit: '50',
-  });
-
+async function fetchJson(url, label) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   let res;
   try {
-    res = await fetch(`${API_BASE}?${params.toString()}`, { signal: controller.signal });
+    res = await fetch(url, { signal: controller.signal });
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new Error(`Mapillary-Anfrage für "${region.name}" hat zu lange gedauert (Timeout)`);
+      throw new Error(`Mapillary-Anfrage für "${label}" hat zu lange gedauert (Timeout)`);
     }
-    throw new Error(`Mapillary-Anfrage für "${region.name}" fehlgeschlagen: ${err.message}`);
+    throw new Error(`Mapillary-Anfrage für "${label}" fehlgeschlagen: ${err.message}`);
   } finally {
     clearTimeout(timer);
   }
@@ -62,23 +53,52 @@ export async function fetchPanoramaForRegion(region) {
     const apiMessage = json?.error?.message;
     throw new Error(
       apiMessage
-        ? `Mapillary-Anfrage fehlgeschlagen für "${region.name}": ${apiMessage}`
-        : `Mapillary-Anfrage fehlgeschlagen für "${region.name}" (HTTP ${res.status})`
+        ? `Mapillary-Anfrage fehlgeschlagen für "${label}": ${apiMessage}`
+        : `Mapillary-Anfrage fehlgeschlagen für "${label}" (HTTP ${res.status})`
     );
   }
+  return json;
+}
 
-  const images = (json?.data || []).filter((img) => img.is_pano && img.thumb_2048_url);
-  if (images.length === 0) return null;
+/**
+ * Fragt echte Mapillary-Aufnahmen in einem kleinen Gebiet ab und liefert ein
+ * einzelnes, zufällig gewähltes 360°-Bild (is_pano=true) zurück - oder null,
+ * wenn dort keine sphärischen Aufnahmen vorliegen.
+ *
+ * Zweistufig, weil Mapillary eine Listenabfrage mit `thumb_2048_url` für
+ * viele Bilder gleichzeitig ablehnt ("Please reduce the amount of data
+ * you're asking for" - live bestätigt): zuerst nur guenstige Felder fuer
+ * die Liste holen, dann die Bild-URL nur fuer das eine gewaehlte Bild.
+ */
+export async function fetchPanoramaForRegion(region) {
+  const [west, south, east, north] = bboxFromPoint(region.lat, region.lng, region.radiusM || 400);
+  const listParams = new URLSearchParams({
+    access_token: MAPILLARY_ACCESS_TOKEN,
+    fields: 'id,is_pano',
+    bbox: `${west},${south},${east},${north}`,
+    limit: String(LIST_LIMIT),
+  });
 
-  const pick = images[Math.floor(Math.random() * images.length)];
-  const [lng, lat] = pick.geometry?.coordinates || [region.lng, region.lat];
+  const listJson = await fetchJson(`${API_BASE}/images?${listParams.toString()}`, region.name);
+  const panoIds = (listJson?.data || []).filter((img) => img.is_pano).map((img) => img.id);
+  if (panoIds.length === 0) return null;
+
+  const chosenId = panoIds[Math.floor(Math.random() * panoIds.length)];
+  const detailParams = new URLSearchParams({
+    access_token: MAPILLARY_ACCESS_TOKEN,
+    fields: 'id,geometry,thumb_2048_url',
+  });
+  const detail = await fetchJson(`${API_BASE}/${chosenId}?${detailParams.toString()}`, region.name);
+  if (!detail?.thumb_2048_url) return null;
+
+  const [lng, lat] = detail.geometry?.coordinates || [region.lng, region.lat];
 
   return {
-    id: `mapillary-${pick.id}`,
+    id: `mapillary-${detail.id}`,
     name: region.name,
     lat,
     lng,
-    panoramaUrl: pick.thumb_2048_url,
+    panoramaUrl: detail.thumb_2048_url,
     attribution: 'Mapillary-Mitwirkende',
     attributionUrl: 'https://www.mapillary.com/',
     coordSource: 'mapillary-live',
