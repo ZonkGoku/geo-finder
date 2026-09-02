@@ -32,7 +32,22 @@
         <span id="chrome-status">Nicht verbunden</span>
       </div>
       <div class="chrome-right">
+        <button class="sound-toggle" id="btn-sound-toggle" aria-label="Sound an/aus" title="Sound an/aus">
+          <svg id="sound-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a9 9 0 0 1 0 12"/></svg>
+          <svg id="sound-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" hidden><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>
+        </button>
         <span id="chrome-peer-id">&mdash;</span>
+      </div>
+    </div>
+
+    <div class="connection-banner hidden" id="connection-banner"></div>
+
+    <div class="state-overlay hidden" id="state-overlay">
+      <div class="state-overlay-card">
+        <div class="state-overlay-icon" id="state-overlay-icon">&#9888;</div>
+        <h3 id="state-overlay-title">Verbindung verloren</h3>
+        <p id="state-overlay-message"></p>
+        <button class="btn btn-primary" id="state-overlay-action" hidden></button>
       </div>
     </div>
 
@@ -167,10 +182,32 @@
           <p class="pano-credit" id="pano-credit"></p>
         </div>
 
+        <div class="round-progress" id="round-progress" aria-hidden="true"></div>
+
         <div class="hud-top">
-          <div class="round-chip">RUNDE <b id="hud-round-index">01</b> / <span id="hud-round-total">05</span></div>
+          <div class="hud-top-left">
+            <div class="round-chip">RUNDE <b id="hud-round-index">01</b> / <span id="hud-round-total">05</span></div>
+            <button class="hint-toggle" id="btn-hint-toggle" hidden>Hinweis</button>
+          </div>
           <div class="timer"><span class="dot" id="timer-dot"></span><span id="hud-timer">01:30</span></div>
           <div class="peer-status" id="hud-peer-status"></div>
+        </div>
+
+        <p class="hint-banner hidden" id="hint-banner"></p>
+
+        <div class="pano-controls" id="pano-controls">
+          <button class="pano-ctrl-btn" id="btn-compass" title="Nach Norden ausrichten" aria-label="Nach Norden ausrichten">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9.5"/><path d="M15 9l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/><path d="M12 2.5v2M12 19.5v2"/></svg>
+          </button>
+          <button class="pano-ctrl-btn" id="btn-zoom-in" title="Vergr&ouml;&szlig;ern" aria-label="Vergr&ouml;&szlig;ern">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+          <button class="pano-ctrl-btn" id="btn-zoom-out" title="Verkleinern" aria-label="Verkleinern">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+          </button>
+          <button class="pano-ctrl-btn" id="btn-fullscreen" title="Vollbild" aria-label="Vollbild">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
+          </button>
         </div>
 
         <div class="hud-bottom">
@@ -195,8 +232,14 @@
         </div>
 
         <div class="result-grid">
-          <div class="radar-big">
-            <div id="result-map-container" class="leaflet-host"></div>
+          <div>
+            <div class="radar-big">
+              <div id="result-map-container" class="leaflet-host"></div>
+            </div>
+            <div class="fun-fact hidden" id="result-fun-fact">
+              <span class="fun-fact-label">Wusstest du schon?</span>
+              <p id="result-fun-fact-text"></p>
+            </div>
           </div>
           <div class="score-list" id="result-score-list"></div>
         </div>
@@ -212,7 +255,14 @@
         <p class="eyebrow">Endstand</p>
         <h2 style="font-size:1.6rem;">Duell beendet</h2>
 
+        <div class="podium" id="podium"></div>
+
         <div class="board-list" id="board-list"></div>
+
+        <div class="overview-map-wrap hidden" id="overview-map-wrap">
+          <h3>Alle Runden im &Uuml;berblick</h3>
+          <div class="overview-map" id="overview-map-container"></div>
+        </div>
 
         <div class="board-foot">
           <button class="btn btn-primary" id="btn-play-again" hidden>Nochmal spielen</button>

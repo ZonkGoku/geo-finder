@@ -37,9 +37,14 @@ export const state = {
     guessedPlayerIds: new Set(),
     myGuess: null,
   },
-  scores: new Map(), // peerId -> { total, perRound: [] }
+  scores: new Map(), // peerId -> { total, perRound: [], streak, bestStreak }
+  roundHistory: [], // [{ actual: {lat,lng}, results: [...] }] - fuer die Endstand-Uebersichtskarte
   clockOffsetMs: 0,
 };
+
+export function freshScoreEntry() {
+  return { total: 0, perRound: [], streak: 0, bestStreak: 0 };
+}
 
 export function resetForNewGame() {
   state.round = {
@@ -53,8 +58,9 @@ export function resetForNewGame() {
     myGuess: null,
   };
   state.scores = new Map();
+  state.roundHistory = [];
   for (const id of state.players.keys()) {
-    state.scores.set(id, { total: 0, perRound: [] });
+    state.scores.set(id, freshScoreEntry());
   }
 }
 

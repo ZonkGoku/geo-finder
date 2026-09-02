@@ -1,6 +1,6 @@
-import { bus, state, resetForNewGame } from '../core/state.js';
+import { bus, state, resetForNewGame, freshScoreEntry } from '../core/state.js';
 import { MSG, makeMessage } from './protocol.js';
-import { scoreGuess } from '../core/scoring.js';
+import { scoreGuess, computeTimeBonus, nextStreak, computeStreakBonus } from '../core/scoring.js';
 import { pickUniqueLocations, makeSeed } from '../core/rng.js';
 
 const ROUND_RESULT_DISPLAY_MS = 8000;
@@ -64,7 +64,7 @@ export class HostController {
         connected: true,
         isHost: false,
       });
-      if (!state.scores.has(peerId)) state.scores.set(peerId, { total: 0, perRound: [] });
+      if (!state.scores.has(peerId)) state.scores.set(peerId, freshScoreEntry());
     }
 
     this.pm.sendTo(
@@ -172,7 +172,11 @@ export class HostController {
     if (state.round.guessedPlayerIds.has(peerId)) return;
 
     if (!state.round.guesses) state.round.guesses = new Map();
-    state.round.guesses.set(peerId, { lat: payload.lat, lng: payload.lng });
+    state.round.guesses.set(peerId, {
+      lat: payload.lat,
+      lng: payload.lng,
+      submittedAtMs: payload.submittedAtMs || Date.now(),
+    });
     state.round.guessedPlayerIds.add(peerId);
 
     this.pm.broadcast(makeMessage(MSG.PLAYER_GUESSED, { playerId: peerId }, state.self.id));
@@ -188,17 +192,50 @@ export class HostController {
     const actual = state.round.actual;
     const guesses = state.round.guesses || new Map();
     const results = [];
+    const isDuel = [...state.players.values()].filter((p) => p.connected).length > 1;
 
     for (const player of state.players.values()) {
       const guess = guesses.get(player.id) || null;
-      const { distanceKm, score, noGuess } = scoreGuess(guess, actual, state.pool.scaleKm);
-      results.push({ playerId: player.id, lat: guess?.lat ?? null, lng: guess?.lng ?? null, distanceKm, score, noGuess });
+      const { distanceKm, score: baseScore, noGuess } = scoreGuess(guess, actual, state.pool.scaleKm);
 
-      if (!state.scores.has(player.id)) state.scores.set(player.id, { total: 0, perRound: [] });
+      if (!state.scores.has(player.id)) state.scores.set(player.id, freshScoreEntry());
       const scoreEntry = state.scores.get(player.id);
-      scoreEntry.total += score;
-      scoreEntry.perRound[state.round.index] = score;
+
+      const timeBonus =
+        isDuel && !noGuess
+          ? computeTimeBonus(guess.submittedAtMs - state.round.startTimestamp, state.round.timeLimitMs)
+          : 0;
+      const streak = nextStreak(scoreEntry.streak, distanceKm);
+      const streakBonus = computeStreakBonus(streak);
+      const roundTotal = baseScore + timeBonus + streakBonus;
+
+      scoreEntry.streak = streak;
+      scoreEntry.bestStreak = Math.max(scoreEntry.bestStreak, streak);
+      scoreEntry.total += roundTotal;
+      scoreEntry.perRound[state.round.index] = {
+        total: roundTotal,
+        base: baseScore,
+        timeBonus,
+        streakBonus,
+        distanceKm,
+        noGuess,
+      };
+
+      results.push({
+        playerId: player.id,
+        lat: guess?.lat ?? null,
+        lng: guess?.lng ?? null,
+        distanceKm,
+        noGuess,
+        base: baseScore,
+        timeBonus,
+        streakBonus,
+        score: roundTotal,
+        streak,
+      });
     }
+
+    state.roundHistory[state.round.index] = { actual, results };
 
     this.pm.broadcast(
       makeMessage(

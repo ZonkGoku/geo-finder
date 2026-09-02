@@ -7,6 +7,7 @@ import { ResultMap } from './map/result-map.js';
 import { PanoViewer } from './panorama/pano-viewer.js';
 import { showScreen } from './ui/router.js';
 import { showToast } from './ui/toast.js';
+import * as sound from './audio/sound.js';
 
 const PROFILE_KEY = 'geofinder.profile';
 const RESULT_DISPLAY_SECONDS = 8;
@@ -16,9 +17,11 @@ let controller = null;
 let pool = null;
 let guessMap = null;
 let resultMap = null;
+let overviewMap = null;
 let panoViewer = null;
 let hudTimerInterval = null;
 let resultCountdownInterval = null;
+let hintRevealed = false;
 
 const el = (id) => document.getElementById(id);
 
@@ -54,6 +57,7 @@ function initProfileUI() {
     if (sw.dataset.color === state.self.color) sw.classList.add('selected');
     else sw.classList.remove('selected');
     sw.addEventListener('click', () => {
+      sound.playClick();
       swatches.forEach((s) => s.classList.remove('selected'));
       sw.classList.add('selected');
       state.self.color = sw.dataset.color;
@@ -67,6 +71,25 @@ function getName() {
   return name || 'Spieler';
 }
 
+// ---------------------------------------------------------------- sound toggle
+
+function initSoundToggle() {
+  const btn = el('btn-sound-toggle');
+  const onIcon = el('sound-icon-on');
+  const offIcon = el('sound-icon-off');
+  const sync = () => {
+    const muted = sound.isMuted();
+    onIcon.hidden = muted;
+    offIcon.hidden = !muted;
+  };
+  sync();
+  btn.addEventListener('click', () => {
+    sound.unlockAudio();
+    sound.toggleMuted();
+    sync();
+  });
+}
+
 // ---------------------------------------------------------------- pool
 
 async function loadPool() {
@@ -77,8 +100,49 @@ async function loadPool() {
 }
 
 function findLocationByCoords(lat, lng) {
-  if (!pool) return null;
+  if (!pool || lat == null || lng == null) return null;
   return pool.locations.find((loc) => Math.abs(loc.lat - lat) < 0.001 && Math.abs(loc.lng - lng) < 0.001) || null;
+}
+
+// ---------------------------------------------------------------- state overlay / connection banner
+
+function showStateOverlay({ title, message, actionLabel, onAction }) {
+  el('state-overlay-title').textContent = title;
+  el('state-overlay-message').textContent = message;
+  const actionBtn = el('state-overlay-action');
+  if (actionLabel) {
+    actionBtn.hidden = false;
+    actionBtn.textContent = actionLabel;
+    actionBtn.onclick = () => {
+      hideStateOverlay();
+      onAction?.();
+    };
+  } else {
+    actionBtn.hidden = true;
+    actionBtn.onclick = null;
+  }
+  el('state-overlay').classList.remove('hidden');
+}
+
+function hideStateOverlay() {
+  el('state-overlay').classList.add('hidden');
+}
+
+function updateConnectionBanner() {
+  const banner = el('connection-banner');
+  const onGameScreen = document.getElementById('screen-hud').classList.contains('active') ||
+    document.getElementById('screen-result').classList.contains('active');
+  if (!onGameScreen) {
+    banner.classList.add('hidden');
+    return;
+  }
+  const lost = [...state.players.values()].find((p) => !p.isHost && !p.connected);
+  if (lost) {
+    banner.textContent = `${lost.name} hat die Verbindung verloren — wartet auf Rückkehr…`;
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
 }
 
 // ---------------------------------------------------------------- menu
@@ -105,6 +169,8 @@ function createSoloPeerManager() {
 }
 
 async function hostFlow() {
+  sound.unlockAudio();
+  sound.playClick();
   clearMenuError();
   const roomCode = generateRoomCode();
   peerManager = new PeerManager();
@@ -126,6 +192,8 @@ async function hostFlow() {
 }
 
 async function joinFlow(rawCode) {
+  sound.unlockAudio();
+  sound.playClick();
   clearMenuError();
   const code = extractRoomCode(rawCode);
   if (!code) {
@@ -155,6 +223,8 @@ function extractRoomCode(raw) {
 }
 
 async function soloFlow() {
+  sound.unlockAudio();
+  sound.playClick();
   clearMenuError();
   peerManager = createSoloPeerManager();
   controller = new HostController(peerManager);
@@ -230,10 +300,13 @@ function renderLobby() {
     readyBtn.textContent = me?.ready ? 'Nicht bereit' : 'Bereit';
     hint.textContent = 'Warte auf den Host, das Spiel zu starten.';
   }
+
+  updateConnectionBanner();
 }
 
 function wireLobbyControls() {
   el('copy-link-btn').addEventListener('click', async () => {
+    sound.playClick();
     const text = el('lobby-share-link').textContent;
     try {
       await navigator.clipboard.writeText(text);
@@ -244,11 +317,13 @@ function wireLobbyControls() {
   });
 
   el('btn-ready-toggle').addEventListener('click', () => {
+    sound.playClick();
     const me = state.players.get(state.self.id);
     controller.setReady(!me?.ready);
   });
 
   el('btn-start-game').addEventListener('click', async () => {
+    sound.playClick();
     const loadedPool = await loadPool();
     controller.startGame(loadedPool);
   });
@@ -256,6 +331,7 @@ function wireLobbyControls() {
   el('lobby-settings-panel').querySelectorAll('.stepper button').forEach((btn) => {
     btn.addEventListener('click', () => {
       if (state.role !== 'host') return;
+      sound.playClick();
       const dir = Number(btn.dataset.dir);
       const kind = btn.dataset.step;
       if (kind === 'rounds') {
@@ -276,30 +352,63 @@ function ensureHudWidgets() {
   if (!panoViewer) panoViewer = new PanoViewer('pano-container');
   if (!guessMap) {
     guessMap = new GuessMap(el('guess-map-container'), () => {
-      el('btn-confirm-guess').disabled = false;
+      sound.playPinSet();
+      const btn = el('btn-confirm-guess');
+      btn.disabled = false;
+      btn.classList.add('ready');
     });
+  }
+}
+
+function renderRoundProgress() {
+  const container = el('round-progress');
+  container.innerHTML = '';
+  for (let i = 0; i < state.round.total; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'round-progress-seg';
+    if (i < state.round.index) seg.classList.add('filled');
+    else if (i === state.round.index) seg.classList.add('current');
+    seg.innerHTML = '<i></i>';
+    container.appendChild(seg);
   }
 }
 
 function renderRoundStart() {
   showScreen('hud');
   ensureHudWidgets();
+  hintRevealed = false;
 
   el('hud-round-index').textContent = String(state.round.index + 1).padStart(2, '0');
   el('hud-round-total').textContent = String(state.round.total).padStart(2, '0');
   el('pano-credit').textContent = 'Foto: Matthew Petroff · CC BY-SA 4.0';
+  renderRoundProgress();
 
-  panoViewer.load(state.round.panoramaUrl);
+  const location = pool?.locations.find((loc) => loc.panoramaUrl === state.round.panoramaUrl);
+  const hintBtn = el('btn-hint-toggle');
+  const hintBanner = el('hint-banner');
+  hintBanner.classList.add('hidden');
+  if (location?.hint) {
+    hintBtn.hidden = false;
+    hintBtn.textContent = 'Hinweis';
+  } else {
+    hintBtn.hidden = true;
+  }
+
+  panoViewer.load(state.round.panoramaUrl, { vaov: location?.vaov });
 
   guessMap.reset();
   el('minimap').classList.remove('expanded');
-  el('btn-confirm-guess').disabled = true;
+  const confirmBtn = el('btn-confirm-guess');
+  confirmBtn.disabled = true;
+  confirmBtn.classList.remove('ready');
 
   renderPeerStatus();
+  updateConnectionBanner();
 
   clearInterval(hudTimerInterval);
   const timerEl = el('hud-timer');
   const timerBox = timerEl.closest('.timer');
+  let tickedCriticalSecond = null;
   const tick = () => {
     const remainingMs = state.round.startTimestamp + state.round.timeLimitMs - Date.now();
     const clamped = Math.max(0, remainingMs);
@@ -307,7 +416,12 @@ function renderRoundStart() {
     const mm = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
     const ss = String(totalSeconds % 60).padStart(2, '0');
     timerEl.textContent = `${mm}:${ss}`;
-    timerBox.classList.toggle('critical', totalSeconds <= 10);
+    const critical = totalSeconds <= 10;
+    timerBox.classList.toggle('critical', critical);
+    if (critical && totalSeconds > 0 && tickedCriticalSecond !== totalSeconds) {
+      tickedCriticalSecond = totalSeconds;
+      sound.playTick(totalSeconds <= 3);
+    }
     if (clamped <= 0) clearInterval(hudTimerInterval);
   };
   tick();
@@ -322,7 +436,8 @@ function renderPeerStatus() {
   for (const p of state.players.values()) {
     const dot = document.createElement('div');
     const guessed = state.round.guessedPlayerIds.has(p.id);
-    dot.className = `peer-dot${guessed ? '' : ' pending'}`;
+    const offline = !p.connected;
+    dot.className = `peer-dot${guessed ? '' : ' pending'}${offline ? ' offline' : ''}`;
     dot.innerHTML = `<i style="background:${guessed ? p.color : ''}"></i>${escapeHtml(p.name)}`;
     container.appendChild(dot);
   }
@@ -330,23 +445,68 @@ function renderPeerStatus() {
 
 function wireHudControls() {
   el('minimap-label').addEventListener('click', () => {
+    sound.playClick();
     const mm = el('minimap');
     mm.classList.toggle('expanded');
     guessMap?.invalidate();
-    setTimeout(() => guessMap?.invalidate(), 240);
+    setTimeout(() => guessMap?.invalidate(), 340);
   });
 
   el('btn-confirm-guess').addEventListener('click', () => {
     const guess = guessMap.getGuess();
     if (!guess) return;
+    sound.playGuessSubmitted();
     if (state.role === 'host') controller.submitLocalGuess(guess.lat, guess.lng);
     else controller.submitGuess(guess.lat, guess.lng);
-    el('btn-confirm-guess').disabled = true;
+    const btn = el('btn-confirm-guess');
+    btn.disabled = true;
+    btn.classList.remove('ready');
     showToast('Tipp abgegeben');
   });
+
+  el('btn-hint-toggle').addEventListener('click', () => {
+    sound.playClick();
+    const location = pool?.locations.find((loc) => loc.panoramaUrl === state.round.panoramaUrl);
+    if (!location?.hint) return;
+    hintRevealed = !hintRevealed;
+    const banner = el('hint-banner');
+    banner.textContent = `💡 ${location.hint}`;
+    banner.classList.toggle('hidden', !hintRevealed);
+  });
+
+  el('btn-compass').addEventListener('click', () => {
+    sound.playClick();
+    panoViewer?.resetNorth();
+  });
+  el('btn-zoom-in').addEventListener('click', () => {
+    sound.playClick();
+    panoViewer?.zoomIn();
+  });
+  el('btn-zoom-out').addEventListener('click', () => {
+    sound.playClick();
+    panoViewer?.zoomOut();
+  });
+  el('btn-fullscreen').addEventListener('click', () => {
+    sound.playClick();
+    panoViewer?.toggleFullscreen();
+  });
+
+  // Erschwert zumindest die triviale Rechtsklick-Bildersuche auf dem Panorama.
+  el('pano-container').addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 // ---------------------------------------------------------------- result
+
+function animateCounter(elEl, from, to, duration = 700) {
+  const start = performance.now();
+  const step = (now) => {
+    const progress = Math.min(1, (now - start) / duration);
+    const eased = 1 - (1 - progress) ** 3;
+    elEl.textContent = Math.round(from + (to - from) * eased).toLocaleString('de-DE');
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 
 function renderRoundResult({ results, actual }) {
   clearInterval(hudTimerInterval);
@@ -361,28 +521,60 @@ function renderRoundResult({ results, actual }) {
     resultMap.render(actual, results, state.players);
   });
 
+  const location = findLocationByCoords(actual.lat, actual.lng);
+  const funFactEl = el('result-fun-fact');
+  if (location?.funFact) {
+    el('result-fun-fact-text').textContent = location.funFact;
+    funFactEl.classList.remove('hidden');
+  } else {
+    funFactEl.classList.add('hidden');
+  }
+
   const sorted = [...results].sort((a, b) => b.score - a.score);
   const listEl = el('result-score-list');
   listEl.innerHTML = '';
+  let myBestScore = 0;
   for (const r of sorted) {
     const player = state.players.get(r.playerId);
+    if (r.playerId === state.self.id) myBestScore = r.score;
     const card = document.createElement('div');
     card.className = 'score-card';
     const meta = r.noGuess ? 'Kein Tipp abgegeben' : `${r.distanceKm.toFixed(1)} km entfernt`;
     const barWidth = Math.max(2, (r.score / 5000) * 100);
+    const chips = [];
+    if (!r.noGuess) chips.push(`<span class="score-chip">Basis ${r.base.toLocaleString('de-DE')}</span>`);
+    if (r.timeBonus > 0) chips.push(`<span class="score-chip bonus">&#9889; +${r.timeBonus} Speed</span>`);
+    if (r.streakBonus > 0) chips.push(`<span class="score-chip streak">&#128293; +${r.streakBonus} Streak x${r.streak}</span>`);
     card.innerHTML = `
       <div class="score-card-top">
         <span class="score-name"><span class="avatar" style="width:22px;height:22px;font-size:0.7rem;background:${player?.color || '#8c99b8'};">${(player?.name || '?').charAt(0).toUpperCase()}</span>${escapeHtml(player?.name || 'Spieler')}</span>
-        <span class="score-points">${r.score.toLocaleString('de-DE')}</span>
+        <span class="score-points" data-final="${r.score}">0</span>
       </div>
       <div class="score-meta">${meta}</div>
-      <div class="score-bar"><i style="width:${barWidth}%; background:${player?.color || 'var(--accent)'};"></i></div>
+      <div class="score-bar"><i style="width:0%; background:${player?.color || 'var(--accent)'};"></i></div>
+      ${chips.length ? `<div class="score-breakdown">${chips.join('')}</div>` : ''}
     `;
     listEl.appendChild(card);
+    const pointsEl = card.querySelector('.score-points');
+    const barEl = card.querySelector('.score-bar i');
+    requestAnimationFrame(() => {
+      animateCounter(pointsEl, 0, r.score);
+      barEl.style.transition = 'width 700ms ease';
+      requestAnimationFrame(() => {
+        barEl.style.width = `${barWidth}%`;
+      });
+    });
   }
+
+  if (myBestScore > 4000) sound.playSuccess();
+  else sound.playRoundReveal();
+  const myStreakResult = results.find((r) => r.playerId === state.self.id);
+  if (myStreakResult?.streakBonus > 0) sound.playStreak();
 
   const isHost = state.role === 'host';
   el('btn-advance-round').hidden = !isHost;
+
+  updateConnectionBanner();
 
   clearInterval(resultCountdownInterval);
   let remaining = RESULT_DISPLAY_SECONDS;
@@ -398,17 +590,79 @@ function renderRoundResult({ results, actual }) {
 
 function wireResultControls() {
   el('btn-advance-round').addEventListener('click', () => {
+    sound.playClick();
     if (state.role === 'host') controller.advanceNow();
   });
 }
 
 // ---------------------------------------------------------------- leaderboard
 
+function renderPodium(sorted) {
+  const podiumEl = el('podium');
+  podiumEl.innerHTML = '';
+  if (sorted.length < 2) {
+    podiumEl.classList.add('hidden');
+    return;
+  }
+  podiumEl.classList.remove('hidden');
+  // Reihenfolge fuers Layout: 2. Platz links, 1. Platz Mitte (hoechster Block), 3. Platz rechts.
+  const order = [1, 0, 2].filter((i) => sorted[i]);
+  order.forEach((idx, visualPos) => {
+    const entry = sorted[idx];
+    const player = state.players.get(entry.playerId);
+    const step = document.createElement('div');
+    step.className = `podium-step rank-${idx + 1}`;
+    step.style.animationDelay = `${visualPos * 100}ms`;
+    const initial = (player?.name || '?').charAt(0).toUpperCase();
+    step.innerHTML = `
+      <div class="avatar" style="background:${player?.color || '#8c99b8'};">${initial}</div>
+      <div class="podium-name">${escapeHtml(player?.name || 'Spieler')}</div>
+      <div class="podium-score">${entry.total.toLocaleString('de-DE')}</div>
+      <div class="podium-block">${idx + 1}</div>
+    `;
+    podiumEl.appendChild(step);
+  });
+}
+
+function renderOverviewMap() {
+  const wrap = el('overview-map-wrap');
+  const rounds = state.roundHistory.filter(Boolean);
+  if (rounds.length === 0) {
+    wrap.classList.add('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+  if (!overviewMap) overviewMap = new ResultMap(el('overview-map-container'));
+  requestAnimationFrame(() => {
+    overviewMap.invalidate();
+    const combinedResults = rounds.flatMap((r) => r.results);
+    // Fuer die Uebersicht wird das letzte Runden-Ziel als Bounds-Anker genutzt,
+    // aber alle Ziele + Tipps aller Runden werden eingezeichnet.
+    overviewMap.render(rounds[rounds.length - 1].actual, combinedResults, state.players);
+    for (const round of rounds.slice(0, -1)) {
+      const targetIcon = window.L.divIcon({
+        className: '',
+        html: '<span class="map-pin map-pin--target"></span>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 14],
+      });
+      window.L.marker([round.actual.lat, round.actual.lng], { icon: targetIcon }).addTo(overviewMap.layerGroup);
+    }
+    const allBounds = rounds.flatMap((r) => [
+      [r.actual.lat, r.actual.lng],
+      ...r.results.filter((res) => res.lat != null).map((res) => [res.lat, res.lng]),
+    ]);
+    if (allBounds.length > 1) overviewMap.map.fitBounds(allBounds, { padding: [30, 30] });
+  });
+}
+
 function renderLeaderboard({ finalScores }) {
   clearInterval(resultCountdownInterval);
   showScreen('leaderboard');
 
   const sorted = [...finalScores].sort((a, b) => b.total - a.total);
+  renderPodium(sorted);
+
   const listEl = el('board-list');
   listEl.innerHTML = '';
   sorted.forEach((entry, idx) => {
@@ -416,7 +670,7 @@ function renderLeaderboard({ finalScores }) {
     const row = document.createElement('div');
     row.className = `board-row${idx === 0 ? ' rank-1' : ''}`;
     const chips = entry.perRound
-      .map((score, i) => `<span class="round-pill">R${i + 1} <b>${score ?? 0}</b></span>`)
+      .map((r, i) => `<span class="round-pill">R${i + 1} <b>${r?.total ?? 0}</b></span>`)
       .join('');
     row.innerHTML = `
       <div class="rank-num">${String(idx + 1).padStart(2, '0')}</div>
@@ -429,11 +683,13 @@ function renderLeaderboard({ finalScores }) {
     listEl.appendChild(row);
   });
 
+  renderOverviewMap();
   el('btn-play-again').hidden = state.role !== 'host';
 }
 
 function wireLeaderboardControls() {
   el('btn-play-again').addEventListener('click', async () => {
+    sound.playClick();
     const loadedPool = await loadPool();
     const isSolo = !state.roomCode;
     if (isSolo) {
@@ -448,7 +704,10 @@ function wireLeaderboardControls() {
     showScreen('lobby');
   });
 
-  el('btn-back-to-menu').addEventListener('click', resetToMenu);
+  el('btn-back-to-menu').addEventListener('click', () => {
+    sound.playClick();
+    resetToMenu();
+  });
 }
 
 // ---------------------------------------------------------------- menu wiring
@@ -458,6 +717,8 @@ function wireMenuControls() {
   el('btn-solo').addEventListener('click', soloFlow);
 
   el('btn-join-toggle').addEventListener('click', () => {
+    sound.unlockAudio();
+    sound.playClick();
     el('join-panel').classList.toggle('hidden');
     if (!el('join-panel').classList.contains('hidden')) el('join-code-input').focus();
   });
@@ -471,6 +732,8 @@ function wireMenuControls() {
 function resetToMenu() {
   clearInterval(hudTimerInterval);
   clearInterval(resultCountdownInterval);
+  hideStateOverlay();
+  el('connection-banner').classList.add('hidden');
   panoViewer?.destroy();
   panoViewer = null;
   controller = null;
@@ -480,6 +743,7 @@ function resetToMenu() {
   state.roomCode = null;
   state.players = new Map();
   state.scores = new Map();
+  state.roundHistory = [];
   history.replaceState(null, '', location.pathname + location.search);
   updateChrome('Nicht verbunden', null);
   showScreen('menu');
@@ -509,12 +773,19 @@ function wireBusEvents() {
   });
   bus.on('ui:game-started', () => showScreen('hud'));
   bus.on('ui:round-started', renderRoundStart);
-  bus.on('ui:player-guessed', renderPeerStatus);
+  bus.on('ui:player-guessed', ({ peerId }) => {
+    renderPeerStatus();
+    if (peerId !== state.self.id) showToast('Gegenspieler hat getippt!');
+  });
   bus.on('ui:round-result', renderRoundResult);
   bus.on('ui:game-over', renderLeaderboard);
   bus.on('ui:host-disconnected', () => {
-    showToast('Verbindung zum Host verloren');
-    resetToMenu();
+    showStateOverlay({
+      title: 'Verbindung zum Host verloren',
+      message: 'Die Partie kann ohne den Host nicht fortgesetzt werden. Deine bisherigen Ergebnisse sind aber nicht verloren, du kannst jederzeit ein neues Duell starten.',
+      actionLabel: 'Zurück zum Menü',
+      onAction: resetToMenu,
+    });
   });
   bus.on('net:error', (err) => {
     console.error('Netzwerkfehler', err);
@@ -523,6 +794,7 @@ function wireBusEvents() {
 
 async function boot() {
   initProfileUI();
+  initSoundToggle();
   wireMenuControls();
   wireLobbyControls();
   wireHudControls();

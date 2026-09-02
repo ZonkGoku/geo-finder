@@ -1,4 +1,4 @@
-import { bus, state } from '../core/state.js';
+import { bus, state, freshScoreEntry } from '../core/state.js';
 import { MSG, makeMessage } from './protocol.js';
 
 export class ClientController {
@@ -48,7 +48,8 @@ export class ClientController {
       case MSG.GAME_START:
         state.round.total = message.payload.roundCount;
         state.scores = new Map();
-        for (const id of state.players.keys()) state.scores.set(id, { total: 0, perRound: [] });
+        state.roundHistory = [];
+        for (const id of state.players.keys()) state.scores.set(id, freshScoreEntry());
         bus.emit('ui:game-started');
         break;
       case MSG.ROUND_START:
@@ -71,11 +72,24 @@ export class ClientController {
       case MSG.ROUND_RESULT:
         state.round.actual = { lat: message.payload.actualLat, lng: message.payload.actualLng };
         for (const r of message.payload.results) {
-          if (!state.scores.has(r.playerId)) state.scores.set(r.playerId, { total: 0, perRound: [] });
+          if (!state.scores.has(r.playerId)) state.scores.set(r.playerId, freshScoreEntry());
           const entry = state.scores.get(r.playerId);
           entry.total += r.score;
-          entry.perRound[message.payload.roundIndex] = r.score;
+          entry.streak = r.streak;
+          entry.bestStreak = Math.max(entry.bestStreak, r.streak);
+          entry.perRound[message.payload.roundIndex] = {
+            total: r.score,
+            base: r.base,
+            timeBonus: r.timeBonus,
+            streakBonus: r.streakBonus,
+            distanceKm: r.distanceKm,
+            noGuess: r.noGuess,
+          };
         }
+        state.roundHistory[message.payload.roundIndex] = {
+          actual: state.round.actual,
+          results: message.payload.results,
+        };
         bus.emit('ui:round-result', { results: message.payload.results, actual: state.round.actual });
         break;
       case MSG.GAME_OVER:

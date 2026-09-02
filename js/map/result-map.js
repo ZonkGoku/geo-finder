@@ -12,6 +12,7 @@ export class ResultMap {
   render(actual, results, players) {
     this.layerGroup.clearLayers();
     const bounds = [[actual.lat, actual.lng]];
+    const lines = [];
 
     const targetIcon = window.L.divIcon({
       className: '',
@@ -32,13 +33,14 @@ export class ResultMap {
         iconAnchor: [9, 18],
       });
       window.L.marker([r.lat, r.lng], { icon }).addTo(this.layerGroup);
-      window.L.polyline(
+      const line = window.L.polyline(
         [
           [r.lat, r.lng],
           [actual.lat, actual.lng],
         ],
-        { color: '#8c99b8', weight: 2, dashArray: '4 6', opacity: 0.8 }
+        { color, weight: 2, dashArray: '4 6', opacity: 0.85 }
       ).addTo(this.layerGroup);
+      lines.push(line);
       bounds.push([r.lat, r.lng]);
     }
 
@@ -46,6 +48,29 @@ export class ResultMap {
       this.map.fitBounds(bounds, { padding: [36, 36] });
     } else {
       this.map.setView(bounds[0], 4);
+    }
+
+    // Linien "einzeichnen": erst unsichtbar (Laenge = 0), dann per
+    // stroke-dashoffset-Transition auf die volle Laenge animieren. Muss nach
+    // fitBounds passieren, weil sich die Pfadlaenge sonst noch aendert.
+    requestAnimationFrame(() => this._animateLines(lines));
+  }
+
+  _animateLines(lines) {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    for (const line of lines) {
+      const path = line._path;
+      if (!path) continue;
+      const length = path.getTotalLength ? path.getTotalLength() : 300;
+      if (reduceMotion) continue;
+      path.style.transition = 'none';
+      path.style.strokeDasharray = `${length}`;
+      path.style.strokeDashoffset = `${length}`;
+      // Reflow erzwingen, damit der Browser den Startzustand tatsaechlich rendert
+      // bevor die Transition zum Endzustand beginnt.
+      path.getBoundingClientRect();
+      path.style.transition = 'stroke-dashoffset 900ms ease-out';
+      path.style.strokeDashoffset = '0';
     }
   }
 
