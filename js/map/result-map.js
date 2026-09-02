@@ -1,11 +1,9 @@
-const TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+import { TILE_URL, TILE_OPTIONS } from './tile-config.js';
 
 export class ResultMap {
   constructor(containerEl) {
     this.map = window.L.map(containerEl, { zoomControl: false, attributionControl: true }).setView([20, 0], 2);
-    window.L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, subdomains: 'abcd', maxZoom: 18 }).addTo(this.map);
+    window.L.tileLayer(TILE_URL, TILE_OPTIONS).addTo(this.map);
     this.layerGroup = window.L.layerGroup().addTo(this.map);
   }
 
