@@ -25,8 +25,15 @@ export const state = {
   self: { id: null, name: '', color: '#f2a93b' },
   roomCode: null,
   players: new Map(), // peerId -> { id, name, color, ready, connected, isHost }
-  settings: { roundCount: 5, timeLimitMs: 90000, poolId: 'starter-pool' },
-  pool: null, // geladenes locations.json (nur Host braucht Koordinaten)
+  settings: {
+    roundCount: 5,
+    timeLimitMs: 90000, // null = unbegrenzt
+    mapSetId: 'weltweit',
+    mode: 'points', // 'points' | 'hp'
+    modifier: 'free', // 'free' | 'no-zoom'
+  },
+  pool: null, // aufgeloestes Kartenpaket (nur Host braucht Koordinaten)
+  hp: new Map(), // peerId -> number (nur im HP-Duell-Modus genutzt)
   round: {
     index: 0,
     total: 0,
@@ -41,6 +48,8 @@ export const state = {
   roundHistory: [], // [{ actual: {lat,lng}, results: [...] }] - fuer die Endstand-Uebersichtskarte
   clockOffsetMs: 0,
 };
+
+export const HP_START = 6000;
 
 export function freshScoreEntry() {
   return { total: 0, perRound: [], streak: 0, bestStreak: 0 };
@@ -59,8 +68,10 @@ export function resetForNewGame() {
   };
   state.scores = new Map();
   state.roundHistory = [];
+  state.hp = new Map();
   for (const id of state.players.keys()) {
     state.scores.set(id, freshScoreEntry());
+    if (state.settings.mode === 'hp') state.hp.set(id, HP_START);
   }
 }
 

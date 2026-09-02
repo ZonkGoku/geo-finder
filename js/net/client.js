@@ -1,4 +1,4 @@
-import { bus, state, freshScoreEntry } from '../core/state.js';
+import { bus, state, freshScoreEntry, HP_START } from '../core/state.js';
 import { MSG, makeMessage } from './protocol.js';
 
 export class ClientController {
@@ -31,6 +31,10 @@ export class ClientController {
     this.pm.sendToHost(makeMessage(MSG.PING, { echoTs }, state.self.id));
   }
 
+  reportTabSwitch() {
+    this.pm.sendToHost(makeMessage(MSG.TAB_SWITCH_WARNING, { playerId: state.self.id }, state.self.id));
+  }
+
   _onMessage(message) {
     switch (message.type) {
       case MSG.ROOM_JOIN_ACCEPTED:
@@ -47,9 +51,15 @@ export class ClientController {
         break;
       case MSG.GAME_START:
         state.round.total = message.payload.roundCount;
+        state.settings.mode = message.payload.mode;
+        state.settings.modifier = message.payload.modifier;
         state.scores = new Map();
         state.roundHistory = [];
-        for (const id of state.players.keys()) state.scores.set(id, freshScoreEntry());
+        state.hp = new Map();
+        for (const id of state.players.keys()) {
+          state.scores.set(id, freshScoreEntry());
+          if (message.payload.mode === 'hp') state.hp.set(id, HP_START);
+        }
         bus.emit('ui:game-started');
         break;
       case MSG.ROUND_START:
@@ -85,6 +95,7 @@ export class ClientController {
             distanceKm: r.distanceKm,
             noGuess: r.noGuess,
           };
+          if (r.hp != null) state.hp.set(r.playerId, r.hp);
         }
         state.roundHistory[message.payload.roundIndex] = {
           actual: state.round.actual,
@@ -98,6 +109,9 @@ export class ClientController {
       case MSG.PLAYER_LEFT:
         state.players.delete(message.payload.playerId);
         bus.emit('ui:lobby-updated');
+        break;
+      case MSG.TAB_SWITCH_WARNING:
+        bus.emit('ui:tab-switch-warning', { peerId: message.payload.playerId });
         break;
       case MSG.PONG:
         state.clockOffsetMs = Math.round((Date.now() - message.payload.echoTs) / 2);

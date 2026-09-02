@@ -1,0 +1,18 @@
+{
+  "id": "capitals",
+  "name": "Capital Cities Only",
+  "description": "Nur Hauptstädte, live über die Mapillary-API geladen.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 1800,
+  "regions": [
+    { "id": "berlin", "name": "Berlin, Deutschland", "lat": 52.5200, "lng": 13.4050, "radiusM": 1200 },
+    { "id": "paris", "name": "Paris, Frankreich", "lat": 48.8566, "lng": 2.3522, "radiusM": 1200 },
+    { "id": "london", "name": "London, Vereinigtes Königreich", "lat": 51.5074, "lng": -0.1278, "radiusM": 1200 },
+    { "id": "madrid", "name": "Madrid, Spanien", "lat": 40.4168, "lng": -3.7038, "radiusM": 1200 },
+    { "id": "rome", "name": "Rom, Italien", "lat": 41.9028, "lng": 12.4964, "radiusM": 1200 },
+    { "id": "vienna", "name": "Wien, Österreich", "lat": 48.2082, "lng": 16.3738, "radiusM": 1200 },
+    { "id": "amsterdam", "name": "Amsterdam, Niederlande", "lat": 52.3676, "lng": 4.9041, "radiusM": 1200 },
+    { "id": "tokyo", "name": "Tokio, Japan", "lat": 35.6762, "lng": 139.6503, "radiusM": 1200 }
+  ]
+}

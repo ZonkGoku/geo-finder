@@ -7,14 +7,19 @@ import { ResultMap } from './map/result-map.js';
 import { PanoViewer } from './panorama/pano-viewer.js';
 import { showScreen } from './ui/router.js';
 import { showToast } from './ui/toast.js';
+import { loadMapSetIndex, loadMapSetDetail } from './core/pool-loader.js';
 import * as sound from './audio/sound.js';
 
 const PROFILE_KEY = 'geofinder.profile';
 const RESULT_DISPLAY_SECONDS = 8;
+const ROUND_COUNT_OPTIONS = [3, 5, 10];
+const DURATION_OPTIONS = [30000, 60000, 90000, 180000, null];
 
 let peerManager = null;
 let controller = null;
-let pool = null;
+let mapSetIndex = [];
+let mapSetDetailCache = new Map(); // id -> resolved detail JSON
+let activeMapSetDetail = null; // detail used for the game currently running
 let guessMap = null;
 let resultMap = null;
 let overviewMap = null;
@@ -22,6 +27,7 @@ let panoViewer = null;
 let hudTimerInterval = null;
 let resultCountdownInterval = null;
 let hintRevealed = false;
+let lastTabSwitchSentAt = 0;
 
 const el = (id) => document.getElementById(id);
 
@@ -90,17 +96,25 @@ function initSoundToggle() {
   });
 }
 
-// ---------------------------------------------------------------- pool
+// ---------------------------------------------------------------- map sets
 
-async function loadPool() {
-  if (pool) return pool;
-  const res = await fetch('./data/locations.json');
-  pool = await res.json();
-  return pool;
+async function ensureMapSetIndex() {
+  if (mapSetIndex.length === 0) mapSetIndex = await loadMapSetIndex();
+  return mapSetIndex;
+}
+
+async function getMapSetDetail(id) {
+  if (mapSetDetailCache.has(id)) return mapSetDetailCache.get(id);
+  const entry = mapSetIndex.find((s) => s.id === id);
+  if (!entry) throw new Error(`Unbekanntes Kartenpaket: ${id}`);
+  const detail = await loadMapSetDetail(entry);
+  mapSetDetailCache.set(id, detail);
+  return detail;
 }
 
 function findLocationByCoords(lat, lng) {
-  if (!pool || lat == null || lng == null) return null;
+  const pool = activeMapSetDetail;
+  if (!pool?.locations || lat == null || lng == null) return null;
   return pool.locations.find((loc) => Math.abs(loc.lat - lat) < 0.001 && Math.abs(loc.lng - lng) < 0.001) || null;
 }
 
@@ -182,8 +196,7 @@ async function hostFlow() {
     state.roomCode = roomCode;
     location.hash = `room=${roomCode}`;
     updateChrome('Host', hostId);
-    renderLobby();
-    showScreen('lobby');
+    await enterLobby();
   } catch (err) {
     console.error(err);
     showMenuError('Verbindung fehlgeschlagen. Prüfe deine Internetverbindung und versuche es erneut.');
@@ -231,8 +244,7 @@ async function soloFlow() {
   controller.registerSelfAsHost(peerManager.peer.id, getName(), state.self.color);
   state.roomCode = null;
   updateChrome('Solo', peerManager.peer.id);
-  const loadedPool = await loadPool();
-  controller.startGame(loadedPool);
+  await enterLobby();
 }
 
 function updateChrome(statusText, peerId) {
@@ -242,47 +254,99 @@ function updateChrome(statusText, peerId) {
 
 // ---------------------------------------------------------------- lobby
 
+async function enterLobby() {
+  await ensureMapSetIndex();
+  renderMapSetGrid();
+  renderLobby();
+  showScreen('lobby');
+}
+
+function renderMapSetGrid() {
+  const grid = el('mapset-grid');
+  grid.innerHTML = '';
+  const isHost = state.role === 'host';
+  for (const entry of mapSetIndex) {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = `mapset-card${entry.id === state.settings.mapSetId ? ' selected' : ''}`;
+    card.disabled = !isHost || !entry.available;
+    const badgeClass = entry.available ? 'ready' : 'needs-token';
+    const badgeText = entry.available ? 'Bereit' : 'Token nötig';
+    card.innerHTML = `
+      <span class="mapset-card-badge ${badgeClass}">${badgeText}</span>
+      <span class="mapset-card-name">${escapeHtml(entry.name)}</span>
+      <span class="mapset-card-desc">${escapeHtml(entry.description)}</span>
+    `;
+    card.addEventListener('click', () => {
+      if (!isHost || !entry.available) return;
+      sound.playClick();
+      controller.updateSettings({ mapSetId: entry.id });
+      renderMapSetGrid();
+    });
+    grid.appendChild(card);
+  }
+}
+
+function renderChoiceRow(rowId, currentValue) {
+  const row = el(rowId);
+  const isHost = state.role === 'host';
+  row.querySelectorAll('button').forEach((btn) => {
+    const raw = btn.dataset.value;
+    const value = raw === 'null' ? null : Number.isNaN(Number(raw)) ? raw : Number(raw);
+    btn.classList.toggle('selected', value === currentValue);
+    btn.disabled = !isHost;
+  });
+}
+
 function renderLobby() {
   const isHost = state.role === 'host';
+  const isSolo = !state.roomCode;
   const players = [...state.players.values()];
 
-  el('lobby-room-code').textContent = state.roomCode || '—';
-  const shareLink = state.roomCode
-    ? `${location.origin}${location.pathname}#room=${state.roomCode}`
-    : '—';
-  el('lobby-share-link').textContent = shareLink;
+  el('lobby-heading').textContent = isSolo ? 'Solo-Einstellungen' : 'Warten auf Mitspieler';
+  el('lobby-share-row').classList.toggle('hidden', isSolo);
+  el('lobby-room-code-row').classList.toggle('hidden', isSolo);
+  el('lobby-players-panel').classList.toggle('hidden', isSolo);
 
-  el('lobby-player-count').textContent = String(players.length);
-  const listEl = el('lobby-player-list');
-  listEl.innerHTML = '';
-  for (const p of players) {
-    const row = document.createElement('div');
-    row.className = 'player-row';
-    const initial = (p.name || '?').trim().charAt(0).toUpperCase();
-    const statusClass = !p.connected ? 'status-offline' : p.ready ? 'status-ready' : 'status-wait';
-    const statusText = !p.connected ? 'getrennt' : p.ready ? 'Bereit' : 'wartet…';
-    row.innerHTML = `
-      <div class="avatar" style="background:${p.color};">${initial}</div>
-      <div class="player-name">${escapeHtml(p.name)} ${p.isHost ? '<span class="host-tag">Host</span>' : ''}</div>
-      <div class="status-pill ${statusClass}">${statusText}</div>
-    `;
-    listEl.appendChild(row);
+  if (!isSolo) {
+    el('lobby-room-code').textContent = state.roomCode || '—';
+    const shareLink = `${location.origin}${location.pathname}#room=${state.roomCode}`;
+    el('lobby-share-link').textContent = shareLink;
+
+    el('lobby-player-count').textContent = String(players.length);
+    const listEl = el('lobby-player-list');
+    listEl.innerHTML = '';
+    for (const p of players) {
+      const row = document.createElement('div');
+      row.className = 'player-row';
+      const initial = (p.name || '?').trim().charAt(0).toUpperCase();
+      const statusClass = !p.connected ? 'status-offline' : p.ready ? 'status-ready' : 'status-wait';
+      const statusText = !p.connected ? 'getrennt' : p.ready ? 'Bereit' : 'wartet…';
+      row.innerHTML = `
+        <div class="avatar" style="background:${p.color};">${initial}</div>
+        <div class="player-name">${escapeHtml(p.name)} ${p.isHost ? '<span class="host-tag">Host</span>' : ''}</div>
+        <div class="status-pill ${statusClass}">${statusText}</div>
+      `;
+      listEl.appendChild(row);
+    }
   }
 
-  el('setting-rounds-value').textContent = String(state.settings.roundCount);
-  el('setting-time-value').textContent = `${Math.round(state.settings.timeLimitMs / 1000)}s`;
-  el('lobby-pool-name').textContent = pool?.name || 'Startpaket';
-
-  const panel = el('lobby-settings-panel');
-  panel.querySelectorAll('.stepper button').forEach((b) => {
-    b.style.display = isHost ? '' : 'none';
-  });
+  renderChoiceRow('choice-rounds', state.settings.roundCount);
+  renderChoiceRow('choice-duration', state.settings.timeLimitMs);
+  renderChoiceRow('choice-mode', state.settings.mode);
+  renderChoiceRow('choice-modifier', state.settings.modifier);
+  if (mapSetIndex.length) renderMapSetGrid();
 
   const readyBtn = el('btn-ready-toggle');
   const startBtn = el('btn-start-game');
   const hint = el('lobby-hint');
 
-  if (isHost) {
+  if (isSolo) {
+    readyBtn.hidden = true;
+    startBtn.hidden = false;
+    startBtn.disabled = false;
+    hint.textContent = '';
+  } else if (isHost) {
     readyBtn.hidden = true;
     startBtn.hidden = false;
     const others = players.filter((p) => !p.isHost);
@@ -304,6 +368,25 @@ function renderLobby() {
   updateConnectionBanner();
 }
 
+async function startGameFromLobby() {
+  sound.playClick();
+  const startBtn = el('btn-start-game');
+  startBtn.disabled = true;
+  const hint = el('lobby-hint');
+  const previousHint = hint.textContent;
+  try {
+    hint.textContent = 'Lade Kartenpaket…';
+    const detail = await getMapSetDetail(state.settings.mapSetId);
+    activeMapSetDetail = detail;
+    await controller.startGame(detail);
+  } catch (err) {
+    console.error(err);
+    hint.textContent = previousHint;
+    startBtn.disabled = false;
+    showToast('Kartenpaket konnte nicht geladen werden.');
+  }
+}
+
 function wireLobbyControls() {
   el('copy-link-btn').addEventListener('click', async () => {
     sound.playClick();
@@ -322,28 +405,23 @@ function wireLobbyControls() {
     controller.setReady(!me?.ready);
   });
 
-  el('btn-start-game').addEventListener('click', async () => {
-    sound.playClick();
-    const loadedPool = await loadPool();
-    controller.startGame(loadedPool);
-  });
+  el('btn-start-game').addEventListener('click', startGameFromLobby);
 
-  el('lobby-settings-panel').querySelectorAll('.stepper button').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (state.role !== 'host') return;
-      sound.playClick();
-      const dir = Number(btn.dataset.dir);
-      const kind = btn.dataset.step;
-      if (kind === 'rounds') {
-        const next = Math.min(10, Math.max(3, state.settings.roundCount + dir));
-        controller.updateSettings({ roundCount: next });
-      } else if (kind === 'time') {
-        const next = Math.min(180000, Math.max(30000, state.settings.timeLimitMs + dir * 15000));
-        controller.updateSettings({ timeLimitMs: next });
-      }
-      renderLobby();
+  const wireChoiceRow = (rowId, settingKey, parse) => {
+    el(rowId).querySelectorAll('button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (state.role !== 'host') return;
+        sound.playClick();
+        const value = parse(btn.dataset.value);
+        controller.updateSettings({ [settingKey]: value });
+        renderLobby();
+      });
     });
-  });
+  };
+  wireChoiceRow('choice-rounds', 'roundCount', (v) => Number(v));
+  wireChoiceRow('choice-duration', 'timeLimitMs', (v) => (v === 'null' ? null : Number(v)));
+  wireChoiceRow('choice-mode', 'mode', (v) => v);
+  wireChoiceRow('choice-modifier', 'modifier', (v) => v);
 }
 
 // ---------------------------------------------------------------- hud
@@ -373,6 +451,27 @@ function renderRoundProgress() {
   }
 }
 
+function renderHpBars() {
+  const container = el('hp-bars');
+  if (state.settings.mode !== 'hp') {
+    container.classList.add('hidden');
+    return;
+  }
+  container.classList.remove('hidden');
+  container.innerHTML = '';
+  for (const p of state.players.values()) {
+    const hp = state.hp.get(p.id) ?? 6000;
+    const row = document.createElement('div');
+    row.className = 'hp-bar-row';
+    row.innerHTML = `
+      <span class="hp-bar-name">${escapeHtml(p.name)}</span>
+      <span class="hp-bar-track"><span class="hp-bar-fill" style="width:${(hp / 6000) * 100}%; background:${hp <= 0 ? 'var(--danger)' : ''}"></span></span>
+      <span class="hp-bar-value">${hp}</span>
+    `;
+    container.appendChild(row);
+  }
+}
+
 function renderRoundStart() {
   showScreen('hud');
   ensureHudWidgets();
@@ -380,10 +479,14 @@ function renderRoundStart() {
 
   el('hud-round-index').textContent = String(state.round.index + 1).padStart(2, '0');
   el('hud-round-total').textContent = String(state.round.total).padStart(2, '0');
-  el('pano-credit').textContent = 'Foto: Matthew Petroff · CC BY-SA 4.0';
+  el('pano-credit').textContent = activeMapSetDetail?.source === 'mapillary'
+    ? 'Foto: Mapillary-Mitwirkende'
+    : 'Foto: Matthew Petroff · CC BY-SA 4.0';
   renderRoundProgress();
+  renderHpBars();
 
-  const location = pool?.locations.find((loc) => loc.panoramaUrl === state.round.panoramaUrl);
+  const location = findLocationByCoords(state.round.actual?.lat, state.round.actual?.lng) ||
+    activeMapSetDetail?.locations?.find((loc) => loc.panoramaUrl === state.round.panoramaUrl);
   const hintBtn = el('btn-hint-toggle');
   const hintBanner = el('hint-banner');
   hintBanner.classList.add('hidden');
@@ -394,7 +497,16 @@ function renderRoundStart() {
     hintBtn.hidden = true;
   }
 
-  panoViewer.load(state.round.panoramaUrl, { vaov: location?.vaov });
+  const zoomLocked = state.settings.modifier === 'no-zoom';
+  el('btn-zoom-in').classList.toggle('hidden', zoomLocked);
+  el('btn-zoom-out').classList.toggle('hidden', zoomLocked);
+
+  el('pano-loading').classList.remove('hidden');
+  panoViewer.load(state.round.panoramaUrl, {
+    vaov: location?.vaov,
+    modifier: state.settings.modifier,
+    onLoad: () => el('pano-loading').classList.add('hidden'),
+  });
 
   guessMap.reset();
   el('minimap').classList.remove('expanded');
@@ -408,24 +520,29 @@ function renderRoundStart() {
   clearInterval(hudTimerInterval);
   const timerEl = el('hud-timer');
   const timerBox = timerEl.closest('.timer');
-  let tickedCriticalSecond = null;
-  const tick = () => {
-    const remainingMs = state.round.startTimestamp + state.round.timeLimitMs - Date.now();
-    const clamped = Math.max(0, remainingMs);
-    const totalSeconds = Math.ceil(clamped / 1000);
-    const mm = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-    const ss = String(totalSeconds % 60).padStart(2, '0');
-    timerEl.textContent = `${mm}:${ss}`;
-    const critical = totalSeconds <= 10;
-    timerBox.classList.toggle('critical', critical);
-    if (critical && totalSeconds > 0 && tickedCriticalSecond !== totalSeconds) {
-      tickedCriticalSecond = totalSeconds;
-      sound.playTick(totalSeconds <= 3);
-    }
-    if (clamped <= 0) clearInterval(hudTimerInterval);
-  };
-  tick();
-  hudTimerInterval = setInterval(tick, 250);
+  if (state.round.timeLimitMs == null) {
+    timerEl.textContent = '∞';
+    timerBox.classList.remove('critical');
+  } else {
+    let tickedCriticalSecond = null;
+    const tick = () => {
+      const remainingMs = state.round.startTimestamp + state.round.timeLimitMs - Date.now();
+      const clamped = Math.max(0, remainingMs);
+      const totalSeconds = Math.ceil(clamped / 1000);
+      const mm = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+      const ss = String(totalSeconds % 60).padStart(2, '0');
+      timerEl.textContent = `${mm}:${ss}`;
+      const critical = totalSeconds <= 10;
+      timerBox.classList.toggle('critical', critical);
+      if (critical && totalSeconds > 0 && tickedCriticalSecond !== totalSeconds) {
+        tickedCriticalSecond = totalSeconds;
+        sound.playTick(totalSeconds <= 3);
+      }
+      if (clamped <= 0) clearInterval(hudTimerInterval);
+    };
+    tick();
+    hudTimerInterval = setInterval(tick, 250);
+  }
 
   requestAnimationFrame(() => guessMap.invalidate());
 }
@@ -466,7 +583,8 @@ function wireHudControls() {
 
   el('btn-hint-toggle').addEventListener('click', () => {
     sound.playClick();
-    const location = pool?.locations.find((loc) => loc.panoramaUrl === state.round.panoramaUrl);
+    const location = findLocationByCoords(state.round.actual?.lat, state.round.actual?.lng) ||
+      activeMapSetDetail?.locations?.find((loc) => loc.panoramaUrl === state.round.panoramaUrl);
     if (!location?.hint) return;
     hintRevealed = !hintRevealed;
     const banner = el('hint-banner');
@@ -493,6 +611,20 @@ function wireHudControls() {
 
   // Erschwert zumindest die triviale Rechtsklick-Bildersuche auf dem Panorama.
   el('pano-container').addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+// ---------------------------------------------------------------- anti-cheat
+
+function initVisibilityWatch() {
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) return;
+    const onActiveRound = document.getElementById('screen-hud').classList.contains('active');
+    if (!onActiveRound || !controller) return;
+    const now = Date.now();
+    if (now - lastTabSwitchSentAt < 3000) return; // Spam-Schutz
+    lastTabSwitchSentAt = now;
+    controller.reportTabSwitch();
+  });
 }
 
 // ---------------------------------------------------------------- result
@@ -545,6 +677,7 @@ function renderRoundResult({ results, actual }) {
     if (!r.noGuess) chips.push(`<span class="score-chip">Basis ${r.base.toLocaleString('de-DE')}</span>`);
     if (r.timeBonus > 0) chips.push(`<span class="score-chip bonus">&#9889; +${r.timeBonus} Speed</span>`);
     if (r.streakBonus > 0) chips.push(`<span class="score-chip streak">&#128293; +${r.streakBonus} Streak x${r.streak}</span>`);
+    if (r.hp != null) chips.push(`<span class="score-chip${r.hpDamage > 0 ? '' : ' streak'}">${r.hpDamage > 0 ? `-${r.hpDamage} HP` : 'Kein Schaden'} · ${r.hp} HP übrig</span>`);
     card.innerHTML = `
       <div class="score-card-top">
         <span class="score-name"><span class="avatar" style="width:22px;height:22px;font-size:0.7rem;background:${player?.color || '#8c99b8'};">${(player?.name || '?').charAt(0).toUpperCase()}</span>${escapeHtml(player?.name || 'Spieler')}</span>
@@ -565,6 +698,8 @@ function renderRoundResult({ results, actual }) {
       });
     });
   }
+
+  renderHpBars();
 
   if (myBestScore > 4000) sound.playSuccess();
   else sound.playRoundReveal();
@@ -605,7 +740,6 @@ function renderPodium(sorted) {
     return;
   }
   podiumEl.classList.remove('hidden');
-  // Reihenfolge fuers Layout: 2. Platz links, 1. Platz Mitte (hoechster Block), 3. Platz rechts.
   const order = [1, 0, 2].filter((i) => sorted[i]);
   order.forEach((idx, visualPos) => {
     const entry = sorted[idx];
@@ -614,10 +748,11 @@ function renderPodium(sorted) {
     step.className = `podium-step rank-${idx + 1}`;
     step.style.animationDelay = `${visualPos * 100}ms`;
     const initial = (player?.name || '?').charAt(0).toUpperCase();
+    const scoreLabel = state.settings.mode === 'hp' ? `${entry.hp ?? 0} HP` : `${entry.total.toLocaleString('de-DE')} Pkt.`;
     step.innerHTML = `
       <div class="avatar" style="background:${player?.color || '#8c99b8'};">${initial}</div>
       <div class="podium-name">${escapeHtml(player?.name || 'Spieler')}</div>
-      <div class="podium-score">${entry.total.toLocaleString('de-DE')}</div>
+      <div class="podium-score">${scoreLabel}</div>
       <div class="podium-block">${idx + 1}</div>
     `;
     podiumEl.appendChild(step);
@@ -636,8 +771,6 @@ function renderOverviewMap() {
   requestAnimationFrame(() => {
     overviewMap.invalidate();
     const combinedResults = rounds.flatMap((r) => r.results);
-    // Fuer die Uebersicht wird das letzte Runden-Ziel als Bounds-Anker genutzt,
-    // aber alle Ziele + Tipps aller Runden werden eingezeichnet.
     overviewMap.render(rounds[rounds.length - 1].actual, combinedResults, state.players);
     for (const round of rounds.slice(0, -1)) {
       const targetIcon = window.L.divIcon({
@@ -660,8 +793,22 @@ function renderLeaderboard({ finalScores }) {
   clearInterval(resultCountdownInterval);
   showScreen('leaderboard');
 
-  const sorted = [...finalScores].sort((a, b) => b.total - a.total);
+  const isHpMode = state.settings.mode === 'hp';
+  const sorted = [...finalScores].sort((a, b) =>
+    isHpMode ? (b.hp ?? 0) - (a.hp ?? 0) || b.total - a.total : b.total - a.total
+  );
   renderPodium(sorted);
+
+  const heading = document.querySelector('#screen-leaderboard h2');
+  if (isHpMode) {
+    const survivor = sorted.find((e) => (e.hp ?? 0) > 0);
+    const survivorName = state.players.get(survivor?.playerId)?.name;
+    heading.textContent = survivor && sorted.some((e) => (e.hp ?? 0) <= 0)
+      ? `${survivorName} gewinnt das HP-Duell!`
+      : 'HP-Duell beendet';
+  } else {
+    heading.textContent = 'Duell beendet';
+  }
 
   const listEl = el('board-list');
   listEl.innerHTML = '';
@@ -672,13 +819,16 @@ function renderLeaderboard({ finalScores }) {
     const chips = entry.perRound
       .map((r, i) => `<span class="round-pill">R${i + 1} <b>${r?.total ?? 0}</b></span>`)
       .join('');
+    const totalLabel = isHpMode
+      ? `<div class="num">${entry.hp ?? 0}</div><div class="lbl">HP übrig</div>`
+      : `<div class="num">${entry.total.toLocaleString('de-DE')}</div><div class="lbl">Punkte</div>`;
     row.innerHTML = `
       <div class="rank-num">${String(idx + 1).padStart(2, '0')}</div>
       <div>
         <div class="board-name">${escapeHtml(player?.name || 'Spieler')}</div>
         <div class="board-chips">${chips}</div>
       </div>
-      <div class="board-total"><div class="num">${entry.total.toLocaleString('de-DE')}</div><div class="lbl">Punkte</div></div>
+      <div class="board-total">${totalLabel}</div>
     `;
     listEl.appendChild(row);
   });
@@ -690,18 +840,16 @@ function renderLeaderboard({ finalScores }) {
 function wireLeaderboardControls() {
   el('btn-play-again').addEventListener('click', async () => {
     sound.playClick();
-    const loadedPool = await loadPool();
     const isSolo = !state.roomCode;
     if (isSolo) {
-      controller.startGame(loadedPool);
+      await startGameFromLobby();
       return;
     }
     for (const p of state.players.values()) {
       if (!p.isHost) p.ready = false;
     }
     controller.updateSettings({});
-    renderLobby();
-    showScreen('lobby');
+    await enterLobby();
   });
 
   el('btn-back-to-menu').addEventListener('click', () => {
@@ -737,6 +885,7 @@ function resetToMenu() {
   panoViewer?.destroy();
   panoViewer = null;
   controller = null;
+  activeMapSetDetail = null;
   peerManager?.destroy();
   peerManager = null;
   state.role = null;
@@ -744,6 +893,7 @@ function resetToMenu() {
   state.players = new Map();
   state.scores = new Map();
   state.roundHistory = [];
+  state.hp = new Map();
   history.replaceState(null, '', location.pathname + location.search);
   updateChrome('Nicht verbunden', null);
   showScreen('menu');
@@ -768,10 +918,23 @@ function handleDeepLink() {
 function wireBusEvents() {
   bus.on('ui:lobby-updated', renderLobby);
   bus.on('ui:lobby-joined', () => {
-    renderLobby();
-    showScreen('lobby');
+    enterLobby();
   });
-  bus.on('ui:game-started', () => showScreen('hud'));
+  bus.on('ui:game-started', async () => {
+    if (!activeMapSetDetail) {
+      try {
+        activeMapSetDetail = await getMapSetDetail(state.settings.mapSetId);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    showScreen('hud');
+  });
+  bus.on('ui:map-resolving', () => showToast('Kartenpaket wird geladen…'));
+  bus.on('ui:map-resolve-failed', () => {
+    showToast('Für dieses Kartenpaket wurden keine Bilder gefunden.');
+    renderLobby();
+  });
   bus.on('ui:round-started', renderRoundStart);
   bus.on('ui:player-guessed', ({ peerId }) => {
     renderPeerStatus();
@@ -779,6 +942,11 @@ function wireBusEvents() {
   });
   bus.on('ui:round-result', renderRoundResult);
   bus.on('ui:game-over', renderLeaderboard);
+  bus.on('ui:tab-switch-warning', ({ peerId }) => {
+    if (peerId === state.self.id) return;
+    const name = state.players.get(peerId)?.name || 'Ein Mitspieler';
+    showToast(`⚠ ${name} hat den Tab gewechselt`);
+  });
   bus.on('ui:host-disconnected', () => {
     showStateOverlay({
       title: 'Verbindung zum Host verloren',
@@ -795,6 +963,7 @@ function wireBusEvents() {
 async function boot() {
   initProfileUI();
   initSoundToggle();
+  initVisibilityWatch();
   wireMenuControls();
   wireLobbyControls();
   wireHudControls();
@@ -802,7 +971,7 @@ async function boot() {
   wireLeaderboardControls();
   wireBusEvents();
   handleDeepLink();
-  loadPool().catch((err) => console.error('Location-Pool konnte nicht geladen werden', err));
+  ensureMapSetIndex().catch((err) => console.error('Kartenpaket-Index konnte nicht geladen werden', err));
 }
 
 boot();

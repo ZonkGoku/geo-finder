@@ -2,6 +2,8 @@
   "id": "starter-pool",
   "name": "Weltweit (Standard)",
   "description": "Elf echte, dokumentierte 360°-Panoramen aus der Atacama-Wüste (Chile), New York und Baltimore (USA) — als Startpunkt gedacht, um weitere Kartenpakete zu ergänzen.",
+  "status": "ready",
+  "source": "static",
   "scaleKm": 1400,
   "locations": [
     {

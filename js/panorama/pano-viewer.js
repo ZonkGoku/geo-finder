@@ -7,10 +7,12 @@ export class PanoViewer {
   constructor(containerId) {
     this.containerId = containerId;
     this.viewer = null;
+    this.zoomLocked = false;
   }
 
-  load(panoramaUrl, { vaov } = {}) {
+  load(panoramaUrl, { vaov, modifier = 'free', onLoad } = {}) {
     this.destroy();
+    this.zoomLocked = modifier === 'no-zoom';
     const config = {
       type: 'equirectangular',
       panorama: panoramaUrl,
@@ -18,22 +20,23 @@ export class PanoViewer {
       showControls: false,
       compass: false,
       hfov: DEFAULT_HFOV,
-      minHfov: MIN_HFOV,
-      maxHfov: MAX_HFOV,
+      minHfov: this.zoomLocked ? DEFAULT_HFOV : MIN_HFOV,
+      maxHfov: this.zoomLocked ? DEFAULT_HFOV : MAX_HFOV,
       yaw: 0,
     };
     if (vaov) config.vaov = vaov;
     this.viewer = window.pannellum.viewer(this.containerId, config);
+    if (onLoad) this.viewer.on('load', onLoad);
   }
 
   zoomIn() {
-    if (!this.viewer) return;
+    if (!this.viewer || this.zoomLocked) return;
     const next = Math.max(MIN_HFOV, this.viewer.getHfov() - ZOOM_STEP);
     this.viewer.setHfov(next, true);
   }
 
   zoomOut() {
-    if (!this.viewer) return;
+    if (!this.viewer || this.zoomLocked) return;
     const next = Math.min(MAX_HFOV, this.viewer.getHfov() + ZOOM_STEP);
     this.viewer.setHfov(next, true);
   }

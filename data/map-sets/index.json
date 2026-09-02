@@ -1,0 +1,40 @@
+{
+  "sets": [
+    {
+      "id": "weltweit",
+      "file": "weltweit.json",
+      "name": "Weltweit (Standard)",
+      "description": "11 handverlesene, echte 360°-Fotos aus Chile und den USA.",
+      "status": "ready",
+      "source": "static",
+      "locationCount": 11
+    },
+    {
+      "id": "hamburg",
+      "file": "hamburg.json",
+      "name": "Hamburg Special",
+      "description": "Live-Straßenbilder aus Hamburg über die Mapillary-API — braucht einen Mapillary-Zugangstoken (siehe README).",
+      "status": "needs-token",
+      "source": "mapillary",
+      "locationCount": null
+    },
+    {
+      "id": "landmarks",
+      "file": "landmarks.json",
+      "name": "Famous Landmarks",
+      "description": "Weltbekannte Sehenswürdigkeiten über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "locationCount": null
+    },
+    {
+      "id": "capitals",
+      "file": "capitals.json",
+      "name": "Capital Cities Only",
+      "description": "Nur Hauptstädte, über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "locationCount": null
+    }
+  ]
+}

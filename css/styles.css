@@ -296,6 +296,55 @@ button{ font-family:inherit; }
 .overview-map-wrap h3{ font-size:0.9rem; margin-bottom:10px; color:var(--text-dim); font-weight:600; }
 .overview-map{ height:280px; border-radius:14px; overflow:hidden; border:1px solid var(--line); }
 
+/* ===================== LOBBY: settings & map-set picker ===================== */
+.setting-group{ padding:10px 0; border-bottom:1px solid var(--line); }
+.setting-group:last-child{ border-bottom:none; }
+.setting-group-label{ font-size:0.78rem; color:var(--text-dim); margin-bottom:8px; }
+.choice-row{ display:flex; flex-wrap:wrap; gap:6px; }
+.choice-row button{
+  flex:1; min-width:52px; padding:8px 10px; border-radius:8px; border:1px solid var(--line);
+  background:var(--surface); color:var(--text-dim); font-size:0.82rem; font-weight:600; cursor:pointer;
+  font-family:var(--font-mono); transition:border-color .15s ease, color .15s ease, background .15s ease;
+}
+.choice-row button:hover{ border-color:var(--accent-2); color:var(--text); }
+.choice-row button.selected{ background:rgba(242,169,59,0.14); border-color:var(--accent); color:var(--accent); }
+.choice-row[data-setting="mode"] button.selected,
+.choice-row[data-setting="modifier"] button.selected{ font-family:var(--font-body); }
+.choice-row[data-setting="mode"] button,
+.choice-row[data-setting="modifier"] button{ font-family:var(--font-body); font-size:0.8rem; }
+
+.mapset-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px; }
+.mapset-card{
+  text-align:left; padding:14px; border-radius:12px; border:1px solid var(--line); background:var(--surface);
+  cursor:pointer; display:flex; flex-direction:column; gap:6px; transition:border-color .15s ease, background .15s ease;
+}
+.mapset-card:hover{ border-color:var(--accent-2); }
+.mapset-card.selected{ border-color:var(--accent); background:rgba(242,169,59,0.08); }
+.mapset-card:disabled{ opacity:0.5; cursor:not-allowed; }
+.mapset-card-name{ font-weight:600; font-size:0.92rem; }
+.mapset-card-desc{ font-size:0.76rem; color:var(--text-dim); line-height:1.4; }
+.mapset-card-badge{ align-self:flex-start; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.06em; padding:2px 7px; border-radius:5px; }
+.mapset-card-badge.ready{ background:rgba(71,214,197,0.16); color:var(--accent-2); }
+.mapset-card-badge.needs-token{ background:rgba(242,85,74,0.16); color:var(--danger); }
+
+/* ===================== HP-Duell ===================== */
+.hp-bars{ position:relative; z-index:2; display:flex; flex-direction:column; gap:6px; padding:10px 26px 0; }
+.hp-bar-row{ display:flex; align-items:center; gap:10px; font-size:0.72rem; color:#fff; }
+.hp-bar-name{ min-width:70px; font-weight:600; }
+.hp-bar-track{ flex:1; height:8px; border-radius:5px; background:rgba(255,255,255,0.15); overflow:hidden; }
+.hp-bar-fill{ height:100%; border-radius:5px; background:linear-gradient(90deg, var(--accent-2), var(--accent)); transition:width .5s ease; }
+.hp-bar-value{ font-family:var(--font-mono); min-width:44px; text-align:right; }
+@media (prefers-reduced-motion: reduce){ .hp-bar-fill{ transition:none; } }
+
+/* ===================== Panorama loading ===================== */
+.pano-loading{
+  position:absolute; inset:0; z-index:5; display:flex; align-items:center; justify-content:center; gap:10px;
+  background:rgba(10,15,26,0.65); color:#fff; font-size:0.85rem;
+}
+.spinner{ width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,0.25); border-top-color:#fff; animation:spin .8s linear infinite; }
+@media (prefers-reduced-motion: reduce){ .spinner{ animation:spin 1.6s linear infinite; } }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
 @media (max-width: 720px){
   #screen-menu .menu-grid, .lobby-cols, .result-grid{ grid-template-columns:1fr; }
   .screen{ padding:24px; }

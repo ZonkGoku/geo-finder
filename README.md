@@ -33,6 +33,23 @@ Der Host ist während der Partie die einzige Autorität für Timer,
 Rundenauswahl und Punkteberechnung (Sternmodell, siehe Konzept Abschnitt 2).
 Trennt sich der Host, endet die Partie — es gibt kein Host-Failover.
 
+**Spielregeln** (in der Lobby einstellbar, nur der Host ändert sie):
+Rundenanzahl (3/5/10), Rundendauer (30/60/90/180s oder unbegrenzt), Modus
+(**Punkte-Duell** — Standard-Scoring inkl. Speed- und Streak-Bonus — oder
+**HP-Duell** — beide starten mit 6000 HP, pro Runde verliert der
+Langsamere/Ungenauere die Punktedifferenz als HP, bei 0 HP ist die Partie
+sofort vorbei) sowie ein Panorama-Modifier (frei umsehen + zoomen, oder
+"Zoom gesperrt" für mehr Schwierigkeit). Ein echtes "Move/No-Move" wie im
+Original-GeoGuessr gibt es bewusst nicht: jede Runde ist ein einzelnes
+statisches Panorama ohne Wegpunkte, "Bewegen" existiert hier also gar nicht
+erst.
+
+**Fair Play**: Rechtsklick auf dem Panorama ist deaktiviert (erschwert die
+triviale Bildersuche), und wechselt ein Spieler während einer aktiven Runde
+den Tab, bekommt der Gegner eine Warnung eingeblendet. Das ist eine
+Abschreckung, keine harte Absicherung — ein manipulierter Client lässt sich
+damit nicht zuverlässig verhindern (siehe „Bekannte Grenzen").
+
 ## Projektstruktur
 
 | Pfad | Inhalt |
@@ -45,13 +62,19 @@ Trennt sich der Host, endet die Partie — es gibt kein Host-Failover.
 | `js/panorama/` | Pannellum-Wrapper |
 | `js/ui/` | Screen-Router, Toast-Hinweise |
 | `js/app.js` | Verdrahtet alles: Menü, Lobby, HUD, Ergebnis, Tabelle |
-| `data/locations.json` | Location-Pool (Koordinaten + Panorama-Pfad + Attribution) |
+| `js/audio/sound.js` | Web-Audio-Soundeffekte (keine MP3-Dateien) |
+| `js/config.js` | Mapillary-Zugangstoken (siehe unten) |
+| `data/map-sets/` | Kartenpakete (siehe unten) |
 | `lib/` | Vendored Third-Party-Libs (PeerJS, Leaflet, Pannellum) — kein CDN nötig |
-| `assets/panoramas/` | Die Panoramafotos selbst |
+| `assets/panoramas/` | Die statischen Panoramafotos des „Weltweit"-Pakets |
 
-## Location-Pool erweitern
+## Kartenpakete (`data/map-sets/`)
 
-`data/locations.json` ist eine einfache, versionierbare Liste. Ein Eintrag:
+`data/map-sets/index.json` listet alle Pakete; jedes Paket ist eine eigene
+Datei. Zwei Arten von Paketen:
+
+**`"source": "static"`** — eine feste Liste kuratierter, vorab geprüfter
+Panoramen (so wie `weltweit.json`). Ein Eintrag:
 
 ```json
 {
@@ -62,27 +85,44 @@ Trennt sich der Host, endet die Partie — es gibt kein Host-Failover.
   "panoramaUrl": "./assets/panoramas/cerro-toco.jpg",
   "attribution": "Matthew Petroff, CC BY-SA 4.0",
   "difficulty": "hard",
+  "hint": "Über 5000 Meter Höhe, extrem trockene Luft.",
+  "funFact": "Cerro Toco liegt nahe dem ALMA-Observatorium ...",
   "tags": ["mountain", "desert", "south-america"]
 }
 ```
 
 Panorama muss **equirektangular** (2:1-Seitenverhältnis) sein, damit
-Pannellum es korrekt als 360° darstellt. `scaleKm` im Pool-Objekt steuert,
-wie schnell die Punktzahl mit der Entfernung abfällt — kleiner Wert für
-enger begrenzte Pools (z. B. eine Stadt), größerer Wert für weltweite Pools.
+Pannellum es korrekt als 360° darstellt (schmalere Fotos können per `vaov`
+korrekt eingepasst werden, siehe `charles-street` in `weltweit.json`).
+`scaleKm` im Paket-Objekt steuert, wie schnell die Punktzahl mit der
+Entfernung abfällt — kleiner Wert für enger begrenzte Pakete (Stadt-Ebene),
+größerer Wert für weltweite Pakete.
 
-### Woher kommen die sechs Start-Locations?
+**`"source": "mapillary"`** — statt fester Fotos definiert das Paket
+`regions` (Punkt + Radius in Metern); zu Rundenbeginn fragt der Host live
+über die [Mapillary-API](https://www.mapillary.com/developer) ein echtes
+360°-Bild (`is_pano: true`) aus jeder gewählten Region ab. So funktionieren
+`hamburg.json`, `landmarks.json` und `capitals.json`, ohne dass Fotos
+vorher manuell gesucht und lizenzrechtlich geprüft werden müssen — die
+Koordinaten kommen direkt aus den von Mapillary gelieferten Bilddaten.
 
-Alle sechs Fotos stammen von Matthew Petroff (CC BY-SA 4.0), aus dem
-öffentlichen Beispielmaterial von [pannellum.org](https://github.com/mpetroff/pannellum.org).
-Zwei Koordinaten (`cerro-toco`) sind aus den GPS-EXIF-Daten der Originalfotos
-übernommen (`coordSource: "exif-gps"`), die übrigen sind sorgfältig
-recherchierte, aber nicht EXIF-verifizierte Koordinaten der jeweils
-abgebildeten, klar erkennbaren Orte (`coordSource: "approx-known-site"` —
-ALMA-Observatorium, Vulkan Láscar, Tocopilla, JFK Airport, Johns Hopkins
-University). Das Startpaket ist bewusst klein und dient als Vorlage; für
-mehr geografische Vielfalt einfach weitere, frei lizenzierte Panoramen mit
-bekannten Koordinaten ergänzen.
+**Vorher nötig:** einen kostenlosen Mapillary-Zugangstoken unter
+[mapillary.com/dashboard/developers](https://www.mapillary.com/dashboard/developers)
+holen und in `js/config.js` eintragen (`MAPILLARY_ACCESS_TOKEN`). Ohne
+gültigen Token zeigt die Lobby diese drei Pakete als „Token nötig" und lässt
+sie nicht auswählen — das „Weltweit"-Paket funktioniert immer, unabhängig
+vom Token. Der Mapillary-Abruf lief in der Entwicklungsumgebung dieses
+Projekts nie gegen die echte API (kein Netzzugriff auf `graph.mapillary.com`
+dort) — vor dem produktiven Einsatz einmal mit echtem Token durchspielen.
+
+### Woher kommen die elf Fotos im „Weltweit"-Paket?
+
+Alle Fotos stammen von Matthew Petroff (CC BY-SA 4.0), aus dem öffentlichen
+Beispielmaterial von [pannellum.org](https://github.com/mpetroff/pannellum.org).
+Zwei Koordinaten (`cerro-toco`, `cerro-toco-east`) sind aus den GPS-EXIF-Daten
+der Originalfotos übernommen (`coordSource: "exif-gps"`), die übrigen sind
+sorgfältig recherchierte, aber nicht EXIF-verifizierte Koordinaten der
+jeweils abgebildeten, klar erkennbaren Orte (`coordSource: "approx-known-site"`).
 
 ## Deployment auf GitHub Pages
 

@@ -1,7 +1,8 @@
-import { bus, state, resetForNewGame, freshScoreEntry } from '../core/state.js';
+import { bus, state, resetForNewGame, freshScoreEntry, HP_START } from '../core/state.js';
 import { MSG, makeMessage } from './protocol.js';
 import { scoreGuess, computeTimeBonus, nextStreak, computeStreakBonus } from '../core/scoring.js';
-import { pickUniqueLocations, makeSeed } from '../core/rng.js';
+import { makeSeed } from '../core/rng.js';
+import { resolveRoundLocations } from '../core/pool-loader.js';
 
 const ROUND_RESULT_DISPLAY_MS = 8000;
 const LEAVE_GRACE_MS = 15000;
@@ -38,6 +39,13 @@ export class HostController {
         break;
       case MSG.SUBMIT_GUESS:
         this._handleGuess(peerId, message.payload);
+        break;
+      case MSG.TAB_SWITCH_WARNING:
+        // an alle ANDEREN weiterleiten - der Absender braucht seine eigene Meldung nicht.
+        for (const p of state.players.values()) {
+          if (p.id !== peerId) this.pm.sendTo(p.id, makeMessage(MSG.TAB_SWITCH_WARNING, { playerId: peerId }, state.self.id));
+        }
+        bus.emit('ui:tab-switch-warning', { peerId });
         break;
       case MSG.PING:
         this.pm.sendTo(peerId, makeMessage(MSG.PONG, { echoTs: message.payload.echoTs }, state.self.id));
@@ -87,6 +95,11 @@ export class HostController {
     bus.emit('ui:lobby-updated');
   }
 
+  reportTabSwitch() {
+    this.pm.broadcast(makeMessage(MSG.TAB_SWITCH_WARNING, { playerId: state.self.id }, state.self.id));
+    bus.emit('ui:tab-switch-warning', { peerId: state.self.id });
+  }
+
   _onPeerLost(peerId) {
     const player = state.players.get(peerId);
     if (!player) return;
@@ -114,17 +127,29 @@ export class HostController {
     this._broadcastLobbyState();
   }
 
-  startGame(pool) {
-    state.pool = pool;
+  async startGame(mapSet) {
+    state.pool = mapSet;
     resetForNewGame();
     const seed = makeSeed();
-    this.roundLocations = pickUniqueLocations(pool.locations, state.settings.roundCount, seed);
+
+    bus.emit('ui:map-resolving');
+    const resolved = await resolveRoundLocations(mapSet, state.settings.roundCount, seed);
+    if (resolved.length === 0) {
+      bus.emit('ui:map-resolve-failed');
+      return;
+    }
+    this.roundLocations = resolved;
     state.round.total = this.roundLocations.length;
 
     this.pm.broadcast(
       makeMessage(
         MSG.GAME_START,
-        { roundCount: this.roundLocations.length, timeLimitMs: state.settings.timeLimitMs },
+        {
+          roundCount: this.roundLocations.length,
+          timeLimitMs: state.settings.timeLimitMs,
+          mode: state.settings.mode,
+          modifier: state.settings.modifier,
+        },
         state.self.id
       )
     );
@@ -160,7 +185,11 @@ export class HostController {
     bus.emit('ui:round-started');
 
     clearTimeout(this.roundTimer);
-    this.roundTimer = setTimeout(() => this._endRound(), state.round.timeLimitMs);
+    // timeLimitMs === null bedeutet "unbegrenzt" - dann beendet nur
+    // "alle haben getippt" die Runde, kein Timeout.
+    if (state.round.timeLimitMs != null) {
+      this.roundTimer = setTimeout(() => this._endRound(), state.round.timeLimitMs);
+    }
   }
 
   submitLocalGuess(lat, lng) {
@@ -193,17 +222,20 @@ export class HostController {
     const guesses = state.round.guesses || new Map();
     const results = [];
     const isDuel = [...state.players.values()].filter((p) => p.connected).length > 1;
+    const isHpMode = state.settings.mode === 'hp';
+    const baseScores = new Map();
 
     for (const player of state.players.values()) {
       const guess = guesses.get(player.id) || null;
       const { distanceKm, score: baseScore, noGuess } = scoreGuess(guess, actual, state.pool.scaleKm);
+      baseScores.set(player.id, baseScore);
 
       if (!state.scores.has(player.id)) state.scores.set(player.id, freshScoreEntry());
       const scoreEntry = state.scores.get(player.id);
 
       const timeBonus =
         isDuel && !noGuess
-          ? computeTimeBonus(guess.submittedAtMs - state.round.startTimestamp, state.round.timeLimitMs)
+          ? computeTimeBonus(guess.submittedAtMs - state.round.startTimestamp, state.round.timeLimitMs ?? 90000)
           : 0;
       const streak = nextStreak(scoreEntry.streak, distanceKm);
       const streakBonus = computeStreakBonus(streak);
@@ -235,6 +267,20 @@ export class HostController {
       });
     }
 
+    let eliminatedPlayerId = null;
+    if (isHpMode) {
+      const bestScore = Math.max(...baseScores.values());
+      for (const result of results) {
+        const damage = Math.max(0, bestScore - baseScores.get(result.playerId));
+        const currentHp = state.hp.get(result.playerId) ?? HP_START;
+        const nextHp = Math.max(0, currentHp - damage);
+        state.hp.set(result.playerId, nextHp);
+        result.hp = nextHp;
+        result.hpDamage = damage;
+        if (nextHp <= 0) eliminatedPlayerId = result.playerId;
+      }
+    }
+
     state.roundHistory[state.round.index] = { actual, results };
 
     this.pm.broadcast(
@@ -249,7 +295,7 @@ export class HostController {
     const isLastRound = state.round.index >= this.roundLocations.length - 1;
     clearTimeout(this.nextRoundTimer);
     this.nextRoundTimer = setTimeout(() => {
-      if (isLastRound) this._endGame();
+      if (isLastRound || eliminatedPlayerId) this._endGame();
       else this._startRound(state.round.index + 1);
     }, ROUND_RESULT_DISPLAY_MS);
   }
@@ -257,7 +303,8 @@ export class HostController {
   advanceNow() {
     clearTimeout(this.nextRoundTimer);
     const isLastRound = state.round.index >= this.roundLocations.length - 1;
-    if (isLastRound) this._endGame();
+    const eliminated = state.settings.mode === 'hp' && [...state.hp.values()].some((hp) => hp <= 0);
+    if (isLastRound || eliminated) this._endGame();
     else this._startRound(state.round.index + 1);
   }
 
@@ -266,6 +313,7 @@ export class HostController {
       playerId,
       total: s.total,
       perRound: s.perRound,
+      hp: state.hp.get(playerId) ?? null,
     }));
     this.pm.broadcast(makeMessage(MSG.GAME_OVER, { finalScores }, state.self.id));
     bus.emit('ui:game-over', { finalScores });

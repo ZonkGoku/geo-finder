@@ -113,12 +113,6 @@
                 <button class="swatch" style="background:#8c99b8;" data-color="#8c99b8" aria-label="Grau"></button>
               </div>
             </div>
-            <div>
-              <div class="field-label">Location-Pool</div>
-              <select class="input" id="pool-select" style="margin-top:6px;">
-                <option value="starter-pool">Startpaket &middot; Atacama &amp; USA</option>
-              </select>
-            </div>
           </div>
         </div>
       </section>
@@ -128,44 +122,65 @@
         <div class="lobby-head">
           <div>
             <p class="eyebrow">Lobby</p>
-            <h2 style="font-size:1.5rem;">Warten auf Mitspieler</h2>
-            <div class="room-code">Raum-Code <b id="lobby-room-code">&mdash;</b></div>
+            <h2 style="font-size:1.5rem;" id="lobby-heading">Warten auf Mitspieler</h2>
+            <div class="room-code" id="lobby-room-code-row">Raum-Code <b id="lobby-room-code">&mdash;</b></div>
           </div>
         </div>
 
-        <div class="share-row">
+        <div class="share-row" id="lobby-share-row">
           <div class="share-link" id="lobby-share-link">&mdash;</div>
           <button class="btn btn-primary" id="copy-link-btn">Link kopieren</button>
         </div>
 
         <div class="lobby-cols">
-          <div class="panel">
+          <div class="panel" id="lobby-players-panel">
             <h3>Spieler (<span id="lobby-player-count">0</span>)</h3>
             <div id="lobby-player-list"></div>
           </div>
           <div class="panel" id="lobby-settings-panel">
-            <h3>Einstellungen</h3>
-            <div class="setting-row">
-              <span>Runden</span>
-              <div class="stepper">
-                <button type="button" data-step="rounds" data-dir="-1">&minus;</button>
-                <span id="setting-rounds-value">5</span>
-                <button type="button" data-step="rounds" data-dir="1">+</button>
+            <h3>Spielregeln</h3>
+
+            <div class="setting-group">
+              <div class="setting-group-label">Runden</div>
+              <div class="choice-row" id="choice-rounds" data-setting="roundCount">
+                <button type="button" data-value="3">3</button>
+                <button type="button" data-value="5">5</button>
+                <button type="button" data-value="10">10</button>
               </div>
             </div>
-            <div class="setting-row">
-              <span>Zeitlimit</span>
-              <div class="stepper">
-                <button type="button" data-step="time" data-dir="-1">&minus;</button>
-                <span id="setting-time-value">90s</span>
-                <button type="button" data-step="time" data-dir="1">+</button>
+
+            <div class="setting-group">
+              <div class="setting-group-label">Rundendauer</div>
+              <div class="choice-row" id="choice-duration" data-setting="timeLimitMs">
+                <button type="button" data-value="30000">30s</button>
+                <button type="button" data-value="60000">60s</button>
+                <button type="button" data-value="90000">90s</button>
+                <button type="button" data-value="180000">180s</button>
+                <button type="button" data-value="null">&#8734;</button>
               </div>
             </div>
-            <div class="setting-row">
-              <span>Location-Pool</span>
-              <span style="color:var(--text-dim);" id="lobby-pool-name">Startpaket</span>
+
+            <div class="setting-group">
+              <div class="setting-group-label">Modus</div>
+              <div class="choice-row" id="choice-mode" data-setting="mode">
+                <button type="button" data-value="points">Punkte-Duell</button>
+                <button type="button" data-value="hp">HP-Duell (6000 HP)</button>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <div class="setting-group-label">Panorama-Steuerung</div>
+              <div class="choice-row" id="choice-modifier" data-setting="modifier">
+                <button type="button" data-value="free">Frei (Zoom erlaubt)</button>
+                <button type="button" data-value="no-zoom">Zoom gesperrt</button>
+              </div>
             </div>
           </div>
+        </div>
+
+        <div class="panel" id="lobby-mapset-panel" style="margin-top:20px;">
+          <h3>Kartenpaket</h3>
+          <div class="mapset-grid" id="mapset-grid"></div>
         </div>
 
         <div class="lobby-cta">
@@ -182,7 +197,11 @@
           <p class="pano-credit" id="pano-credit"></p>
         </div>
 
+        <div class="pano-loading hidden" id="pano-loading"><span class="spinner"></span>Panorama l&auml;dt&hellip;</div>
+
         <div class="round-progress" id="round-progress" aria-hidden="true"></div>
+
+        <div class="hp-bars hidden" id="hp-bars"></div>
 
         <div class="hud-top">
           <div class="hud-top-left">
