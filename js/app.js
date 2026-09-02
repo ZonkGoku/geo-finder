@@ -653,6 +653,10 @@ function initVisibilityWatch() {
 // ---------------------------------------------------------------- result
 
 function animateCounter(elEl, from, to, duration = 700) {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    elEl.textContent = to.toLocaleString('de-DE');
+    return;
+  }
   const start = performance.now();
   const step = (now) => {
     const progress = Math.min(1, (now - start) / duration);
@@ -705,34 +709,38 @@ function renderRoundResult({ results, actual }) {
           ? `Richtig — ${escapeHtml(r.actualCountry)}`
           : `Falsch — du: ${escapeHtml(r.guessedCountry || '—')}, richtig: ${escapeHtml(r.actualCountry || '—')}`;
       barWidth = r.correct ? 100 : 4;
-      if (r.streak > 0) chips.push(`<span class="score-chip streak">&#128293; ${r.streak}er-Streak</span>`);
+      if (r.streak > 0) chips.push({ cls: 'streak', html: `&#128293; ${r.streak}er-Streak` });
     } else {
       meta = r.noGuess ? 'Kein Tipp abgegeben' : `${r.distanceKm.toFixed(1)} km entfernt`;
       barWidth = Math.max(2, (r.score / 5000) * 100);
-      if (!r.noGuess) chips.push(`<span class="score-chip">Basis ${r.base.toLocaleString('de-DE')}</span>`);
-      if (r.timeBonus > 0) chips.push(`<span class="score-chip bonus">&#9889; +${r.timeBonus} Speed</span>`);
-      if (r.streakBonus > 0) chips.push(`<span class="score-chip streak">&#128293; +${r.streakBonus} Streak x${r.streak}</span>`);
-      if (r.hp != null) chips.push(`<span class="score-chip${r.hpDamage > 0 ? '' : ' streak'}">${r.hpDamage > 0 ? `-${r.hpDamage} HP` : 'Kein Schaden'} · ${r.hp} HP übrig</span>`);
+      if (!r.noGuess) chips.push({ cls: '', html: `Basis ${r.base.toLocaleString('de-DE')}` });
+      if (r.timeBonus > 0) chips.push({ cls: 'bonus', html: `&#9889; +${r.timeBonus} Speed` });
+      if (r.streakBonus > 0) chips.push({ cls: 'streak', html: `&#128293; +${r.streakBonus} Streak x${r.streak}` });
+      if (r.hp != null) {
+        chips.push({
+          cls: r.hpDamage > 0 ? '' : 'streak',
+          html: `${r.hpDamage > 0 ? `-${r.hpDamage} HP` : 'Kein Schaden'} · ${r.hp} HP übrig`,
+        });
+      }
     }
+    // Getaktete Enthüllung (Field-Instrument-Konzept): Distanz steht sofort,
+    // Punktzahl + Balken ziehen ab 1.6s hoch, Bonus-Chips folgen gestaffelt.
+    const chipsHtml = chips
+      .map((c, i) => `<span class="score-chip ${c.cls}" style="--reveal-delay:${(2.4 + i * 0.3).toFixed(1)}s">${c.html}</span>`)
+      .join('');
     card.innerHTML = `
       <div class="score-card-top">
         <span class="score-name"><span class="avatar" style="width:22px;height:22px;font-size:0.7rem;background:${player?.color || '#8c99b8'};">${(player?.name || '?').charAt(0).toUpperCase()}</span>${escapeHtml(player?.name || 'Spieler')}</span>
-        <span class="score-points" data-final="${r.score}">0</span>
+        <span class="score-points">0</span>
       </div>
       <div class="score-meta">${meta}</div>
-      <div class="score-bar"><i style="width:0%; background:${player?.color || 'var(--accent)'};"></i></div>
-      ${chips.length ? `<div class="score-breakdown">${chips.join('')}</div>` : ''}
+      <div class="score-bar"><i style="--target-width:${barWidth}%; background:${player?.color || 'var(--accent)'};"></i></div>
+      ${chips.length ? `<div class="score-breakdown">${chipsHtml}</div>` : ''}
     `;
     listEl.appendChild(card);
     const pointsEl = card.querySelector('.score-points');
-    const barEl = card.querySelector('.score-bar i');
-    requestAnimationFrame(() => {
-      animateCounter(pointsEl, 0, r.score);
-      barEl.style.transition = 'width 700ms ease';
-      requestAnimationFrame(() => {
-        barEl.style.width = `${barWidth}%`;
-      });
-    });
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(() => animateCounter(pointsEl, 0, r.score), reduceMotion ? 0 : 1600);
   }
 
   renderHpBars();

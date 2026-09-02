@@ -1,6 +1,7 @@
 import { MAPILLARY_ACCESS_TOKEN } from '../config.js';
 
 const API_BASE = 'https://graph.mapillary.com/images';
+const REQUEST_TIMEOUT_MS = 8000;
 
 // Mapillary lehnt bbox-Anfragen über 0.010 Quadratgrad ab (per Live-Test
 // bestätigt: "Bounding box area is too large. Maximum allowed area is
@@ -28,7 +29,9 @@ function bboxFromPoint(lat, lng, radiusM) {
 /**
  * Fragt echte Mapillary-Aufnahmen in einem kleinen Gebiet ab und liefert ein
  * einzelnes, zufällig gewähltes 360°-Bild (is_pano=true) zurück - oder null,
- * wenn dort keine sphärischen Aufnahmen vorliegen.
+ * wenn dort keine sphärischen Aufnahmen vorliegen. Bricht nach
+ * REQUEST_TIMEOUT_MS selbst ab (Browser-fetch() hat sonst kein Timeout und
+ * ein haengender Request wuerde die ganze Rundenauswahl blockieren).
  */
 export async function fetchPanoramaForRegion(region) {
   const [west, south, east, north] = bboxFromPoint(region.lat, region.lng, region.radiusM || 400);
@@ -39,7 +42,21 @@ export async function fetchPanoramaForRegion(region) {
     limit: '50',
   });
 
-  const res = await fetch(`${API_BASE}?${params.toString()}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let res;
+  try {
+    res = await fetch(`${API_BASE}?${params.toString()}`, { signal: controller.signal });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error(`Mapillary-Anfrage für "${region.name}" hat zu lange gedauert (Timeout)`);
+    }
+    throw new Error(`Mapillary-Anfrage für "${region.name}" fehlgeschlagen: ${err.message}`);
+  } finally {
+    clearTimeout(timer);
+  }
+
   const json = await res.json().catch(() => null);
   if (!res.ok) {
     const apiMessage = json?.error?.message;

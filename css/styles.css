@@ -37,6 +37,11 @@ h1,h2,h3{ font-family: var(--font-display); font-weight:600; text-wrap:balance; 
 button{ font-family:inherit; }
 ::selection{ background:var(--accent); color:var(--accent-ink); }
 .hidden{ display:none !important; }
+/* .btn setzt display:inline-flex - das schlaegt sonst das native [hidden]-
+   Verhalten (Autoren-Regeln gewinnen immer gegen User-Agent-Regeln, egal
+   welche Spezifitaet), wodurch per .hidden=true/hidden-Attribut versteckte
+   Buttons trotzdem sichtbar blieben. */
+[hidden]{ display:none !important; }
 
 .page{ width:100%; max-width:1020px; display:flex; flex-direction:column; gap:22px; align-items:center; }
 
@@ -185,10 +190,16 @@ button{ font-family:inherit; }
 .score-card{ background:var(--surface-raised); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
 .score-card-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
 .score-name{ font-weight:600; font-size:0.92rem; display:flex; align-items:center; gap:8px; }
-.score-points{ font-family:var(--font-mono); font-size:1.15rem; font-weight:600; font-variant-numeric:tabular-nums; }
+.score-points{ font-family:var(--font-mono); font-size:1.15rem; font-weight:600; font-variant-numeric:tabular-nums; opacity:0; animation:scoreFadeIn .3s ease 1.6s forwards; }
 .score-meta{ font-size:0.76rem; color:var(--text-dim); margin-top:2px; font-family:var(--font-mono); }
 .score-bar{ height:6px; border-radius:4px; background:var(--surface-hi); margin-top:10px; overflow:hidden; }
-.score-bar i{ display:block; height:100%; border-radius:4px; background:var(--accent); }
+.score-bar i{ display:block; height:100%; border-radius:4px; background:var(--accent); width:0%; animation:scoreFillBar 1s cubic-bezier(.2,.8,.2,1) 1.6s forwards; }
+@keyframes scoreFadeIn{ from{ opacity:0; transform:translateY(3px); } to{ opacity:1; transform:none; } }
+@keyframes scoreFillBar{ to{ width:var(--target-width, 0%); } }
+@media (prefers-reduced-motion: reduce){
+  .score-points{ animation:none; opacity:1; }
+  .score-bar i{ animation:none; width:var(--target-width, 0%); }
+}
 .result-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:24px; padding-top:18px; border-top:1px solid var(--line); }
 .next-hint{ font-size:0.82rem; color:var(--text-dim); font-family:var(--font-mono); }
 
@@ -272,9 +283,14 @@ button{ font-family:inherit; }
 .fun-fact-label{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-2); font-weight:600; }
 .fun-fact p{ margin:6px 0 0; font-size:0.86rem; color:var(--text); line-height:1.5; }
 .score-breakdown{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-.score-chip{ font-family:var(--font-mono); font-size:0.66rem; padding:2px 7px; border-radius:6px; background:var(--surface-hi); color:var(--text-dim); }
+.score-chip{
+  font-family:var(--font-mono); font-size:0.66rem; padding:2px 7px; border-radius:6px;
+  background:var(--surface-hi); color:var(--text-dim);
+  opacity:0; animation:scoreFadeIn .25s ease forwards; animation-delay:var(--reveal-delay, 2.4s);
+}
 .score-chip.bonus{ color:var(--accent); }
 .score-chip.streak{ color:var(--accent-2); }
+@media (prefers-reduced-motion: reduce){ .score-chip{ animation:none; opacity:1; } }
 
 /* ===================== LEADERBOARD extras ===================== */
 .podium{ display:flex; align-items:flex-end; justify-content:center; gap:14px; margin:26px 0 8px; min-height:170px; }

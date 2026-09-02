@@ -31,17 +31,22 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
   if (mapSet.source === 'mapillary') {
     const candidateCount = Math.min(mapSet.regions.length, roundCount * 3);
     const candidates = pickUniqueLocations(mapSet.regions, candidateCount, seed);
+
+    // Parallel in Batches statt nacheinander: fetchPanoramaForRegion hat
+    // zwar selbst ein Timeout, aber sequenziell koennten 8 Regionen x 8s
+    // trotzdem wie ein Haenger wirken. So ist die Obergrenze ein einzelnes
+    // Batch-Timeout, nicht die Summe aller Versuche.
+    const BATCH_SIZE = 4;
     const resolved = [];
-    for (const region of candidates) {
-      if (resolved.length >= roundCount) break;
-      try {
-        const loc = await fetchPanoramaForRegion(region);
-        if (loc) resolved.push(loc);
-      } catch (err) {
-        console.error('Mapillary-Abruf fehlgeschlagen für Region', region.name, err);
+    for (let i = 0; i < candidates.length && resolved.length < roundCount; i += BATCH_SIZE) {
+      const batch = candidates.slice(i, i + BATCH_SIZE);
+      const settled = await Promise.allSettled(batch.map((region) => fetchPanoramaForRegion(region)));
+      for (const outcome of settled) {
+        if (outcome.status === 'fulfilled' && outcome.value) resolved.push(outcome.value);
+        else if (outcome.status === 'rejected') console.error('Mapillary-Abruf fehlgeschlagen:', outcome.reason);
       }
     }
-    return resolved;
+    return resolved.slice(0, roundCount);
   }
 
   throw new Error(`Unbekannte Kartenpaket-Quelle: ${mapSet.source}`);
