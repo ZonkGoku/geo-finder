@@ -2,19 +2,33 @@ import { MAPILLARY_ACCESS_TOKEN } from '../config.js';
 
 const API_BASE = 'https://graph.mapillary.com/images';
 
+// Mapillary lehnt bbox-Anfragen über 0.010 Quadratgrad ab (per Live-Test
+// bestätigt: "Bounding box area is too large. Maximum allowed area is
+// 0.010 square degrees"). Mit Sicherheitsmarge bleiben wir klar darunter.
+const MAX_BBOX_AREA_DEG2 = 0.008;
+const METERS_PER_DEGREE = 111320;
+
 function bboxFromPoint(lat, lng, radiusM) {
-  const dLat = radiusM / 111320;
-  const dLng = radiusM / (111320 * Math.cos((lat * Math.PI) / 180) || 1);
+  const latRad = (lat * Math.PI) / 180;
+  const cosLat = Math.max(Math.cos(latRad), 0.01); // verhindert Explosion nahe den Polen
+
+  let dLat = radiusM / METERS_PER_DEGREE;
+  let dLng = radiusM / (METERS_PER_DEGREE * cosLat);
+
+  const area = 4 * dLat * dLng;
+  if (area > MAX_BBOX_AREA_DEG2) {
+    const scale = Math.sqrt(MAX_BBOX_AREA_DEG2 / area);
+    dLat *= scale;
+    dLng *= scale;
+  }
+
   return [lng - dLng, lat - dLat, lng + dLng, lat + dLat];
 }
 
 /**
  * Fragt echte Mapillary-Aufnahmen in einem kleinen Gebiet ab und liefert ein
  * einzelnes, zufällig gewähltes 360°-Bild (is_pano=true) zurück - oder null,
- * wenn dort keine sphärischen Aufnahmen vorliegen. Ungetestet gegen die
- * echte API in dieser Sandbox (kein Netzzugriff auf graph.mapillary.com hier),
- * daher bewusst defensiv: jeder Fehler wirft, der Aufrufer entscheidet, ob er
- * eine andere Region probiert.
+ * wenn dort keine sphärischen Aufnahmen vorliegen.
  */
 export async function fetchPanoramaForRegion(region) {
   const [west, south, east, north] = bboxFromPoint(region.lat, region.lng, region.radiusM || 400);
@@ -26,9 +40,17 @@ export async function fetchPanoramaForRegion(region) {
   });
 
   const res = await fetch(`${API_BASE}?${params.toString()}`);
-  if (!res.ok) throw new Error(`Mapillary-Anfrage fehlgeschlagen (HTTP ${res.status})`);
-  const json = await res.json();
-  const images = (json.data || []).filter((img) => img.is_pano && img.thumb_2048_url);
+  const json = await res.json().catch(() => null);
+  if (!res.ok) {
+    const apiMessage = json?.error?.message;
+    throw new Error(
+      apiMessage
+        ? `Mapillary-Anfrage fehlgeschlagen für "${region.name}": ${apiMessage}`
+        : `Mapillary-Anfrage fehlgeschlagen für "${region.name}" (HTTP ${res.status})`
+    );
+  }
+
+  const images = (json?.data || []).filter((img) => img.is_pano && img.thumb_2048_url);
   if (images.length === 0) return null;
 
   const pick = images[Math.floor(Math.random() * images.length)];
