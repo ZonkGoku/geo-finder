@@ -561,13 +561,18 @@ function renderPeerStatus() {
 }
 
 function wireHudControls() {
-  el('minimap-label').addEventListener('click', () => {
+  const expandMap = () => {
     sound.playClick();
-    const mm = el('minimap');
-    mm.classList.toggle('expanded');
+    el('minimap').classList.add('expanded');
     guessMap?.invalidate();
     setTimeout(() => guessMap?.invalidate(), 340);
-  });
+  };
+  const collapseMap = () => {
+    sound.playClick();
+    el('minimap').classList.remove('expanded');
+  };
+  el('minimap-open-btn').addEventListener('click', expandMap);
+  el('minimap-close-btn').addEventListener('click', collapseMap);
 
   el('btn-confirm-guess').addEventListener('click', () => {
     const guess = guessMap.getGuess();
