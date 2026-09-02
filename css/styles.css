@@ -336,6 +336,39 @@ button{ font-family:inherit; }
 .hp-bar-value{ font-family:var(--font-mono); min-width:44px; text-align:right; }
 @media (prefers-reduced-motion: reduce){ .hp-bar-fill{ transition:none; } }
 
+/* ===================== Emotes ===================== */
+.emote-layer{ position:absolute; inset:0; z-index:6; pointer-events:none; overflow:hidden; }
+.emote-float{
+  position:absolute; bottom:90px; font-size:2.2rem; animation:emoteFloat 2.2s ease-out forwards;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+}
+@keyframes emoteFloat{
+  0%{ opacity:0; transform:translateY(0) scale(0.6); }
+  15%{ opacity:1; transform:translateY(-10px) scale(1.1); }
+  80%{ opacity:1; transform:translateY(-120px) scale(1); }
+  100%{ opacity:0; transform:translateY(-150px) scale(0.9); }
+}
+@media (prefers-reduced-motion: reduce){
+  .emote-float{ animation:none; opacity:1; bottom:140px; }
+}
+
+.emote-wrap{ position:absolute; left:50%; bottom:24px; transform:translateX(-50%); z-index:4; display:flex; flex-direction:column; align-items:center; gap:10px; }
+.emote-wheel{
+  display:flex; gap:6px; background:rgba(10,15,26,0.65); backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,0.14); border-radius:16px; padding:8px;
+}
+.emote-btn{
+  width:36px; height:36px; border-radius:10px; border:none; background:rgba(255,255,255,0.06);
+  font-size:1.2rem; cursor:pointer; transition:background .12s ease, transform .12s ease;
+}
+.emote-btn:hover{ background:rgba(255,255,255,0.16); transform:scale(1.1); }
+.emote-toggle{
+  width:44px; height:44px; border-radius:50%; border:1px solid rgba(255,255,255,0.16);
+  background:rgba(10,15,26,0.6); backdrop-filter:blur(6px); font-size:1.3rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.emote-toggle:hover{ border-color:var(--accent); }
+
 /* ===================== Panorama loading ===================== */
 .pano-loading{
   position:absolute; inset:0; z-index:5; display:flex; align-items:center; justify-content:center; gap:10px;

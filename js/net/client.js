@@ -35,6 +35,10 @@ export class ClientController {
     this.pm.sendToHost(makeMessage(MSG.TAB_SWITCH_WARNING, { playerId: state.self.id }, state.self.id));
   }
 
+  sendEmote(emoji) {
+    this.pm.sendToHost(makeMessage(MSG.EMOTE, { playerId: state.self.id, emoji }, state.self.id));
+  }
+
   _onMessage(message) {
     switch (message.type) {
       case MSG.ROOM_JOIN_ACCEPTED:
@@ -112,6 +116,9 @@ export class ClientController {
         break;
       case MSG.TAB_SWITCH_WARNING:
         bus.emit('ui:tab-switch-warning', { peerId: message.payload.playerId });
+        break;
+      case MSG.EMOTE:
+        bus.emit('ui:emote-received', { peerId: message.payload.playerId, emoji: message.payload.emoji });
         break;
       case MSG.PONG:
         state.clockOffsetMs = Math.round((Date.now() - message.payload.echoTs) / 2);

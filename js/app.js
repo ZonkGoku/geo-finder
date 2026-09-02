@@ -611,6 +611,29 @@ function wireHudControls() {
 
   // Erschwert zumindest die triviale Rechtsklick-Bildersuche auf dem Panorama.
   el('pano-container').addEventListener('contextmenu', (e) => e.preventDefault());
+
+  el('btn-emote-toggle').addEventListener('click', () => {
+    sound.playClick();
+    el('emote-wheel').classList.toggle('hidden');
+  });
+  el('emote-wheel').querySelectorAll('.emote-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const emoji = btn.dataset.emoji;
+      controller?.sendEmote(emoji);
+      spawnEmote(emoji);
+      el('emote-wheel').classList.add('hidden');
+    });
+  });
+}
+
+function spawnEmote(emoji) {
+  const layer = el('emote-layer');
+  const bubble = document.createElement('div');
+  bubble.className = 'emote-float';
+  bubble.textContent = emoji;
+  bubble.style.left = `${20 + Math.random() * 60}%`;
+  layer.appendChild(bubble);
+  setTimeout(() => bubble.remove(), 2300);
 }
 
 // ---------------------------------------------------------------- anti-cheat
@@ -662,6 +685,7 @@ function renderRoundResult({ results, actual }) {
     funFactEl.classList.add('hidden');
   }
 
+  const isCountryMode = state.settings.mode === 'country-streak';
   const sorted = [...results].sort((a, b) => b.score - a.score);
   const listEl = el('result-score-list');
   listEl.innerHTML = '';
@@ -671,13 +695,25 @@ function renderRoundResult({ results, actual }) {
     if (r.playerId === state.self.id) myBestScore = r.score;
     const card = document.createElement('div');
     card.className = 'score-card';
-    const meta = r.noGuess ? 'Kein Tipp abgegeben' : `${r.distanceKm.toFixed(1)} km entfernt`;
-    const barWidth = Math.max(2, (r.score / 5000) * 100);
+    let meta;
+    let barWidth;
     const chips = [];
-    if (!r.noGuess) chips.push(`<span class="score-chip">Basis ${r.base.toLocaleString('de-DE')}</span>`);
-    if (r.timeBonus > 0) chips.push(`<span class="score-chip bonus">&#9889; +${r.timeBonus} Speed</span>`);
-    if (r.streakBonus > 0) chips.push(`<span class="score-chip streak">&#128293; +${r.streakBonus} Streak x${r.streak}</span>`);
-    if (r.hp != null) chips.push(`<span class="score-chip${r.hpDamage > 0 ? '' : ' streak'}">${r.hpDamage > 0 ? `-${r.hpDamage} HP` : 'Kein Schaden'} · ${r.hp} HP übrig</span>`);
+    if (isCountryMode) {
+      meta = r.noGuess
+        ? 'Kein Tipp abgegeben'
+        : r.correct
+          ? `Richtig — ${escapeHtml(r.actualCountry)}`
+          : `Falsch — du: ${escapeHtml(r.guessedCountry || '—')}, richtig: ${escapeHtml(r.actualCountry || '—')}`;
+      barWidth = r.correct ? 100 : 4;
+      if (r.streak > 0) chips.push(`<span class="score-chip streak">&#128293; ${r.streak}er-Streak</span>`);
+    } else {
+      meta = r.noGuess ? 'Kein Tipp abgegeben' : `${r.distanceKm.toFixed(1)} km entfernt`;
+      barWidth = Math.max(2, (r.score / 5000) * 100);
+      if (!r.noGuess) chips.push(`<span class="score-chip">Basis ${r.base.toLocaleString('de-DE')}</span>`);
+      if (r.timeBonus > 0) chips.push(`<span class="score-chip bonus">&#9889; +${r.timeBonus} Speed</span>`);
+      if (r.streakBonus > 0) chips.push(`<span class="score-chip streak">&#128293; +${r.streakBonus} Streak x${r.streak}</span>`);
+      if (r.hp != null) chips.push(`<span class="score-chip${r.hpDamage > 0 ? '' : ' streak'}">${r.hpDamage > 0 ? `-${r.hpDamage} HP` : 'Kein Schaden'} · ${r.hp} HP übrig</span>`);
+    }
     card.innerHTML = `
       <div class="score-card-top">
         <span class="score-name"><span class="avatar" style="width:22px;height:22px;font-size:0.7rem;background:${player?.color || '#8c99b8'};">${(player?.name || '?').charAt(0).toUpperCase()}</span>${escapeHtml(player?.name || 'Spieler')}</span>
@@ -701,10 +737,16 @@ function renderRoundResult({ results, actual }) {
 
   renderHpBars();
 
-  if (myBestScore > 4000) sound.playSuccess();
-  else sound.playRoundReveal();
-  const myStreakResult = results.find((r) => r.playerId === state.self.id);
-  if (myStreakResult?.streakBonus > 0) sound.playStreak();
+  const myResult = results.find((r) => r.playerId === state.self.id);
+  if (isCountryMode) {
+    if (myResult?.correct) sound.playSuccess();
+    else sound.playRoundReveal();
+    if (myResult?.correct && myResult.streak >= 2) sound.playStreak();
+  } else {
+    if (myBestScore > 4000) sound.playSuccess();
+    else sound.playRoundReveal();
+    if (myResult?.streakBonus > 0) sound.playStreak();
+  }
 
   const isHost = state.role === 'host';
   el('btn-advance-round').hidden = !isHost;
@@ -748,7 +790,12 @@ function renderPodium(sorted) {
     step.className = `podium-step rank-${idx + 1}`;
     step.style.animationDelay = `${visualPos * 100}ms`;
     const initial = (player?.name || '?').charAt(0).toUpperCase();
-    const scoreLabel = state.settings.mode === 'hp' ? `${entry.hp ?? 0} HP` : `${entry.total.toLocaleString('de-DE')} Pkt.`;
+    const scoreLabel =
+      state.settings.mode === 'hp'
+        ? `${entry.hp ?? 0} HP`
+        : state.settings.mode === 'country-streak'
+          ? `${Math.round(entry.total / 1000)}/${entry.perRound.length} richtig`
+          : `${entry.total.toLocaleString('de-DE')} Pkt.`;
     step.innerHTML = `
       <div class="avatar" style="background:${player?.color || '#8c99b8'};">${initial}</div>
       <div class="podium-name">${escapeHtml(player?.name || 'Spieler')}</div>
@@ -794,9 +841,12 @@ function renderLeaderboard({ finalScores }) {
   showScreen('leaderboard');
 
   const isHpMode = state.settings.mode === 'hp';
-  const sorted = [...finalScores].sort((a, b) =>
-    isHpMode ? (b.hp ?? 0) - (a.hp ?? 0) || b.total - a.total : b.total - a.total
-  );
+  const isCountryMode = state.settings.mode === 'country-streak';
+  const sorted = [...finalScores].sort((a, b) => {
+    if (isHpMode) return (b.hp ?? 0) - (a.hp ?? 0) || b.total - a.total;
+    if (isCountryMode) return b.total - a.total || (b.bestStreak ?? 0) - (a.bestStreak ?? 0);
+    return b.total - a.total;
+  });
   renderPodium(sorted);
 
   const heading = document.querySelector('#screen-leaderboard h2');
@@ -806,6 +856,8 @@ function renderLeaderboard({ finalScores }) {
     heading.textContent = survivor && sorted.some((e) => (e.hp ?? 0) <= 0)
       ? `${survivorName} gewinnt das HP-Duell!`
       : 'HP-Duell beendet';
+  } else if (isCountryMode) {
+    heading.textContent = 'Country-Streak beendet';
   } else {
     heading.textContent = 'Duell beendet';
   }
@@ -816,12 +868,20 @@ function renderLeaderboard({ finalScores }) {
     const player = state.players.get(entry.playerId);
     const row = document.createElement('div');
     row.className = `board-row${idx === 0 ? ' rank-1' : ''}`;
-    const chips = entry.perRound
-      .map((r, i) => `<span class="round-pill">R${i + 1} <b>${r?.total ?? 0}</b></span>`)
-      .join('');
-    const totalLabel = isHpMode
-      ? `<div class="num">${entry.hp ?? 0}</div><div class="lbl">HP übrig</div>`
-      : `<div class="num">${entry.total.toLocaleString('de-DE')}</div><div class="lbl">Punkte</div>`;
+    const chips = isCountryMode
+      ? entry.perRound
+          .map((r, i) => `<span class="round-pill">R${i + 1} <b>${r?.correct ? '✓' : '✗'}</b></span>`)
+          .join('')
+      : entry.perRound.map((r, i) => `<span class="round-pill">R${i + 1} <b>${r?.total ?? 0}</b></span>`).join('');
+    let totalLabel;
+    if (isHpMode) {
+      totalLabel = `<div class="num">${entry.hp ?? 0}</div><div class="lbl">HP übrig</div>`;
+    } else if (isCountryMode) {
+      const correctCount = Math.round(entry.total / 1000);
+      totalLabel = `<div class="num">${correctCount}/${entry.perRound.length}</div><div class="lbl">Bester Streak: ${entry.bestStreak ?? 0}</div>`;
+    } else {
+      totalLabel = `<div class="num">${entry.total.toLocaleString('de-DE')}</div><div class="lbl">Punkte</div>`;
+    }
     row.innerHTML = `
       <div class="rank-num">${String(idx + 1).padStart(2, '0')}</div>
       <div>
@@ -946,6 +1006,10 @@ function wireBusEvents() {
     if (peerId === state.self.id) return;
     const name = state.players.get(peerId)?.name || 'Ein Mitspieler';
     showToast(`⚠ ${name} hat den Tab gewechselt`);
+  });
+  bus.on('ui:emote-received', ({ peerId, emoji }) => {
+    if (peerId === state.self.id) return;
+    spawnEmote(emoji);
   });
   bus.on('ui:host-disconnected', () => {
     showStateOverlay({

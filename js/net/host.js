@@ -1,8 +1,16 @@
 import { bus, state, resetForNewGame, freshScoreEntry, HP_START } from '../core/state.js';
 import { MSG, makeMessage } from './protocol.js';
-import { scoreGuess, computeTimeBonus, nextStreak, computeStreakBonus } from '../core/scoring.js';
+import {
+  scoreGuess,
+  computeTimeBonus,
+  nextStreak,
+  computeStreakBonus,
+  scoreCountryGuess,
+  nextCountryStreak,
+} from '../core/scoring.js';
 import { makeSeed } from '../core/rng.js';
 import { resolveRoundLocations } from '../core/pool-loader.js';
+import { ensureCountryData, findCountryAtPointSync } from '../core/country-lookup.js';
 
 const ROUND_RESULT_DISPLAY_MS = 8000;
 const LEAVE_GRACE_MS = 15000;
@@ -46,6 +54,14 @@ export class HostController {
           if (p.id !== peerId) this.pm.sendTo(p.id, makeMessage(MSG.TAB_SWITCH_WARNING, { playerId: peerId }, state.self.id));
         }
         bus.emit('ui:tab-switch-warning', { peerId });
+        break;
+      case MSG.EMOTE:
+        for (const p of state.players.values()) {
+          if (p.id !== peerId) {
+            this.pm.sendTo(p.id, makeMessage(MSG.EMOTE, { playerId: peerId, emoji: message.payload.emoji }, state.self.id));
+          }
+        }
+        bus.emit('ui:emote-received', { peerId, emoji: message.payload.emoji });
         break;
       case MSG.PING:
         this.pm.sendTo(peerId, makeMessage(MSG.PONG, { echoTs: message.payload.echoTs }, state.self.id));
@@ -100,6 +116,10 @@ export class HostController {
     bus.emit('ui:tab-switch-warning', { peerId: state.self.id });
   }
 
+  sendEmote(emoji) {
+    this.pm.broadcast(makeMessage(MSG.EMOTE, { playerId: state.self.id, emoji }, state.self.id));
+  }
+
   _onPeerLost(peerId) {
     const player = state.players.get(peerId);
     if (!player) return;
@@ -131,6 +151,10 @@ export class HostController {
     state.pool = mapSet;
     resetForNewGame();
     const seed = makeSeed();
+
+    if (state.settings.mode === 'country-streak') {
+      this.countryFeatures = await ensureCountryData();
+    }
 
     bus.emit('ui:map-resolving');
     const resolved = await resolveRoundLocations(mapSet, state.settings.roundCount, seed);
@@ -220,15 +244,51 @@ export class HostController {
     clearTimeout(this.roundTimer);
     const actual = state.round.actual;
     const guesses = state.round.guesses || new Map();
-    const results = [];
+    const mode = state.settings.mode;
+
+    const results =
+      mode === 'country-streak' ? this._scoreCountryRound(actual, guesses) : this._scorePointsRound(actual, guesses);
+
+    let eliminatedPlayerId = null;
+    if (mode === 'hp') {
+      const bestScore = Math.max(...results.map((r) => r.base));
+      for (const result of results) {
+        const damage = Math.max(0, bestScore - result.base);
+        const currentHp = state.hp.get(result.playerId) ?? HP_START;
+        const nextHp = Math.max(0, currentHp - damage);
+        state.hp.set(result.playerId, nextHp);
+        result.hp = nextHp;
+        result.hpDamage = damage;
+        if (nextHp <= 0) eliminatedPlayerId = result.playerId;
+      }
+    }
+
+    state.roundHistory[state.round.index] = { actual, results };
+
+    this.pm.broadcast(
+      makeMessage(
+        MSG.ROUND_RESULT,
+        { roundIndex: state.round.index, actualLat: actual.lat, actualLng: actual.lng, results },
+        state.self.id
+      )
+    );
+    bus.emit('ui:round-result', { results, actual });
+
+    const isLastRound = state.round.index >= this.roundLocations.length - 1;
+    clearTimeout(this.nextRoundTimer);
+    this.nextRoundTimer = setTimeout(() => {
+      if (isLastRound || eliminatedPlayerId) this._endGame();
+      else this._startRound(state.round.index + 1);
+    }, ROUND_RESULT_DISPLAY_MS);
+  }
+
+  _scorePointsRound(actual, guesses) {
     const isDuel = [...state.players.values()].filter((p) => p.connected).length > 1;
-    const isHpMode = state.settings.mode === 'hp';
-    const baseScores = new Map();
+    const results = [];
 
     for (const player of state.players.values()) {
       const guess = guesses.get(player.id) || null;
       const { distanceKm, score: baseScore, noGuess } = scoreGuess(guess, actual, state.pool.scaleKm);
-      baseScores.set(player.id, baseScore);
 
       if (!state.scores.has(player.id)) state.scores.set(player.id, freshScoreEntry());
       const scoreEntry = state.scores.get(player.id);
@@ -266,38 +326,45 @@ export class HostController {
         streak,
       });
     }
+    return results;
+  }
 
-    let eliminatedPlayerId = null;
-    if (isHpMode) {
-      const bestScore = Math.max(...baseScores.values());
-      for (const result of results) {
-        const damage = Math.max(0, bestScore - baseScores.get(result.playerId));
-        const currentHp = state.hp.get(result.playerId) ?? HP_START;
-        const nextHp = Math.max(0, currentHp - damage);
-        state.hp.set(result.playerId, nextHp);
-        result.hp = nextHp;
-        result.hpDamage = damage;
-        if (nextHp <= 0) eliminatedPlayerId = result.playerId;
-      }
+  _scoreCountryRound(actual, guesses) {
+    const features = this.countryFeatures;
+    const actualCountry = findCountryAtPointSync(actual.lat, actual.lng, features);
+    const results = [];
+
+    for (const player of state.players.values()) {
+      const guess = guesses.get(player.id) || null;
+      const noGuess = !guess;
+      const guessedCountry = guess ? findCountryAtPointSync(guess.lat, guess.lng, features) : null;
+      const { correct, score } = scoreCountryGuess(guessedCountry, actualCountry);
+
+      if (!state.scores.has(player.id)) state.scores.set(player.id, freshScoreEntry());
+      const scoreEntry = state.scores.get(player.id);
+      const streak = nextCountryStreak(scoreEntry.streak, correct);
+
+      scoreEntry.streak = streak;
+      scoreEntry.bestStreak = Math.max(scoreEntry.bestStreak, streak);
+      scoreEntry.total += score;
+      scoreEntry.perRound[state.round.index] = { total: score, correct, guessedCountry, actualCountry, noGuess };
+
+      results.push({
+        playerId: player.id,
+        lat: guess?.lat ?? null,
+        lng: guess?.lng ?? null,
+        noGuess,
+        correct,
+        guessedCountry,
+        actualCountry,
+        base: score,
+        timeBonus: 0,
+        streakBonus: 0,
+        score,
+        streak,
+      });
     }
-
-    state.roundHistory[state.round.index] = { actual, results };
-
-    this.pm.broadcast(
-      makeMessage(
-        MSG.ROUND_RESULT,
-        { roundIndex: state.round.index, actualLat: actual.lat, actualLng: actual.lng, results },
-        state.self.id
-      )
-    );
-    bus.emit('ui:round-result', { results, actual });
-
-    const isLastRound = state.round.index >= this.roundLocations.length - 1;
-    clearTimeout(this.nextRoundTimer);
-    this.nextRoundTimer = setTimeout(() => {
-      if (isLastRound || eliminatedPlayerId) this._endGame();
-      else this._startRound(state.round.index + 1);
-    }, ROUND_RESULT_DISPLAY_MS);
+    return results;
   }
 
   advanceNow() {
@@ -313,6 +380,7 @@ export class HostController {
       playerId,
       total: s.total,
       perRound: s.perRound,
+      bestStreak: s.bestStreak,
       hp: state.hp.get(playerId) ?? null,
     }));
     this.pm.broadcast(makeMessage(MSG.GAME_OVER, { finalScores }, state.self.id));

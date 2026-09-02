@@ -62,4 +62,18 @@ export function scoreGuess(guess, actual, scaleKm) {
   return { distanceKm, score: scoreForDistance(distanceKm, scaleKm), noGuess: false };
 }
 
+export const COUNTRY_STREAK_POINTS = 1000;
+
+/** Country-Streak-Modus: nur richtig/falsch zaehlt, keine Distanz-Feinheit. */
+export function scoreCountryGuess(guessedCountry, actualCountry) {
+  const correct = Boolean(guessedCountry) && guessedCountry === actualCountry;
+  return { correct, score: correct ? COUNTRY_STREAK_POINTS : 0 };
+}
+
+/** Country-Streak: einfacher als der distanzbasierte Streak - jede richtige
+ * Runde zaehlt hoch, jede falsche reisst die Kette komplett ab. */
+export function nextCountryStreak(currentStreak, correct) {
+  return correct ? currentStreak + 1 : 0;
+}
+
 export { STREAK_DISTANCE_KM, MAX_TIME_BONUS };

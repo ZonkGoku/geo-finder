@@ -35,14 +35,26 @@ Trennt sich der Host, endet die Partie — es gibt kein Host-Failover.
 
 **Spielregeln** (in der Lobby einstellbar, nur der Host ändert sie):
 Rundenanzahl (3/5/10), Rundendauer (30/60/90/180s oder unbegrenzt), Modus
-(**Punkte-Duell** — Standard-Scoring inkl. Speed- und Streak-Bonus — oder
-**HP-Duell** — beide starten mit 6000 HP, pro Runde verliert der
-Langsamere/Ungenauere die Punktedifferenz als HP, bei 0 HP ist die Partie
-sofort vorbei) sowie ein Panorama-Modifier (frei umsehen + zoomen, oder
-"Zoom gesperrt" für mehr Schwierigkeit). Ein echtes "Move/No-Move" wie im
-Original-GeoGuessr gibt es bewusst nicht: jede Runde ist ein einzelnes
-statisches Panorama ohne Wegpunkte, "Bewegen" existiert hier also gar nicht
-erst.
+sowie ein Panorama-Modifier (frei umsehen + zoomen, oder "Zoom gesperrt"
+für mehr Schwierigkeit). Ein echtes "Move/No-Move" wie im Original-
+GeoGuessr gibt es bewusst nicht: jede Runde ist ein einzelnes statisches
+Panorama ohne Wegpunkte, "Bewegen" existiert hier also gar nicht erst.
+
+Drei Modi:
+- **Punkte-Duell** — Standard-Scoring inkl. Speed- und Distanz-Streak-Bonus.
+- **HP-Duell** — beide starten mit 6000 HP, pro Runde verliert der
+  Langsamere/Ungenauere die Punktedifferenz als HP, bei 0 HP ist die Partie
+  sofort vorbei.
+- **Country-Streak** — nur das Land zählt, nicht der exakte Pin. Ein Klick
+  auf die Karte wird per Punkt-in-Polygon-Test (`js/core/point-in-polygon.js`,
+  `data/geo/countries-110m.json` von [world-atlas](https://github.com/topojson/world-atlas),
+  110m-Auflösung) gegen echte Ländergrenzen aufgelöst und mit dem auf
+  dieselbe Art aufgelösten Land der tatsächlichen Position verglichen —
+  funktioniert dadurch unabhängig davon, ob das Kartenpaket ein `country`-
+  Feld pflegt.
+
+**Social**: ein Emote-Rad (😱 🎯 😂 💩 👏) unten in der HUD schickt ein kurz
+aufploppendes Emoji an die Mitspieler.
 
 **Fair Play**: Rechtsklick auf dem Panorama ist deaktiviert (erschwert die
 triviale Bildersuche), und wechselt ein Spieler während einer aktiven Runde
@@ -150,3 +162,5 @@ jeweils abgebildeten, klar erkennbaren Orte (`coordSource: "approx-known-site"`)
 - PeerJS: MIT · Leaflet: BSD-2-Clause · Pannellum: MIT (siehe `lib/VERSIONS.txt`
   und `lib/pannellum/LICENSE`).
 - Panoramafotos: Matthew Petroff, CC BY-SA 4.0.
+- Ländergrenzen (`data/geo/countries-110m.json`): [world-atlas](https://github.com/topojson/world-atlas)
+  von Michael Bostock, ISC-artige Lizenz (siehe `data/geo/world-atlas-LICENSE`).

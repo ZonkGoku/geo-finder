@@ -165,6 +165,7 @@
               <div class="choice-row" id="choice-mode" data-setting="mode">
                 <button type="button" data-value="points">Punkte-Duell</button>
                 <button type="button" data-value="hp">HP-Duell (6000 HP)</button>
+                <button type="button" data-value="country-streak">Country-Streak</button>
               </div>
             </div>
 
@@ -238,6 +239,19 @@
           <div class="minimap" id="minimap">
             <div id="guess-map-container" class="leaflet-host"></div>
           </div>
+        </div>
+
+        <div class="emote-layer" id="emote-layer"></div>
+
+        <div class="emote-wrap">
+          <div class="emote-wheel hidden" id="emote-wheel">
+            <button type="button" class="emote-btn" data-emoji="😱">😱</button>
+            <button type="button" class="emote-btn" data-emoji="🎯">🎯</button>
+            <button type="button" class="emote-btn" data-emoji="😂">😂</button>
+            <button type="button" class="emote-btn" data-emoji="💩">💩</button>
+            <button type="button" class="emote-btn" data-emoji="👏">👏</button>
+          </div>
+          <button class="emote-toggle" id="btn-emote-toggle" aria-label="Emotes" title="Emotes">&#128512;</button>
         </div>
       </section>
 
