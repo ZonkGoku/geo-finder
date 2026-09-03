@@ -312,19 +312,45 @@ async function enterLobby() {
   renderLobby();
 }
 
+// Fallback pro Kategorie, falls ein Kartenpaket unten keine eigene ID hat
+// (z.B. neue Pakete, die noch nicht individuell verdrahtet wurden).
 const MAPSET_CATEGORY_ICONS = {
   staedte: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V9l5-4v16M13 21V5l5 3v13M4 21h16M9 12h.01M9 16h.01M13 9h.01M13 13h.01M13 17h.01"/></svg>',
   kultur: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21h16M5 21V9M9 21V9M15 21V9M19 21V9M3 9l9-5 9 5M4 9h16"/></svg>',
   natur: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20l6-10 4 6 2-3 6 7H3z"/><circle cx="17" cy="6" r="2"/></svg>',
   default: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 4 6 4 9s-1.5 6.3-4 9c-2.5-2.7-4-6-4-9s1.5-6.3 4-9z"/></svg>',
 };
+// Nutzerfeedback: die zufaelligen Picsum-Fotos "passen ueberhaupt nicht"
+// zum jeweiligen Kartenpaket (z.B. eine Frau im Wald fuer "Hamburg
+// Special"). Kein Bild-API liefert ohne Account/Kosten verlaesslich
+// thematisch passende Fotos - stattdessen bekommt jetzt JEDES Kartenpaket
+// sein eigenes, handgezeichnetes Symbol statt sich nur die 4
+// Kategorie-Icons zu teilen.
+const MAPSET_ICONS = {
+  weltweit: MAPSET_CATEGORY_ICONS.default,
+  hamburg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="5" r="2"/><path d="M12 7v13M7 13a5 5 0 0 0 10 0M5 13h4m6 0h4"/></svg>',
+  'hamburg-hafen': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 16l1.5-5h13L20 16"/><path d="M8 11V6h8v5"/><path d="M2 20c1.5-2 3-2 4.5 0s3 2 4.5 0 3-2 4.5 0 3 2 4.5 0"/></svg>',
+  'hamburg-alster': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M11 3v10"/><path d="M11 4l6 7h-6z" fill="currentColor" stroke="none"/><path d="M2 19c1.5-1.5 3-1.5 4.5 0s3 1.5 4.5 0 3-1.5 4.5 0 3 1.5 4.5 0"/></svg>',
+  'hamburg-szene': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
+  landmarks: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l3.5 6h-7z" fill="currentColor" stroke="none"/><path d="M9 8h6v12H9z"/><path d="M6 20h12"/></svg>',
+  capitals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7l1.4 3 3.3.3-2.5 2.3.8 3.3-3-1.8-3 1.8.8-3.3-2.5-2.3 3.3-.3z" fill="currentColor" stroke="none"/></svg>',
+  berlin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21V9"/><circle cx="12" cy="6.5" r="3"/><path d="M9 21h6M8 17h8"/></svg>',
+  paris: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l4 9h-2.7l1.7 5.5h-2L14 22h-4l1-5.5h-2L10.7 11H8z"/><path d="M6 22h12"/></svg>',
+  munich: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 21V9a2 2 0 0 1 4 0v1"/><path d="M13 21V9a2 2 0 0 1 4 0v1"/><circle cx="9" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.4" fill="currentColor" stroke="none"/><path d="M4 21h16"/></svg>',
+  london: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="7" width="6" height="12"/><circle cx="12" cy="10" r="1.7"/><path d="M9 7l3-3 3 3M6 19h12"/></svg>',
+  'new-york': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2c1.6 1.6 1.6 3.2 0 4.8S10.4 8.4 12 10"/><path d="M12 10v11"/><path d="M8 21h8M9.5 14.5h5"/></svg>',
+  'asian-megacities': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v2"/><path d="M4 8h16M6.5 8L8 6h8l1.5 2"/><path d="M5 13h14M6.5 13L8 11h8l1.5 2"/><path d="M8 21v-8h8v8"/><path d="M4 21h16"/></svg>',
+  unesco: MAPSET_CATEGORY_ICONS.kultur,
+  stadiums: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="12" cy="14" rx="9" ry="5"/><ellipse cx="12" cy="14" rx="5" ry="2.6"/><path d="M4 10l-1.2-4M20 10l1.2-4"/></svg>',
+  'ruins-castles': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 21V10h3V7h2v3h2V6h2v4h2V7h2v3h3v11z"/><path d="M4 21h16"/></svg>',
+  bridges: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 17c3-4 17-4 20 0"/><path d="M7 6v11M17 6v11"/><path d="M7 9l5 3 5-3"/><path d="M2 21h20"/></svg>',
+  extreme: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 20l6-10 4 6 2-3 6 7H3z"/><path d="M18 4v4M16 6h4M16.6 4.6l2.8 2.8M19.4 4.6l-2.8 2.8"/></svg>',
+  coastal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="7" r="2.5"/><path d="M2 14c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 19c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>',
+  'country-roads': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 21C6 13 12 13 9 5"/><path d="M15 21c-3-8 3-8 0-16"/><path d="M12 4v2M12 9v2M12 14v2M12 19v2"/></svg>',
+  'national-parks': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l4 6h-2.5l3.5 5h-3l3 6H7l3-6H7l3.5-5H8z"/><path d="M12 19v3"/></svg>',
+  islands: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21V10"/><path d="M12 10c-2-3-6-3-7-1 2.5 1.2 4.5 0 7 1zm0 0c2-3 6-3 7-1-2.5 1.2-4.5 0-7 1zm0 0c-1-3 0-6 2-7-1 2-1 4-2 7z"/><ellipse cx="12" cy="21" rx="9" ry="2"/></svg>',
+};
 const MAPSET_PLAY_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-// Picsum liefert generische, aber seed-stabile Fotos ohne API-Key - echte
-// thematische Fotos pro Kartenpaket sind ohne kostenpflichtige Bild-API nicht
-// verlaesslich zu bekommen. Unsplash Source (urspruenglich vom Nutzer
-// vorgeschlagen) wurde Anfang 2025 von Unsplash abgeschaltet, daher Picsum
-// als noch funktionierende Alternative.
-const mapSetCoverUrl = (id) => `https://picsum.photos/seed/${encodeURIComponent(id)}/400/300`;
 
 function getFilteredMapSets() {
   const term = mapSetSearchTerm.trim().toLowerCase();
@@ -349,11 +375,11 @@ function renderMapSetGrid() {
     card.disabled = !isHost || !entry.available;
     const badgeClass = entry.available ? 'ready' : 'needs-token';
     const badgeText = entry.available ? 'Bereit' : 'Token nötig';
-    const icon = MAPSET_CATEGORY_ICONS[entry.tag] || MAPSET_CATEGORY_ICONS.default;
+    const coverClass = entry.tag ? `cover-${entry.tag}` : 'cover-default';
+    const icon = MAPSET_ICONS[entry.id] || MAPSET_CATEGORY_ICONS[entry.tag] || MAPSET_CATEGORY_ICONS.default;
     card.innerHTML = `
-      <div class="mapset-card-cover">
-        <div class="mapset-card-cover-img" style="background-image:url('${mapSetCoverUrl(entry.id)}');"></div>
-        <span class="mapset-card-tag">${icon}</span>
+      <div class="mapset-card-cover ${coverClass}">
+        <span class="mapset-card-icon">${icon}</span>
         <div class="mapset-card-play">${MAPSET_PLAY_ICON}</div>
       </div>
       <div class="mapset-card-body">

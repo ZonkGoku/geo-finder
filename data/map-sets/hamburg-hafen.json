@@ -1,0 +1,20 @@
+{
+  "id": "hamburg-hafen",
+  "name": "Hamburg: Hafen & Elbe",
+  "description": "Nur der maritime Hamburg-Teil: Landungsbrücken, Speicherstadt, HafenCity und Elbufer über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 5,
+  "regions": [
+    { "id": "hamburg-landungsbruecken", "name": "Landungsbrücken", "lat": 53.5459, "lng": 9.9683 },
+    { "id": "hamburg-elbphilharmonie", "name": "Elbphilharmonie", "lat": 53.5413, "lng": 9.9840 },
+    { "id": "hamburg-speicherstadt", "name": "Speicherstadt", "lat": 53.5445, "lng": 9.9915 },
+    { "id": "hamburg-hafencity", "name": "HafenCity / Überseequartier", "lat": 53.5410, "lng": 10.0005 },
+    { "id": "hamburg-alter-elbtunnel", "name": "Alter Elbtunnel", "lat": 53.5453, "lng": 9.9673 },
+    { "id": "hamburg-fischmarkt", "name": "Fischmarkt", "lat": 53.5462, "lng": 9.9548 },
+    { "id": "hamburg-oevelgoenne", "name": "Elbstrand Övelgönne", "lat": 53.5480, "lng": 9.9128 },
+    { "id": "hamburg-elbbruecken", "name": "Elbbrücken", "lat": 53.5320, "lng": 10.0210 },
+    { "id": "hamburg-neumuehlen", "name": "Neumühlen / Museumshafen", "lat": 53.5470, "lng": 9.9270 },
+    { "id": "hamburg-finkenwerder", "name": "Finkenwerder", "lat": 53.5350, "lng": 9.8650 }
+  ]
+}

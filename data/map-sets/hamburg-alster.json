@@ -1,0 +1,20 @@
+{
+  "id": "hamburg-alster",
+  "name": "Hamburg: Alster & Innenstadt",
+  "description": "Der innerstädtische Hamburg-Teil rund um Binnenalster, Rathaus und die Grünanlagen über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 4,
+  "regions": [
+    { "id": "hamburg-jungfernstieg", "name": "Jungfernstieg / Binnenalster", "lat": 53.5548, "lng": 9.9930 },
+    { "id": "hamburg-rathausmarkt", "name": "Rathausmarkt", "lat": 53.5503, "lng": 9.9928 },
+    { "id": "hamburg-planten-un-blomen", "name": "Planten un Blomen", "lat": 53.5613, "lng": 9.9838 },
+    { "id": "hamburg-michel", "name": "Michaeliskirche (Michel)", "lat": 53.5457, "lng": 9.9789 },
+    { "id": "hamburg-alsterpark", "name": "Alsterpark", "lat": 53.5720, "lng": 10.0030 },
+    { "id": "hamburg-harvestehude", "name": "Harvestehude / Innocentiapark", "lat": 53.5730, "lng": 9.9880 },
+    { "id": "hamburg-rotherbaum", "name": "Rotherbaum / Grindelviertel", "lat": 53.5680, "lng": 9.9840 },
+    { "id": "hamburg-hauptbahnhof", "name": "Hauptbahnhof", "lat": 53.5528, "lng": 10.0067 },
+    { "id": "hamburg-st-georg", "name": "St. Georg / Lange Reihe", "lat": 53.5556, "lng": 10.0134 },
+    { "id": "hamburg-deichstrasse", "name": "Deichstraße", "lat": 53.5460, "lng": 9.9927 }
+  ]
+}

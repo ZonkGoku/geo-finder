@@ -1,0 +1,18 @@
+{
+  "id": "hamburg-szene",
+  "name": "Hamburg: Szeneviertel",
+  "description": "Die angesagten Hamburger Viertel: Sternschanze, Reeperbahn, Karolinenviertel und Umgebung über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 5,
+  "regions": [
+    { "id": "hamburg-reeperbahn", "name": "Reeperbahn / St. Pauli", "lat": 53.5503, "lng": 9.9625 },
+    { "id": "hamburg-sternschanze", "name": "Sternschanze / Schanzenviertel", "lat": 53.5631, "lng": 9.9622 },
+    { "id": "hamburg-karolinenviertel", "name": "Karolinenviertel", "lat": 53.5590, "lng": 9.9670 },
+    { "id": "hamburg-altona", "name": "Altona", "lat": 53.5524, "lng": 9.9354 },
+    { "id": "hamburg-ottensen", "name": "Ottensen", "lat": 53.5510, "lng": 9.9130 },
+    { "id": "hamburg-eppendorf", "name": "Eppendorf", "lat": 53.5867, "lng": 9.9877 },
+    { "id": "hamburg-winterhude", "name": "Winterhude / Mühlenkamp", "lat": 53.5905, "lng": 10.0090 },
+    { "id": "hamburg-hoheluft", "name": "Hoheluft", "lat": 53.5810, "lng": 9.9700 }
+  ]
+}

@@ -409,16 +409,21 @@ button{ font-family:inherit; color:inherit; }
    Karten-Steuerelemente (.minimap-close-btn/.pano-ctrl-btn), an allen drei
    Kartenstellen (Minimap, Rundenergebnis, Endstand-Uebersicht) gleich. */
 .map-style-toggle{
-  position:absolute; top:8px; left:8px; z-index:2; display:flex; align-items:center; gap:5px;
+  position:absolute; top:8px; left:8px; z-index:3; display:flex; align-items:center; gap:5px;
   padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.18);
   background:rgba(10,15,26,0.72); backdrop-filter:blur(4px); color:#fff; cursor:pointer;
   font-family:var(--font-body); font-size:0.7rem; font-weight:600;
-  transition:border-color .15s ease, color .15s ease;
+  transition:border-color .15s ease, color .15s ease, background .15s ease;
 }
 .map-style-toggle svg{ width:14px; height:14px; flex:none; }
-.map-style-toggle:hover{ border-color:var(--accent-2); color:var(--accent-2); }
-/* Im eingeklappten Minimap-Zustand ist kein Platz - nur bei .expanded zeigen. */
-.minimap:not(.expanded) .map-style-toggle{ display:none; }
+.map-style-toggle:hover{ border-color:var(--accent-2); color:var(--accent-2); background:rgba(10,15,26,0.9); }
+/* Im eingeklappten Minimap-Zustand bleibt nur ein kompakter Icon-Button statt
+   der Pille mit Text - Nutzerfeedback: der Umschalter war vorher komplett
+   ausgeblendet und nur waehrend des kurzen .expanded-Moments sichtbar. Der
+   Button liegt ueber dem .minimap-open-btn-Overlay (hoeherer z-index),
+   bleibt also unabhaengig vom "Karte oeffnen"-Zustand klickbar. */
+.minimap:not(.expanded) .map-style-toggle{ padding:0; width:26px; height:26px; justify-content:center; }
+.minimap:not(.expanded) .map-style-toggle span{ display:none; }
 
 .leaflet-host{ width:100%; height:100%; background:var(--surface); }
 /* Die Minimap sitzt im HUD ueber echten Fotos und bleibt in beiden Themes
@@ -681,26 +686,27 @@ button{ font-family:inherit; color:inherit; }
 .mapset-card:disabled{ opacity:0.5; cursor:not-allowed; }
 .mapset-card:disabled:hover{ transform:none; box-shadow:none; }
 
+/* Jedes Kartenpaket hat ein eigenes handgezeichnetes Icon (MAPSET_ICONS in
+   app.js) statt eines zufaelligen Fotos - Nutzerfeedback: die Picsum-Fotos
+   "passen ueberhaupt nicht" zum jeweiligen Paket. Kategorie-Farbverlauf im
+   Hintergrund bleibt als grobe visuelle Gruppierung. */
 .mapset-card-cover{
-  position:relative; height:130px; overflow:hidden; background-size:cover; background-position:center;
-  background-color:var(--surface-hi);
+  position:relative; height:130px; display:flex; align-items:center; justify-content:center; overflow:hidden;
 }
-.mapset-card-cover-img{
-  position:absolute; inset:0; background-size:cover; background-position:center;
-  filter:saturate(0.4) brightness(0.55); transform:scale(1.06);
-  transition:filter .3s ease, transform .3s ease;
-}
-.mapset-card:hover:not(:disabled) .mapset-card-cover-img{ filter:saturate(1.05) brightness(0.85); transform:scale(1.14); }
 .mapset-card-cover::after{
   content:""; position:absolute; inset:0;
-  background:linear-gradient(180deg, rgba(5,5,5,0) 30%, rgba(5,5,5,0.85) 100%);
+  background:radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.16), transparent 60%);
 }
-.mapset-card-tag{
-  position:absolute; left:9px; top:9px; z-index:1; display:flex; align-items:center; justify-content:center;
-  width:24px; height:24px; border-radius:7px; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px);
-  color:rgba(255,255,255,0.9);
+.mapset-card-cover.cover-staedte{ background:linear-gradient(135deg, #0f3b45, #0b1f28); }
+.mapset-card-cover.cover-kultur{ background:linear-gradient(135deg, #4a2a12, #241209); }
+.mapset-card-cover.cover-natur{ background:linear-gradient(135deg, #14401f, #0b2313); }
+.mapset-card-cover.cover-default{ background:linear-gradient(135deg, #232b3d, #141925); }
+.mapset-card-icon{
+  position:relative; z-index:1; width:42px; height:42px; color:rgba(255,255,255,0.92);
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,0.45));
+  transition:transform .3s cubic-bezier(.2,.8,.2,1);
 }
-.mapset-card-tag svg{ width:14px; height:14px; }
+.mapset-card:hover:not(:disabled) .mapset-card-icon{ transform:scale(1.14) translateY(-2px); }
 
 .mapset-card-play{
   position:absolute; left:50%; bottom:12px; z-index:1;

@@ -21,6 +21,36 @@
       "locationCount": null
     },
     {
+      "id": "hamburg-hafen",
+      "file": "hamburg-hafen.json",
+      "name": "Hamburg: Hafen & Elbe",
+      "description": "Nur der maritime Hamburg-Teil: Landungsbrücken, Speicherstadt, HafenCity — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "staedte",
+      "locationCount": null
+    },
+    {
+      "id": "hamburg-alster",
+      "file": "hamburg-alster.json",
+      "name": "Hamburg: Alster & Innenstadt",
+      "description": "Der innerstädtische Hamburg-Teil rund um Binnenalster und Rathaus — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "staedte",
+      "locationCount": null
+    },
+    {
+      "id": "hamburg-szene",
+      "file": "hamburg-szene.json",
+      "name": "Hamburg: Szeneviertel",
+      "description": "Die angesagten Hamburger Viertel: Sternschanze, Reeperbahn, Karolinenviertel — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "staedte",
+      "locationCount": null
+    },
+    {
       "id": "landmarks",
       "file": "landmarks.json",
       "name": "Famous Landmarks",
