@@ -45,12 +45,32 @@ export function computeMapSetBounds(mapSet) {
   ];
 }
 
+// Harte Obergrenze fuer einzelne Region-Abrufversuche ueber alle Wellen
+// hinweg - verhindert eine Endlosschleife, falls die Mapillary-API generell
+// nicht erreichbar ist, waehrend trotzdem genug Spielraum bleibt, um auch
+// bei mehreren fehlgeschlagenen Regionen noch auf die gewuenschte
+// Rundenzahl zu kommen.
+const MAX_RESOLVE_ATTEMPTS = 20;
+
 /**
  * Liefert bis zu roundCount Runden-Orte fuer ein Kartenpaket. Bei
- * Mapillary-Paketen wird pro gewaehlter Region live ein Bild abgefragt;
- * liefert eine Region nichts (kein 360°-Bild in dem Gebiet gefunden oder
- * Netzwerkfehler), wird die naechste Reserve-Region versucht. Das Ergebnis
- * kann daher kuerzer als roundCount sein - der Aufrufer muss das abfangen.
+ * Mapillary-Paketen wird pro gewaehlter Region live ein Bild abgefragt.
+ *
+ * Liefert eine Region nichts (kein 360°-Bild im 50m-Radius gefunden,
+ * Timeout, HTTP-Fehler), wurde das Ergebnis frueher einfach verworfen -
+ * das Spiel startete dann mit WENIGER Runden als in der Lobby gewaehlt
+ * (sichtbar als "RUNDE 01 / 01" im HUD, wenn nur eine von vielen Regionen
+ * ein Bild lieferte). Jetzt wird in Wellen nachgefragt: fehlgeschlagene
+ * Regionen werden durch weitere, noch nicht versuchte Regionen aus dem
+ * Kartenpaket ersetzt, bis entweder roundCount erreicht ist oder das
+ * Versuchslimit (MAX_RESOLVE_ATTEMPTS) ausgeschoepft ist. Reicht das
+ * Kartenpaket selbst nicht fuer roundCount eindeutige Regionen (z. B. 10
+ * gewuenschte Runden bei nur 8 definierten Regionen), wird der Regionen-Pool
+ * fuer die letzten Versuche ein zweites Mal durchlaufen - ein zweites Foto
+ * derselben Sehenswuerdigkeit ist immer noch besser, als das Spiel mit zu
+ * wenigen Runden zu starten. Das Ergebnis kann trotzdem kuerzer als
+ * roundCount sein, wenn die API durchgehend nicht erreichbar ist - der
+ * Aufrufer (host.js) faengt das weiterhin ab.
  */
 export async function resolveRoundLocations(mapSet, roundCount, seed) {
   if (mapSet.source === 'static') {
@@ -58,25 +78,35 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
   }
 
   if (mapSet.source === 'mapillary') {
-    const candidateCount = Math.min(mapSet.regions.length, roundCount * 3);
-    const candidates = pickUniqueLocations(mapSet.regions, candidateCount, seed);
-
-    // Alle Kandidaten-Regionen parallel abfragen. Das fruehere sequentielle
-    // Abklappern mit 350ms-Pause beruhte auf der (inzwischen widerlegten)
-    // Annahme, gleichzeitige Anfragen wuerden das "reduce the amount of
-    // data"-Problem ausloesen - das lag tatsaechlich am bbox-Endpunkt selbst,
-    // nicht an Nebenlaeufigkeit (siehe mapillary-source.js). Mit der
-    // Radiussuche ist Parallelisieren unproblematisch und macht das Laden
-    // eines Kartenpakets deutlich spuerbar schneller.
-    const settled = await Promise.allSettled(candidates.map((region) => fetchPanoramaForRegion(region)));
-
+    // Alle sichtbaren Fehler bei gleichzeitigen Anfragen betrafen den
+    // frueheren bbox-Endpunkt, nicht Nebenlaeufigkeit selbst (siehe
+    // mapillary-source.js) - Wellen von Parallel-Anfragen bleiben also
+    // schnell UND robust.
+    const pool = pickUniqueLocations(mapSet.regions, mapSet.regions.length, seed);
     const resolved = [];
-    for (const result of settled) {
-      if (resolved.length >= roundCount) break;
-      if (result.status === 'fulfilled' && result.value) {
-        resolved.push(result.value);
-      } else if (result.status === 'rejected') {
-        console.error('Mapillary-Abruf fehlgeschlagen:', result.reason);
+    let attempts = 0;
+    let cursor = 0;
+
+    while (resolved.length < roundCount && attempts < MAX_RESOLVE_ATTEMPTS) {
+      const stillNeeded = roundCount - resolved.length;
+      const attemptsLeft = MAX_RESOLVE_ATTEMPTS - attempts;
+      const waveSize = Math.min(stillNeeded, attemptsLeft, pool.length);
+      if (waveSize <= 0) break;
+
+      const wave = [];
+      for (let i = 0; i < waveSize; i++) {
+        wave.push(pool[cursor % pool.length]);
+        cursor++;
+      }
+      attempts += wave.length;
+
+      const settled = await Promise.allSettled(wave.map((region) => fetchPanoramaForRegion(region)));
+      for (const result of settled) {
+        if (result.status === 'fulfilled' && result.value) {
+          resolved.push(result.value);
+        } else if (result.status === 'rejected') {
+          console.error('Mapillary-Abruf fehlgeschlagen, versuche Ersatz-Region:', result.reason);
+        }
       }
     }
     return resolved;

@@ -16,6 +16,17 @@ const ROUND_RESULT_DISPLAY_MS = 8000;
 const LEAVE_GRACE_MS = 15000;
 const MAX_PLAYERS = 6;
 
+// Waermt den Browser-Cache fuer die naechste Runde vor, waehrend die
+// aktuelle noch laeuft - rein lokal im Host-Browser (kein Protokoll-/
+// Broadcast-Feld), damit dabei keine zukuenftigen Runden-URLs an Mitspieler
+// verschickt werden (das waere ein neues Leck der spaeteren Antworten,
+// genau das Problem, das der Anti-Cheat-Fix dieser Session verhindern soll).
+function preloadImage(url) {
+  if (!url || typeof Image === 'undefined') return;
+  const img = new Image();
+  img.src = url;
+}
+
 export class HostController {
   constructor(peerManager) {
     this.pm = peerManager;
@@ -235,6 +246,7 @@ export class HostController {
       )
     );
     bus.emit('ui:round-started');
+    preloadImage(this.roundLocations[index + 1]?.panoramaUrl);
 
     clearTimeout(this.roundTimer);
     // timeLimitMs === null bedeutet "unbegrenzt" - dann beendet nur
