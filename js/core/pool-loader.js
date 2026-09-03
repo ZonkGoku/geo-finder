@@ -32,21 +32,25 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
     const candidateCount = Math.min(mapSet.regions.length, roundCount * 3);
     const candidates = pickUniqueLocations(mapSet.regions, candidateCount, seed);
 
-    // Parallel in Batches statt nacheinander: fetchPanoramaForRegion hat
-    // zwar selbst ein Timeout, aber sequenziell koennten 8 Regionen x 8s
-    // trotzdem wie ein Haenger wirken. So ist die Obergrenze ein einzelnes
-    // Batch-Timeout, nicht die Summe aller Versuche.
-    const BATCH_SIZE = 4;
+    // Nacheinander mit kurzer Pause, NICHT parallel: mehrere gleichzeitige
+    // Anfragen mit demselben Token loesten live ein Rate-Limit bei Mapillary
+    // aus ("reduce the amount of data you're asking for" kam sogar bei der
+    // guenstigsten Abfrage, sobald mehrere Requests gleichzeitig liefen).
+    // fetchPanoramaForRegion hat weiterhin ein eigenes Timeout, damit ein
+    // einzelner haengender Request nicht die ganze Kette blockiert.
+    const RATE_LIMIT_DELAY_MS = 350;
     const resolved = [];
-    for (let i = 0; i < candidates.length && resolved.length < roundCount; i += BATCH_SIZE) {
-      const batch = candidates.slice(i, i + BATCH_SIZE);
-      const settled = await Promise.allSettled(batch.map((region) => fetchPanoramaForRegion(region)));
-      for (const outcome of settled) {
-        if (outcome.status === 'fulfilled' && outcome.value) resolved.push(outcome.value);
-        else if (outcome.status === 'rejected') console.error('Mapillary-Abruf fehlgeschlagen:', outcome.reason);
+    for (const region of candidates) {
+      if (resolved.length >= roundCount) break;
+      try {
+        const loc = await fetchPanoramaForRegion(region);
+        if (loc) resolved.push(loc);
+      } catch (err) {
+        console.error('Mapillary-Abruf fehlgeschlagen:', err);
       }
+      await new Promise((r) => setTimeout(r, RATE_LIMIT_DELAY_MS));
     }
-    return resolved.slice(0, roundCount);
+    return resolved;
   }
 
   throw new Error(`Unbekannte Kartenpaket-Quelle: ${mapSet.source}`);
