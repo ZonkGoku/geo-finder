@@ -161,7 +161,11 @@ button{ font-family:inherit; color:inherit; }
 .hud-bottom{ position:absolute; left:26px; bottom:24px; z-index:3; }
 .guess-btn{ padding:14px 26px; font-size:1rem; border-radius:13px; box-shadow:0 12px 24px -10px rgba(242,169,59,0.55); }
 
-.minimap-wrap{ position:absolute; right:24px; bottom:24px; z-index:3; }
+.minimap-wrap{ position:absolute; right:24px; bottom:24px; z-index:3; display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.minimap-scope{
+  font-family:var(--font-body); font-size:0.7rem; font-weight:600; letter-spacing:0.02em; color:#fff;
+  background:rgba(10,15,26,0.72); border:1px solid var(--line); border-radius:999px; padding:5px 12px;
+}
 .minimap{
   position:relative; width:140px; height:140px; border-radius:16px; background:var(--surface); border:1px solid var(--line);
   overflow:hidden;

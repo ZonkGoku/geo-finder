@@ -482,6 +482,12 @@ function renderRoundStart() {
   el('pano-credit').textContent = activeMapSetDetail?.source === 'mapillary'
     ? 'Foto: Mapillary-Mitwirkende'
     : 'Foto: Matthew Petroff · CC BY-SA 4.0';
+
+  const scopeEl = el('minimap-scope');
+  const isDefaultPool = !activeMapSetDetail || activeMapSetDetail.id === 'starter-pool';
+  scopeEl.textContent = isDefaultPool ? '' : `Modus: ${activeMapSetDetail.name}`;
+  scopeEl.classList.toggle('hidden', isDefaultPool);
+
   renderRoundProgress();
   renderHpBars();
 
@@ -509,6 +515,9 @@ function renderRoundStart() {
   });
 
   guessMap.reset();
+  if (state.round.index === 0) {
+    guessMap.focusOnLocations(activeMapSetDetail?.locations || activeMapSetDetail?.regions);
+  }
   el('minimap').classList.remove('expanded');
   const confirmBtn = el('btn-confirm-guess');
   confirmBtn.disabled = true;

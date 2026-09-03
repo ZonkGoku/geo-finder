@@ -37,9 +37,36 @@ export class GuessMap {
     }
   }
 
+  /**
+   * Nur den Tipp-Marker entfernen, die Kartenansicht (Pan/Zoom) bleibt
+   * unveraendert. So "merkt" sich die Karte zwischen Runden, wohin der
+   * letzte Spieler navigiert hat, statt bei jeder Runde auf die
+   * Standard-Weltansicht zurueckzuspringen.
+   */
   reset() {
     this.clear();
-    this.map.setView([20, 0], 2);
+  }
+
+  /**
+   * Zoomt einmalig (mit Flug-Animation) auf die Ausdehnung eines
+   * Kartenpakets - z. B. beim Start einer neuen Partie oder beim Wechsel
+   * des Kartenpakets. Wird bewusst NICHT bei jeder Runde erneut
+   * aufgerufen, damit die manuelle Zoomposition des Spielers innerhalb
+   * einer Partie erhalten bleibt (siehe reset()).
+   */
+  focusOnLocations(points, { maxZoom = 13 } = {}) {
+    const coords = (points || [])
+      .filter((p) => p?.lat != null && p?.lng != null)
+      .map((p) => [p.lat, p.lng]);
+    if (coords.length === 0) return;
+
+    if (coords.length === 1) {
+      this.map.flyTo(coords[0], maxZoom, { duration: 1.1 });
+      return;
+    }
+
+    const bounds = window.L.latLngBounds(coords);
+    this.map.flyToBounds(bounds, { padding: [48, 48], maxZoom, duration: 1.1 });
   }
 
   getGuess() {
