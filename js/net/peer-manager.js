@@ -1,7 +1,22 @@
 import { bus } from '../core/state.js';
+import { TURN_SERVERS } from '../config.js';
 
 const ROOM_PREFIX = 'geofinder-';
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // ohne 0/O, 1/I/L
+
+// Eigene ICE-Serverliste statt PeerJS' eingebautem Standard - sobald man
+// selbst ein `config`-Objekt uebergibt, ERSETZT das den Standard komplett,
+// daher hier explizit STUN (findet die oeffentliche IP/Port-Zuordnung) UND
+// TURN (leitet Daten durch, wenn reines STUN an symmetrischem NAT oder
+// restriktiven Firewalls scheitert - z. B. Handy im Mobilfunknetz + Laptop
+// im WLAN) zusammen auflisten. Ohne TURN funktioniert die Verbindung oft nur,
+// wenn beide Geraete im selben Netzwerk sind.
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:global.stun.twilio.com:3478' },
+  ...TURN_SERVERS,
+];
+const PEER_OPTIONS = { config: { iceServers: ICE_SERVERS } };
 
 export function generateRoomCode(length = 6) {
   let code = '';
@@ -24,7 +39,7 @@ export class PeerManager {
     this.isHost = true;
     this.roomCode = roomCode;
     return new Promise((resolve, reject) => {
-      const peer = new window.Peer(ROOM_PREFIX + roomCode);
+      const peer = new window.Peer(ROOM_PREFIX + roomCode, PEER_OPTIONS);
       this.peer = peer;
 
       peer.on('open', (id) => resolve(id));
@@ -40,7 +55,7 @@ export class PeerManager {
     this.isHost = false;
     this.roomCode = roomCode;
     return new Promise((resolve, reject) => {
-      const peer = new window.Peer();
+      const peer = new window.Peer(undefined, PEER_OPTIONS);
       this.peer = peer;
 
       peer.on('open', () => {
