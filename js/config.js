@@ -10,20 +10,35 @@ export function isMapillaryConfigured() {
 
 // TURN-Server für WebRTC-Verbindungen zwischen Geräten in unterschiedlichen
 // Netzwerken (z. B. Handy im Mobilfunknetz + Laptop im WLAN). Reines STUN
-// (der PeerJS-Standard ohne diese Liste) findet nur die öffentliche
+// (der PeerJS-Standard ohne diese Konfiguration) findet nur die öffentliche
 // IP/Port-Zuordnung - das reicht bei vielen Heimroutern, scheitert aber an
 // symmetrischem NAT oder restriktiven Firewalls (Mobilfunknetze, manche
 // Firmennetze). Ein TURN-Server leitet den Datenverkehr in diesem Fall
 // einfach durch, als Fallback.
 //
-// Kostenloses Kontingent z. B. bei https://www.metered.ca/tools/openrelay/
-// (kein Server-Betrieb nötig, kein Guthaben/Kreditkarte für die Gratisstufe):
-// Account anlegen -> Dashboard -> "TURN Credentials" -> die dort
-// angezeigten Server-URLs, Username und Credential hier eintragen.
+// Kostenloses Kontingent (500MB/Monat, keine Kreditkarte) über
+// https://www.metered.ca/. Die Liste unten ist die vom Metered-Dashboard
+// für diesen Zugang generierte ICE-Server-Konfiguration - mehrere
+// Transport-Varianten (UDP/TCP auf Port 80/443, TLS auf 443), damit auch
+// Netzwerke funktionieren, die einzelne davon blockieren. Username/Credential
+// sind wie der Mapillary-Token oben bewusst fürs Frontend gedacht (siehe
+// Metered-eigenes Beispiel: dieselbe Liste direkt im Browser-JS verwendet).
 export const TURN_SERVERS = [
-  // { urls: 'turn:PASTE_HOST:80', username: 'PASTE_USERNAME', credential: 'PASTE_CREDENTIAL' },
+  { urls: 'stun:stun.relay.metered.ca:80' },
+  { urls: 'turn:global.relay.metered.ca:80', username: '4e817b00839966d351e3778d', credential: 'k+zd+kFXWsKQiBiq' },
+  {
+    urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+    username: '4e817b00839966d351e3778d',
+    credential: 'k+zd+kFXWsKQiBiq',
+  },
+  { urls: 'turn:global.relay.metered.ca:443', username: '4e817b00839966d351e3778d', credential: 'k+zd+kFXWsKQiBiq' },
+  {
+    urls: 'turns:global.relay.metered.ca:443?transport=tcp',
+    username: '4e817b00839966d351e3778d',
+    credential: 'k+zd+kFXWsKQiBiq',
+  },
 ];
 
 export function isTurnConfigured() {
-  return TURN_SERVERS.length > 0 && !TURN_SERVERS.some((s) => String(s.username || '').startsWith('PASTE_'));
+  return TURN_SERVERS.length > 0;
 }
