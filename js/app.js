@@ -628,7 +628,7 @@ function renderRoundStart() {
       const mm = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
       const ss = String(totalSeconds % 60).padStart(2, '0');
       timerEl.textContent = `${mm}:${ss}`;
-      const critical = totalSeconds <= 10;
+      const critical = totalSeconds <= 15;
       timerBox.classList.toggle('critical', critical);
       if (critical && totalSeconds > 0 && tickedCriticalSecond !== totalSeconds) {
         tickedCriticalSecond = totalSeconds;
