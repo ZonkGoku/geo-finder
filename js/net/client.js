@@ -1,9 +1,28 @@
 import { bus, state, freshScoreEntry, HP_START } from '../core/state.js';
 import { MSG, makeMessage } from './protocol.js';
 
+// Ein offener WebRTC-DataChannel ("conn.open === true") garantiert NICHT,
+// dass ein einzelnes send() auch wirklich ankommt - gerade ueber eine per
+// TURN gerelayte Verbindung kann ein Paket stillschweigend verloren gehen,
+// ohne dass send() wirft oder 'error'/'close' feuert. Bisher gab es fuer
+// SUBMIT_GUESS keinerlei Bestaetigung: ging genau dieses eine Paket
+// verloren, wartete die Runde ewig auf einen Tipp, der laengst "gesendet"
+// war - ohne jeden Fehler in der Konsole (live gemeldeter Bug: Host konnte
+// tippen, der Tipp eines Mitspielers "kam nie an", Timer lief nur runter).
+// Der Host bestaetigt jeden empfangenen Tipp per PLAYER_GUESSED-Broadcast
+// (der auch an den Absender selbst zurueckgeht) - bleibt diese Bestaetigung
+// aus, wird der Tipp erneut gesendet. _handleGuess() auf Host-Seite ist
+// bereits idempotent (ignoriert einen bereits gezaehlten peerId), erneutes
+// Senden ist also gefahrlos.
+const GUESS_RETRY_MS = 1500;
+const MAX_GUESS_RETRIES = 6;
+
 export class ClientController {
   constructor(peerManager) {
     this.pm = peerManager;
+    this._pendingGuessPayload = null;
+    this._guessRetryCount = 0;
+    this._guessRetryTimer = null;
     // Unsubscribe-Funktionen sammeln, damit destroy() sie beim Verlassen
     // (z. B. ueber "Spiel verlassen") wieder abmelden kann - siehe
     // HostController.destroy() fuer den gleichen Grund.
@@ -14,6 +33,7 @@ export class ClientController {
   }
 
   destroy() {
+    clearTimeout(this._guessRetryTimer);
     this._unsubscribers.forEach((unsubscribe) => unsubscribe());
   }
 
@@ -30,9 +50,29 @@ export class ClientController {
 
   submitGuess(lat, lng) {
     state.round.myGuess = { lat, lng };
-    this.pm.sendToHost(
-      makeMessage(MSG.SUBMIT_GUESS, { roundIndex: state.round.index, lat, lng, submittedAtMs: Date.now() }, state.self.id)
-    );
+    this._pendingGuessPayload = { roundIndex: state.round.index, lat, lng, submittedAtMs: Date.now() };
+    this._guessRetryCount = 0;
+    this._sendPendingGuess();
+  }
+
+  _sendPendingGuess() {
+    if (!this._pendingGuessPayload) return;
+    this.pm.sendToHost(makeMessage(MSG.SUBMIT_GUESS, this._pendingGuessPayload, state.self.id));
+    if (!this.pm.hostConnection?.open) {
+      console.warn('[GeoFinder] Verbindung zum Host ist beim Senden des Tipps nicht offen.');
+    }
+    clearTimeout(this._guessRetryTimer);
+    if (this._guessRetryCount >= MAX_GUESS_RETRIES) {
+      bus.emit('ui:guess-unconfirmed');
+      return;
+    }
+    this._guessRetryCount++;
+    this._guessRetryTimer = setTimeout(() => this._sendPendingGuess(), GUESS_RETRY_MS);
+  }
+
+  _clearPendingGuess() {
+    this._pendingGuessPayload = null;
+    clearTimeout(this._guessRetryTimer);
   }
 
   measureClockOffset() {
@@ -100,13 +140,20 @@ export class ClientController {
           guessedPlayerIds: new Set(),
           myGuess: null,
         };
+        this._clearPendingGuess(); // eine neue Runde macht einen Retry fuer die alte sinnlos
         bus.emit('ui:round-started');
         break;
       case MSG.PLAYER_GUESSED:
         state.round.guessedPlayerIds.add(message.payload.playerId);
+        // Bestaetigung, dass der eigene Tipp tatsaechlich angekommen ist -
+        // der Host schickt PLAYER_GUESSED an alle, auch an den Absender
+        // selbst zurueck. Erst hier den Retry-Timer stoppen, nicht schon
+        // beim lokalen Klick (siehe Kommentar oben an MAX_GUESS_RETRIES).
+        if (message.payload.playerId === state.self.id) this._clearPendingGuess();
         bus.emit('ui:player-guessed', { peerId: message.payload.playerId });
         break;
       case MSG.ROUND_RESULT: {
+        this._clearPendingGuess(); // Runde ist ohnehin vorbei, egal ob die Bestaetigung ankam
         state.round.actual = { lat: message.payload.actualLat, lng: message.payload.actualLng };
         const actualMeta = {
           name: message.payload.actualName ?? null,

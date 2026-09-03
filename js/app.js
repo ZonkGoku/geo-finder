@@ -1212,6 +1212,9 @@ function wireBusEvents() {
   bus.on('net:error', (err) => {
     console.error('Netzwerkfehler', err);
   });
+  bus.on('ui:guess-unconfirmed', () => {
+    showToast('Tipp konnte nicht bestätigt werden — bitte Verbindung prüfen.');
+  });
 }
 
 async function boot() {
