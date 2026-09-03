@@ -138,6 +138,7 @@ button{ font-family:inherit; color:inherit; }
 .chrome-icon-btn{ background:none; border:none; color:var(--text-dim); cursor:pointer; padding:2px; display:flex; align-items:center; }
 .chrome-icon-btn:hover{ color:var(--text); }
 .chrome-icon-btn svg{ width:15px; height:15px; }
+.chrome-icon-btn--leave:hover{ color:var(--danger); }
 
 .device-screen{ position:relative; min-height:600px; }
 .screen{ display:none; padding:36px; min-height:600px; }
@@ -616,17 +617,16 @@ button{ font-family:inherit; color:inherit; }
 }
 .mapset-empty{ color:var(--text-dim); font-size:0.86rem; text-align:center; padding:24px 0; }
 
-/* --- Kartenpaket-Hero-Cards: horizontale Netflix/PS-Style-Karussell-Leiste
-   statt statischem Grid, echte Foto-Cover (Picsum, seeded pro Paket-ID)
-   statt der alten wiederholten Kategorie-Hausicons. --- */
+/* --- Kartenpaket-Hero-Cards: umbrechendes Grid statt horizontalem
+   Scroll-Slider (Nutzerfeedback: das Karussell war unklar/unbeliebt), echte
+   Foto-Cover (Picsum, seeded pro Paket-ID) statt der alten wiederholten
+   Kategorie-Hausicons. --- */
 .mapset-grid{
-  display:flex; gap:16px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x proximity;
-  padding:4px 4px 12px; margin:0 -4px; scrollbar-width:thin;
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:14px;
 }
 .mapset-card{
   position:relative; text-align:left; padding:0; border-radius:14px; border:1px solid var(--line);
   background:var(--surface); color:var(--text); cursor:pointer; overflow:hidden;
-  flex:0 0 232px; scroll-snap-align:start;
   transition:transform .25s cubic-bezier(.2,.8,.2,1), border-color .2s ease, box-shadow .2s ease;
 }
 .mapset-card:hover:not(:disabled){

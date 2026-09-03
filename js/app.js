@@ -111,6 +111,26 @@ function initThemeToggle() {
 
 // ---------------------------------------------------------------- sound toggle
 
+// Bislang gab es nur auf dem Leaderboard einen Weg zurueck ins Menue -
+// dieser Button in der Chrome-Leiste ist ueberall sichtbar, wo .device
+// aktiv ist (Lobby/HUD/Ergebnis/Leaderboard), und erlaubt jederzeit einen
+// Abbruch. resetToMenu() raeumt PeerManager/Controller aureichend auf -
+// fuer den Host bedeutet das Verlassen fuer Mitspieler denselben
+// "Host getrennt"-Zustand, den es bei einem echten Verbindungsabbruch auch
+// schon gibt (bus.on('ui:host-disconnected', ...)).
+function initLeaveGameButton() {
+  el('btn-leave-game').addEventListener('click', () => {
+    if (!state.role) {
+      resetToMenu();
+      return;
+    }
+    if (confirm('Spiel wirklich verlassen und zurück zum Menü?')) {
+      sound.playClick();
+      resetToMenu();
+    }
+  });
+}
+
 function initSoundToggle() {
   const btn = el('btn-sound-toggle');
   const onIcon = el('sound-icon-on');
@@ -342,11 +362,21 @@ function renderMapSetGrid() {
         <span class="mapset-card-desc">${escapeHtml(entry.description)}</span>
       </div>
     `;
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
       if (!isHost || !entry.available) return;
       sound.playClick();
       controller.updateSettings({ mapSetId: entry.id });
       renderMapSetGrid();
+
+      // Klick aufs Cover-Bild (wo der Play-Pfeil sitzt) startet direkt -
+      // vorher war der Pfeil rein dekorativ und tat nichts eigenes.
+      if (e.target.closest('.mapset-card-cover')) {
+        if (!canStartGame()) {
+          showToast('Warte, bis alle Mitspieler bereit sind, bevor das Spiel gestartet werden kann.');
+        } else if (confirm(`Jetzt mit „${entry.name}“ starten?`)) {
+          startGameFromLobby();
+        }
+      }
     });
     grid.appendChild(card);
   }
@@ -444,6 +474,16 @@ function renderLobby() {
   }
 
   updateConnectionBanner();
+}
+
+// Gleiche Bedingung wie fuer #btn-start-game in renderLobby() - der
+// Direktstart per Kartenpaket-Cover-Klick darf nicht strenger/laxer sein
+// als der normale "Match starten"-Button.
+function canStartGame() {
+  const isSolo = !state.roomCode;
+  if (isSolo) return true;
+  const others = [...state.players.values()].filter((p) => !p.isHost);
+  return others.length > 0 && others.every((p) => p.ready && p.connected);
 }
 
 async function startGameFromLobby() {
@@ -1062,6 +1102,11 @@ function resetToMenu() {
   el('connection-banner').classList.add('hidden');
   panoViewer?.destroy();
   panoViewer = null;
+  // Raeumt pendente Runden-/Leave-Timer und Bus-Listener auf - wichtig seit
+  // "Spiel verlassen" auch mitten in einer laufenden Runde moeglich ist,
+  // sonst wuerde z. B. ein noch laufender Rundentimer spaeter auf einen
+  // bereits zerstoerten PeerManager broadcasten.
+  controller?.destroy?.();
   controller = null;
   activeMapSetDetail = null;
   peerManager?.destroy();
@@ -1173,6 +1218,7 @@ async function boot() {
   initProfileUI();
   initThemeToggle();
   initSoundToggle();
+  initLeaveGameButton();
   initVisibilityWatch();
   wireMenuControls();
   wireLobbyControls();

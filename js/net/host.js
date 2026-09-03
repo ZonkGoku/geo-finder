@@ -36,9 +36,25 @@ export class HostController {
     this.leaveTimers = new Map();
     this.pendingNames = new Map(); // peerId -> {name, color} vor Accept
 
-    bus.on('net:peer-connected', () => {});
-    bus.on('net:peer-disconnected', ({ peerId }) => this._onPeerLost(peerId));
-    bus.on('net:message', ({ peerId, message }) => this._onMessage(peerId, message));
+    // bus.on() gibt eine Unsubscribe-Funktion zurueck - gesammelt, damit
+    // destroy() sie beim Verlassen eines Spiels (z. B. ueber den neuen
+    // "Spiel verlassen"-Button, auch mitten in einer laufenden Runde)
+    // wieder abmelden kann. Ohne das haetten mehrere Solo-/Host-Durchgaenge
+    // in derselben Tab-Session immer mehr tote HostController angesammelt,
+    // die trotzdem noch auf jede net:message reagieren.
+    this._unsubscribers = [
+      bus.on('net:peer-connected', () => {}),
+      bus.on('net:peer-disconnected', ({ peerId }) => this._onPeerLost(peerId)),
+      bus.on('net:message', ({ peerId, message }) => this._onMessage(peerId, message)),
+    ];
+  }
+
+  destroy() {
+    clearTimeout(this.roundTimer);
+    clearTimeout(this.nextRoundTimer);
+    for (const timer of this.leaveTimers.values()) clearTimeout(timer);
+    this.leaveTimers.clear();
+    this._unsubscribers.forEach((unsubscribe) => unsubscribe());
   }
 
   registerSelfAsHost(hostId, name, color) {

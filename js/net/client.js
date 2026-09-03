@@ -4,8 +4,17 @@ import { MSG, makeMessage } from './protocol.js';
 export class ClientController {
   constructor(peerManager) {
     this.pm = peerManager;
-    bus.on('net:message', ({ message }) => this._onMessage(message));
-    bus.on('net:host-disconnected', () => bus.emit('ui:host-disconnected'));
+    // Unsubscribe-Funktionen sammeln, damit destroy() sie beim Verlassen
+    // (z. B. ueber "Spiel verlassen") wieder abmelden kann - siehe
+    // HostController.destroy() fuer den gleichen Grund.
+    this._unsubscribers = [
+      bus.on('net:message', ({ message }) => this._onMessage(message)),
+      bus.on('net:host-disconnected', () => bus.emit('ui:host-disconnected')),
+    ];
+  }
+
+  destroy() {
+    this._unsubscribers.forEach((unsubscribe) => unsubscribe());
   }
 
   join(name, color) {
