@@ -2,7 +2,8 @@ import { MAPILLARY_ACCESS_TOKEN } from '../config.js';
 
 const API_BASE = 'https://graph.mapillary.com';
 const REQUEST_TIMEOUT_MS = 8000;
-const LIST_LIMIT = 30;
+const LIST_LIMIT = 10;
+const MAX_DETAIL_ATTEMPTS = 5;
 
 // Mapillary lehnt bbox-Anfragen über 0.010 Quadratgrad ab (per Live-Test
 // bestätigt: "Bounding box area is too large. Maximum allowed area is
@@ -60,47 +61,63 @@ async function fetchJson(url, label) {
   return json;
 }
 
+function shuffle(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 /**
  * Fragt echte Mapillary-Aufnahmen in einem kleinen Gebiet ab und liefert ein
  * einzelnes, zufällig gewähltes 360°-Bild (is_pano=true) zurück - oder null,
  * wenn dort keine sphärischen Aufnahmen vorliegen.
  *
- * Zweistufig, weil Mapillary eine Listenabfrage mit `thumb_2048_url` für
- * viele Bilder gleichzeitig ablehnt ("Please reduce the amount of data
- * you're asking for" - live bestätigt): zuerst nur guenstige Felder fuer
- * die Liste holen, dann die Bild-URL nur fuer das eine gewaehlte Bild.
+ * Die Listenabfrage fragt bewusst nur `id` ab (kein `is_pano`, kein
+ * `thumb_2048_url`) - jede bisher probierte Feldkombination loeste live
+ * denselben "reduce the amount of data"-Fehler aus, auch bei kleinstem
+ * bbox und limit=10, was eher auf ein Konto-/Token-Kontingent als auf zu
+ * "teure" Felder hindeutet. `is_pano` wird stattdessen pro Bild einzeln in
+ * der Detailabfrage geprueft (mehrere Kandidaten-IDs werden probiert, bis
+ * eine spaerische Aufnahme dabei ist oder die Region aufgegeben wird).
  */
 export async function fetchPanoramaForRegion(region) {
   const [west, south, east, north] = bboxFromPoint(region.lat, region.lng, region.radiusM || 400);
   const listParams = new URLSearchParams({
     access_token: MAPILLARY_ACCESS_TOKEN,
-    fields: 'id,is_pano',
+    fields: 'id',
     bbox: `${west},${south},${east},${north}`,
     limit: String(LIST_LIMIT),
   });
 
   const listJson = await fetchJson(`${API_BASE}/images?${listParams.toString()}`, region.name);
-  const panoIds = (listJson?.data || []).filter((img) => img.is_pano).map((img) => img.id);
-  if (panoIds.length === 0) return null;
+  const ids = shuffle((listJson?.data || []).map((img) => img.id));
+  if (ids.length === 0) return null;
 
-  const chosenId = panoIds[Math.floor(Math.random() * panoIds.length)];
   const detailParams = new URLSearchParams({
     access_token: MAPILLARY_ACCESS_TOKEN,
-    fields: 'id,geometry,thumb_2048_url',
+    fields: 'id,is_pano,geometry,thumb_2048_url',
   });
-  const detail = await fetchJson(`${API_BASE}/${chosenId}?${detailParams.toString()}`, region.name);
-  if (!detail?.thumb_2048_url) return null;
 
-  const [lng, lat] = detail.geometry?.coordinates || [region.lng, region.lat];
+  for (const [index, id] of ids.slice(0, MAX_DETAIL_ATTEMPTS).entries()) {
+    if (index > 0) await new Promise((r) => setTimeout(r, 350));
+    const detail = await fetchJson(`${API_BASE}/${id}?${detailParams.toString()}`, region.name);
+    if (!detail?.is_pano || !detail?.thumb_2048_url) continue;
 
-  return {
-    id: `mapillary-${detail.id}`,
-    name: region.name,
-    lat,
-    lng,
-    panoramaUrl: detail.thumb_2048_url,
-    attribution: 'Mapillary-Mitwirkende',
-    attributionUrl: 'https://www.mapillary.com/',
-    coordSource: 'mapillary-live',
-  };
+    const [lng, lat] = detail.geometry?.coordinates || [region.lng, region.lat];
+    return {
+      id: `mapillary-${detail.id}`,
+      name: region.name,
+      lat,
+      lng,
+      panoramaUrl: detail.thumb_2048_url,
+      attribution: 'Mapillary-Mitwirkende',
+      attributionUrl: 'https://www.mapillary.com/',
+      coordSource: 'mapillary-live',
+    };
+  }
+
+  return null;
 }
