@@ -45,12 +45,20 @@ export function computeMapSetBounds(mapSet) {
   ];
 }
 
-// Harte Obergrenze fuer einzelne Region-Abrufversuche ueber alle Wellen
-// hinweg - verhindert eine Endlosschleife, falls die Mapillary-API generell
-// nicht erreichbar ist, waehrend trotzdem genug Spielraum bleibt, um auch
-// bei mehreren fehlgeschlagenen Regionen noch auf die gewuenschte
-// Rundenzahl zu kommen.
-const MAX_RESOLVE_ATTEMPTS = 20;
+// Obergrenze fuer einzelne Region-Abrufversuche ueber alle Wellen hinweg -
+// verhindert eine Endlosschleife, falls die Mapillary-API generell nicht
+// erreichbar ist. Ein fixer Wert (urspruenglich 20) reichte bei groesseren
+// Kartenpaketen nicht: Hamburg hat z. B. 48 Regionen, aber viele davon haben
+// live keine Mapillary-Abdeckung im engen 50m-Radius - bei 10 gewuenschten
+// Runden brach das Budget ab, bevor der 48er-Pool ueberhaupt einmal ganz
+// durchprobiert war (live bestaetigt: "RUNDE 01 / 03" trotz 10 gewaehlter
+// Runden). Das Budget skaliert daher mit der Poolgroesse (grob 3 Versuche
+// pro Region), bleibt aber nach oben gedeckelt.
+const MIN_RESOLVE_ATTEMPTS = 24;
+const MAX_RESOLVE_ATTEMPTS_CAP = 90;
+function resolveAttemptBudget(regionCount) {
+  return Math.min(MAX_RESOLVE_ATTEMPTS_CAP, Math.max(MIN_RESOLVE_ATTEMPTS, regionCount * 3));
+}
 
 /**
  * Liefert bis zu roundCount Runden-Orte fuer ein Kartenpaket. Bei
@@ -83,13 +91,14 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
     // mapillary-source.js) - Wellen von Parallel-Anfragen bleiben also
     // schnell UND robust.
     const pool = pickUniqueLocations(mapSet.regions, mapSet.regions.length, seed);
+    const resolveAttempts = resolveAttemptBudget(pool.length);
     const resolved = [];
     let attempts = 0;
     let cursor = 0;
 
-    while (resolved.length < roundCount && attempts < MAX_RESOLVE_ATTEMPTS) {
+    while (resolved.length < roundCount && attempts < resolveAttempts) {
       const stillNeeded = roundCount - resolved.length;
-      const attemptsLeft = MAX_RESOLVE_ATTEMPTS - attempts;
+      const attemptsLeft = resolveAttempts - attempts;
       const waveSize = Math.min(stillNeeded, attemptsLeft, pool.length);
       if (waveSize <= 0) break;
 
