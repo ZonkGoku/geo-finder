@@ -6,6 +6,16 @@
 <title>GeoFinder — 360°-Multiplayer</title>
 <meta name="description" content="GeoGuessr-artiges 360°-Multiplayer für bis zu 6 Spieler, rein statisch, P2P über WebRTC.">
 <link rel="icon" href="data:,">
+<script>
+  // Vor dem ersten Render setzen, sonst blitzt kurz das falsche Theme auf
+  // (localStorage-Wahl hat Vorrang vor der Systemeinstellung).
+  (function () {
+    var stored = null;
+    try { stored = localStorage.getItem('geofinder-theme'); } catch (e) {}
+    var theme = stored || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -32,7 +42,11 @@
         <span id="chrome-status">Nicht verbunden</span>
       </div>
       <div class="chrome-right">
-        <button class="sound-toggle" id="btn-sound-toggle" aria-label="Sound an/aus" title="Sound an/aus">
+        <button class="chrome-icon-btn" id="btn-theme-toggle" aria-label="Hell-/Dunkelmodus" title="Hell-/Dunkelmodus">
+          <svg id="theme-icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5z"/></svg>
+          <svg id="theme-icon-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" hidden><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>
+        </button>
+        <button class="chrome-icon-btn" id="btn-sound-toggle" aria-label="Sound an/aus" title="Sound an/aus">
           <svg id="sound-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a9 9 0 0 1 0 12"/></svg>
           <svg id="sound-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" hidden><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>
         </button>

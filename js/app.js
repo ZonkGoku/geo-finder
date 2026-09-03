@@ -77,6 +77,36 @@ function getName() {
   return name || 'Spieler';
 }
 
+// ---------------------------------------------------------------- theme toggle
+
+const THEME_KEY = 'geofinder-theme';
+
+function initThemeToggle() {
+  const btn = el('btn-theme-toggle');
+  const darkIcon = el('theme-icon-dark');
+  const lightIcon = el('theme-icon-light');
+  const sync = () => {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    // .hidden=bool reflektiert bei <svg>-Elementen in manchen Browsern nicht
+    // zuverlaessig auf das DOM-Attribut - toggleAttribute() umgeht das.
+    darkIcon.toggleAttribute('hidden', isLight);
+    lightIcon.toggleAttribute('hidden', !isLight);
+    btn.title = isLight ? 'Zu Dunkelmodus wechseln' : 'Zu Hellmodus wechseln';
+  };
+  sync();
+  btn.addEventListener('click', () => {
+    sound.playClick();
+    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch {
+      /* Storage nicht verfuegbar (z. B. privater Modus) - Wahl gilt nur fuer diese Sitzung. */
+    }
+    sync();
+  });
+}
+
 // ---------------------------------------------------------------- sound toggle
 
 function initSoundToggle() {
@@ -85,8 +115,10 @@ function initSoundToggle() {
   const offIcon = el('sound-icon-off');
   const sync = () => {
     const muted = sound.isMuted();
-    onIcon.hidden = muted;
-    offIcon.hidden = !muted;
+    // siehe initThemeToggle(): .hidden=bool reflektiert bei <svg> nicht
+    // zuverlaessig auf das DOM-Attribut.
+    onIcon.toggleAttribute('hidden', muted);
+    offIcon.toggleAttribute('hidden', !muted);
   };
   sync();
   btn.addEventListener('click', () => {
@@ -1055,6 +1087,7 @@ function wireBusEvents() {
 
 async function boot() {
   initProfileUI();
+  initThemeToggle();
   initSoundToggle();
   initVisibilityWatch();
   wireMenuControls();

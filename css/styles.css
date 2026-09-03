@@ -16,6 +16,23 @@
   --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
 }
 
+/* Hellmodus: nur die Menue-/Lobby-/Leaderboard-Oberflaeche (die "App-Chrome").
+   Das In-Game-HUD (#screen-hud) liegt ueber echten Panorama-Fotos und bleibt
+   bewusst immer dunkel - siehe die hartkodierten rgba(10,15,26,...)-Werte
+   dort, die von diesem Block unberuehrt bleiben. Akzentfarben (--accent,
+   --accent-2, --danger) sind Markenfarben und aendern sich nicht mit dem
+   Theme. */
+:root[data-theme="light"]{
+  --ink: #f6f7f5;
+  --surface: #ffffff;
+  --surface-raised: #f2f3f5;
+  --surface-hi: #e7e9ed;
+  --line: #dde1e7;
+  --text: #14181f;
+  --text-dim: #5c6472;
+  --text-faint: #8891a0;
+}
+
 *{ box-sizing:border-box; }
 html,body{ margin:0; padding:0; }
 
@@ -31,6 +48,13 @@ body{
   display:flex;
   justify-content:center;
   padding: 40px 20px 56px;
+}
+:root[data-theme="light"] body{
+  background:
+    radial-gradient(ellipse 900px 600px at 50% -10%, rgba(255,122,51,0.07) 0%, transparent 60%),
+    repeating-linear-gradient(0deg, rgba(20,24,31,0.04) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(90deg, rgba(20,24,31,0.04) 0 1px, transparent 1px 48px),
+    var(--ink);
 }
 
 h1,h2,h3{ font-family: var(--font-display); font-weight:600; text-wrap:balance; margin:0; }
@@ -63,9 +87,9 @@ button{ font-family:inherit; color:inherit; }
 .chrome-left{ display:flex; align-items:center; gap:8px; }
 .chrome-left svg{ width:14px; height:14px; color:var(--accent-2); }
 .chrome-right{ display:flex; align-items:center; gap:12px; }
-.sound-toggle{ background:none; border:none; color:var(--text-dim); cursor:pointer; padding:2px; display:flex; align-items:center; }
-.sound-toggle:hover{ color:var(--text); }
-.sound-toggle svg{ width:15px; height:15px; }
+.chrome-icon-btn{ background:none; border:none; color:var(--text-dim); cursor:pointer; padding:2px; display:flex; align-items:center; }
+.chrome-icon-btn:hover{ color:var(--text); }
+.chrome-icon-btn svg{ width:15px; height:15px; }
 
 .device-screen{ position:relative; min-height:600px; }
 .screen{ display:none; padding:36px; min-height:600px; }
@@ -167,10 +191,12 @@ button{ font-family:inherit; color:inherit; }
 .minimap-wrap{ position:absolute; right:24px; bottom:24px; z-index:3; display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
 .minimap-scope{
   font-family:var(--font-body); font-size:0.7rem; font-weight:600; letter-spacing:0.02em; color:#fff;
-  background:rgba(10,15,26,0.72); border:1px solid var(--line); border-radius:999px; padding:5px 12px;
+  background:rgba(10,15,26,0.72); border:1px solid rgba(255,255,255,0.14); border-radius:999px; padding:5px 12px;
 }
+/* HUD-Karte liegt ueber echten Fotos und bleibt in beiden Themes dunkel -
+   deshalb hier bewusst Hex-Werte statt var(--surface)/var(--line). */
 .minimap{
-  position:relative; width:140px; height:140px; border-radius:16px; background:var(--surface); border:1px solid var(--line);
+  position:relative; width:140px; height:140px; border-radius:16px; background:#141925; border:1px solid #232b3d;
   overflow:hidden;
   transition:width .32s cubic-bezier(.34,1.4,.4,1), height .32s cubic-bezier(.34,1.4,.4,1),
              box-shadow .2s ease, border-color .2s ease;
@@ -201,6 +227,10 @@ button{ font-family:inherit; color:inherit; }
 .minimap.expanded .minimap-close-btn{ display:flex; }
 
 .leaflet-host{ width:100%; height:100%; background:var(--surface); }
+/* Die Minimap sitzt im HUD ueber echten Fotos und bleibt in beiden Themes
+   dunkel; der Ergebnis-Karten-Host (.radar-big) folgt dagegen normal dem
+   Theme wie der Rest der App-Chrome. */
+.minimap .leaflet-host{ background:#141925; }
 .minimap:not(.expanded) .leaflet-host{ pointer-events:none; }
 
 /* Leaflet pin markers (shared HUD/result look) */
