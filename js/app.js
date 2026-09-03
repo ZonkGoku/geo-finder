@@ -28,6 +28,8 @@ let hudTimerInterval = null;
 let resultCountdownInterval = null;
 let hintRevealed = false;
 let lastTabSwitchSentAt = 0;
+let mapSetFilterTag = 'alle';
+let mapSetSearchTerm = '';
 
 const el = (id) => document.getElementById(id);
 
@@ -282,26 +284,57 @@ function updateChrome(statusText, peerId) {
 
 async function enterLobby() {
   await ensureMapSetIndex();
+  // Screen zuerst sichtbar machen, DANACH rendern: renderChoiceRow() misst
+  // offsetLeft/offsetWidth der Buttons fuer den gleitenden Thumb - auf einem
+  // noch display:none-Screen liefert das immer 0.
+  showScreen('lobby');
   renderMapSetGrid();
   renderLobby();
-  showScreen('lobby');
+}
+
+const MAPSET_CATEGORY_ICONS = {
+  staedte: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V9l5-4v16M13 21V5l5 3v13M4 21h16M9 12h.01M9 16h.01M13 9h.01M13 13h.01M13 17h.01"/></svg>',
+  kultur: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21h16M5 21V9M9 21V9M15 21V9M19 21V9M3 9l9-5 9 5M4 9h16"/></svg>',
+  natur: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20l6-10 4 6 2-3 6 7H3z"/><circle cx="17" cy="6" r="2"/></svg>',
+  default: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 4 6 4 9s-1.5 6.3-4 9c-2.5-2.7-4-6-4-9s1.5-6.3 4-9z"/></svg>',
+};
+const MAPSET_PLAY_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+
+function getFilteredMapSets() {
+  const term = mapSetSearchTerm.trim().toLowerCase();
+  return mapSetIndex.filter((entry) => {
+    const matchesTag = mapSetFilterTag === 'alle' || entry.tag === mapSetFilterTag;
+    const matchesTerm = !term || entry.name.toLowerCase().includes(term) || entry.description.toLowerCase().includes(term);
+    return matchesTag && matchesTerm;
+  });
 }
 
 function renderMapSetGrid() {
   const grid = el('mapset-grid');
   grid.innerHTML = '';
   const isHost = state.role === 'host';
-  for (const entry of mapSetIndex) {
+  const filtered = getFilteredMapSets();
+  el('mapset-empty').classList.toggle('hidden', filtered.length > 0);
+
+  for (const entry of filtered) {
     const card = document.createElement('button');
     card.type = 'button';
     card.className = `mapset-card${entry.id === state.settings.mapSetId ? ' selected' : ''}`;
     card.disabled = !isHost || !entry.available;
     const badgeClass = entry.available ? 'ready' : 'needs-token';
     const badgeText = entry.available ? 'Bereit' : 'Token nötig';
+    const coverClass = entry.tag ? `cover-${entry.tag}` : 'cover-default';
+    const icon = MAPSET_CATEGORY_ICONS[entry.tag] || MAPSET_CATEGORY_ICONS.default;
     card.innerHTML = `
-      <span class="mapset-card-badge ${badgeClass}">${badgeText}</span>
-      <span class="mapset-card-name">${escapeHtml(entry.name)}</span>
-      <span class="mapset-card-desc">${escapeHtml(entry.description)}</span>
+      <div class="mapset-card-cover ${coverClass}">
+        ${icon}
+        <div class="mapset-card-play">${MAPSET_PLAY_ICON}</div>
+      </div>
+      <div class="mapset-card-body">
+        <span class="mapset-card-badge ${badgeClass}">${badgeText}</span>
+        <span class="mapset-card-name">${escapeHtml(entry.name)}</span>
+        <span class="mapset-card-desc">${escapeHtml(entry.description)}</span>
+      </div>
     `;
     card.addEventListener('click', () => {
       if (!isHost || !entry.available) return;
@@ -316,12 +349,25 @@ function renderMapSetGrid() {
 function renderChoiceRow(rowId, currentValue) {
   const row = el(rowId);
   const isHost = state.role === 'host';
+  let selectedBtn = null;
   row.querySelectorAll('button').forEach((btn) => {
     const raw = btn.dataset.value;
     const value = raw === 'null' ? null : Number.isNaN(Number(raw)) ? raw : Number(raw);
-    btn.classList.toggle('selected', value === currentValue);
+    const isSelected = value === currentValue;
+    btn.classList.toggle('selected', isSelected);
     btn.disabled = !isHost;
+    if (isSelected) selectedBtn = btn;
   });
+
+  // Gleitenden Thumb hinter den ausgewaehlten Button positionieren.
+  const thumb = row.querySelector('.choice-thumb');
+  if (thumb && selectedBtn) {
+    thumb.style.opacity = '1';
+    thumb.style.transform = `translateX(${selectedBtn.offsetLeft - 3}px)`;
+    thumb.style.width = `${selectedBtn.offsetWidth}px`;
+  } else if (thumb) {
+    thumb.style.opacity = '0';
+  }
 }
 
 function renderLobby() {
@@ -448,6 +494,19 @@ function wireLobbyControls() {
   wireChoiceRow('choice-duration', 'timeLimitMs', (v) => (v === 'null' ? null : Number(v)));
   wireChoiceRow('choice-mode', 'mode', (v) => v);
   wireChoiceRow('choice-modifier', 'modifier', (v) => v);
+
+  el('mapset-search-input').addEventListener('input', (e) => {
+    mapSetSearchTerm = e.target.value;
+    renderMapSetGrid();
+  });
+  el('mapset-chips').querySelectorAll('.mapset-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      sound.playClick();
+      mapSetFilterTag = chip.dataset.tag;
+      el('mapset-chips').querySelectorAll('.mapset-chip').forEach((c) => c.classList.toggle('selected', c === chip));
+      renderMapSetGrid();
+    });
+  });
 }
 
 // ---------------------------------------------------------------- hud

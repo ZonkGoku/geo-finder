@@ -157,6 +157,7 @@
             <div class="setting-group">
               <div class="setting-group-label">Runden</div>
               <div class="choice-row" id="choice-rounds" data-setting="roundCount">
+                <div class="choice-thumb" aria-hidden="true"></div>
                 <button type="button" data-value="3">3</button>
                 <button type="button" data-value="5">5</button>
                 <button type="button" data-value="10">10</button>
@@ -166,6 +167,7 @@
             <div class="setting-group">
               <div class="setting-group-label">Rundendauer</div>
               <div class="choice-row" id="choice-duration" data-setting="timeLimitMs">
+                <div class="choice-thumb" aria-hidden="true"></div>
                 <button type="button" data-value="30000">30s</button>
                 <button type="button" data-value="60000">60s</button>
                 <button type="button" data-value="90000">90s</button>
@@ -177,6 +179,7 @@
             <div class="setting-group">
               <div class="setting-group-label">Modus</div>
               <div class="choice-row" id="choice-mode" data-setting="mode">
+                <div class="choice-thumb" aria-hidden="true"></div>
                 <button type="button" data-value="points">Punkte-Duell</button>
                 <button type="button" data-value="hp">HP-Duell (6000 HP)</button>
                 <button type="button" data-value="country-streak">Country-Streak</button>
@@ -186,6 +189,7 @@
             <div class="setting-group">
               <div class="setting-group-label">Panorama-Steuerung</div>
               <div class="choice-row" id="choice-modifier" data-setting="modifier">
+                <div class="choice-thumb" aria-hidden="true"></div>
                 <button type="button" data-value="free">Frei (Zoom erlaubt)</button>
                 <button type="button" data-value="no-zoom">Zoom gesperrt</button>
               </div>
@@ -195,12 +199,28 @@
 
         <div class="panel" id="lobby-mapset-panel" style="margin-top:20px;">
           <h3>Kartenpaket</h3>
+          <div class="mapset-toolbar">
+            <div class="mapset-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="mapset-search-input" placeholder="Kartenpaket suchen…" autocomplete="off">
+            </div>
+            <div class="mapset-chips" id="mapset-chips">
+              <button type="button" class="mapset-chip selected" data-tag="alle">Alle</button>
+              <button type="button" class="mapset-chip" data-tag="staedte">St&auml;dte</button>
+              <button type="button" class="mapset-chip" data-tag="kultur">Kultur</button>
+              <button type="button" class="mapset-chip" data-tag="natur">Natur</button>
+            </div>
+          </div>
           <div class="mapset-grid" id="mapset-grid"></div>
+          <p class="mapset-empty hidden" id="mapset-empty">Keine Kartenpakete gefunden.</p>
         </div>
 
         <div class="lobby-cta">
           <button class="btn btn-primary" id="btn-ready-toggle">Bereit</button>
-          <button class="btn btn-primary" id="btn-start-game" hidden>Spiel starten</button>
+          <button class="btn btn-primary cta-mega" id="btn-start-game" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+            Match starten
+          </button>
           <span class="cta-hint" id="lobby-hint"></span>
         </div>
       </section>

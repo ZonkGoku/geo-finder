@@ -36,12 +36,21 @@
 *{ box-sizing:border-box; }
 html,body{ margin:0; padding:0; }
 
+/* Sanft driftender Gradient-Mesh-Hintergrund statt eines statischen Glows -
+   zwei grosse, weiche Farbflecken wandern langsam per background-position
+   (nativ animierbar, anders als CSS-Custom-Properties in Gradient-Funktionen,
+   die ohne @property nicht sauber interpolieren). Das Punktraster bleibt an
+   Ort und Stelle (letzte beiden Layer, Position unveraendert). */
 body{
-  background:
-    radial-gradient(ellipse 900px 600px at 50% -10%, rgba(255,122,51,0.10) 0%, transparent 60%),
+  background-color: var(--ink);
+  background-image:
+    radial-gradient(640px 520px at 50% 50%, rgba(255,122,51,0.16), transparent 65%),
+    radial-gradient(560px 480px at 50% 50%, rgba(47,230,214,0.12), transparent 65%),
     repeating-linear-gradient(0deg, rgba(151,162,184,0.05) 0 1px, transparent 1px 48px),
-    repeating-linear-gradient(90deg, rgba(151,162,184,0.05) 0 1px, transparent 1px 48px),
-    var(--ink);
+    repeating-linear-gradient(90deg, rgba(151,162,184,0.05) 0 1px, transparent 1px 48px);
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
+  background-position: 18% -6%, 88% 22%, 0 0, 0 0;
+  animation: meshDrift 26s ease-in-out infinite alternate;
   color: var(--text);
   font-family: var(--font-body);
   min-height: 100vh;
@@ -49,12 +58,17 @@ body{
   justify-content:center;
   padding: 40px 20px 56px;
 }
+@keyframes meshDrift{
+  from{ background-position: 18% -6%, 88% 22%, 0 0, 0 0; }
+  to{ background-position: 38% 10%, 64% 42%, 0 0, 0 0; }
+}
+@media (prefers-reduced-motion: reduce){ body{ animation:none; } }
 :root[data-theme="light"] body{
-  background:
-    radial-gradient(ellipse 900px 600px at 50% -10%, rgba(255,122,51,0.07) 0%, transparent 60%),
+  background-image:
+    radial-gradient(640px 520px at 50% 50%, rgba(255,122,51,0.10), transparent 65%),
+    radial-gradient(560px 480px at 50% 50%, rgba(47,230,214,0.09), transparent 65%),
     repeating-linear-gradient(0deg, rgba(20,24,31,0.04) 0 1px, transparent 1px 48px),
-    repeating-linear-gradient(90deg, rgba(20,24,31,0.04) 0 1px, transparent 1px 48px),
-    var(--ink);
+    repeating-linear-gradient(90deg, rgba(20,24,31,0.04) 0 1px, transparent 1px 48px);
 }
 
 h1,h2,h3{ font-family: var(--font-display); font-weight:600; text-wrap:balance; margin:0; }
@@ -75,7 +89,9 @@ button{ font-family:inherit; color:inherit; }
 .kicker{ margin:0; font-size:0.78rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-dim); }
 
 .device{
-  width:100%; max-width:900px; background:var(--surface);
+  width:100%; max-width:900px;
+  background:color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
   border:1px solid var(--line); border-radius:22px; overflow:hidden;
   box-shadow: 0 30px 60px -30px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.02) inset;
 }
@@ -149,7 +165,12 @@ button{ font-family:inherit; color:inherit; }
 .share-row{ display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
 .share-link{ flex:1; min-width:220px; background:var(--surface-raised); border:1px solid var(--line); border-radius:10px; padding:11px 14px; font-family:var(--font-mono); font-size:0.78rem; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .lobby-cols{ display:grid; grid-template-columns:1.1fr 0.9fr; gap:24px; margin-top:28px; }
-.panel{ background:var(--surface-raised); border:1px solid var(--line); border-radius:14px; padding:18px; }
+.panel{
+  background:color-mix(in srgb, var(--surface-raised) 72%, transparent);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--line); border-radius:14px; padding:18px;
+  box-shadow:0 1px 0 0 rgba(255,255,255,0.04) inset;
+}
 .panel h3{ font-size:0.95rem; margin-bottom:14px; }
 .player-row{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); }
 .player-row:last-child{ border-bottom:none; }
@@ -166,6 +187,20 @@ button{ font-family:inherit; color:inherit; }
 .stepper button{ width:24px; height:24px; border-radius:6px; border:1px solid var(--line); background:var(--surface); color:var(--text); cursor:pointer; }
 .lobby-cta{ margin-top:20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
 .cta-hint{ font-size:0.78rem; color:var(--text-dim); }
+
+.cta-mega{
+  padding:16px 32px; font-size:1.02rem; letter-spacing:0.02em; border-radius:14px;
+  display:inline-flex; align-items:center; gap:10px;
+  box-shadow:0 0 0 1px rgba(255,122,51,0.5), 0 14px 34px -10px rgba(255,122,51,0.6);
+  animation:ctaBreathe 2.6s ease-in-out infinite;
+}
+.cta-mega svg{ width:19px; height:19px; }
+.cta-mega:disabled{ animation:none; }
+@keyframes ctaBreathe{
+  0%,100%{ box-shadow:0 0 0 1px rgba(255,122,51,0.5), 0 14px 34px -10px rgba(255,122,51,0.6); transform:scale(1); }
+  50%{ box-shadow:0 0 0 1px rgba(255,122,51,0.7), 0 18px 42px -8px rgba(255,122,51,0.85); transform:scale(1.015); }
+}
+@media (prefers-reduced-motion: reduce){ .cta-mega{ animation:none; } }
 
 /* ===================== HUD ===================== */
 #screen-hud{ padding:0; min-height:600px; position:relative; overflow:hidden; }
@@ -372,28 +407,93 @@ button{ font-family:inherit; color:inherit; }
 .setting-group{ padding:10px 0; border-bottom:1px solid var(--line); }
 .setting-group:last-child{ border-bottom:none; }
 .setting-group-label{ font-size:0.78rem; color:var(--text-dim); margin-bottom:8px; }
-.choice-row{ display:flex; flex-wrap:wrap; gap:6px; }
-.choice-row button{
-  flex:1; min-width:52px; padding:8px 10px; border-radius:8px; border:1px solid var(--line);
-  background:var(--surface); color:var(--text-dim); font-size:0.82rem; font-weight:600; cursor:pointer;
-  font-family:var(--font-mono); transition:border-color .15s ease, color .15s ease, background .15s ease;
+
+/* Segmented Control mit gleitendem Thumb: .choice-thumb wird per JS auf die
+   Position/Breite des ausgewaehlten Buttons gesetzt (renderChoiceRow) und
+   animiert dorthin, statt bei jeder Auswahl neu einzublenden. */
+.choice-row{
+  position:relative; display:flex; flex-wrap:wrap; gap:2px;
+  background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:3px;
 }
-.choice-row button:hover{ border-color:var(--accent-2); color:var(--text); }
-.choice-row button.selected{ background:rgba(255,122,51,0.14); border-color:var(--accent); color:var(--accent); }
+.choice-thumb{
+  position:absolute; top:3px; left:3px; height:calc(100% - 6px); width:0;
+  background:linear-gradient(135deg, var(--accent), var(--accent-2)); border-radius:8px;
+  box-shadow:0 4px 14px -4px rgba(255,122,51,0.55);
+  transition:transform .28s cubic-bezier(.34,1.4,.4,1), width .28s cubic-bezier(.34,1.4,.4,1), opacity .2s ease;
+  opacity:0; pointer-events:none;
+}
+@media (prefers-reduced-motion: reduce){ .choice-thumb{ transition:none; } }
+.choice-row button{
+  position:relative; z-index:1; flex:1; min-width:52px; padding:8px 10px; border-radius:8px; border:1px solid transparent;
+  background:transparent; color:var(--text-dim); font-size:0.82rem; font-weight:600; cursor:pointer;
+  font-family:var(--font-mono); transition:color .2s ease;
+}
+.choice-row button:hover{ color:var(--text); }
+.choice-row button.selected{ color:var(--accent-ink); }
 .choice-row[data-setting="mode"] button.selected,
 .choice-row[data-setting="modifier"] button.selected{ font-family:var(--font-body); }
 .choice-row[data-setting="mode"] button,
 .choice-row[data-setting="modifier"] button{ font-family:var(--font-body); font-size:0.8rem; }
 
-.mapset-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px; }
-.mapset-card{
-  text-align:left; padding:14px; border-radius:12px; border:1px solid var(--line); background:var(--surface);
-  color:var(--text); cursor:pointer; display:flex; flex-direction:column; gap:6px;
-  transition:border-color .15s ease, background .15s ease;
+/* --- Kartenpaket-Toolbar: Suche + Filter-Chips --- */
+.mapset-toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+.mapset-search{
+  display:flex; align-items:center; gap:8px; flex:1; min-width:200px;
+  background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:0 12px;
 }
-.mapset-card:hover{ border-color:var(--accent-2); }
-.mapset-card.selected{ border-color:var(--accent); background:rgba(255,122,51,0.08); }
-.mapset-card:disabled{ opacity:0.5; cursor:not-allowed; }
+.mapset-search svg{ width:15px; height:15px; color:var(--text-faint); flex:none; }
+.mapset-search input{
+  border:none; background:none; color:var(--text); font-family:var(--font-body); font-size:0.86rem;
+  padding:9px 0; width:100%; outline:none;
+}
+.mapset-search input::placeholder{ color:var(--text-faint); }
+.mapset-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+.mapset-chip{
+  padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--surface);
+  color:var(--text-dim); font-size:0.8rem; font-weight:600; cursor:pointer; transition:all .15s ease;
+}
+.mapset-chip:hover{ border-color:var(--accent-2); color:var(--text); }
+.mapset-chip.selected{
+  background:linear-gradient(135deg, var(--accent), var(--accent-2)); border-color:transparent; color:var(--accent-ink);
+}
+.mapset-empty{ color:var(--text-dim); font-size:0.86rem; text-align:center; padding:24px 0; }
+
+/* --- Fancy Kartenpaket-Karten --- */
+.mapset-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:14px; }
+.mapset-card{
+  position:relative; text-align:left; padding:0; border-radius:16px; border:1px solid var(--line);
+  background:var(--surface); color:var(--text); cursor:pointer; overflow:hidden;
+  transition:transform .2s cubic-bezier(.2,.8,.2,1), border-color .2s ease, box-shadow .2s ease;
+}
+.mapset-card:hover:not(:disabled){
+  transform:translateY(-3px) scale(1.015); border-color:var(--accent-2);
+  box-shadow:0 16px 34px -14px rgba(47,230,214,0.45);
+}
+.mapset-card.selected{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 16px 34px -14px rgba(255,122,51,0.55); }
+.mapset-card:disabled{ opacity:0.55; cursor:not-allowed; }
+.mapset-card:disabled:hover{ transform:none; box-shadow:none; }
+
+.mapset-card-cover{
+  position:relative; height:72px; display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.mapset-card-cover svg{ width:30px; height:30px; color:rgba(255,255,255,0.85); position:relative; z-index:1; }
+.mapset-card-cover::after{
+  content:""; position:absolute; inset:0;
+  background:radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.16), transparent 60%);
+}
+.mapset-card-cover.cover-staedte{ background:linear-gradient(135deg, #0f3b45, #0b1f28); }
+.mapset-card-cover.cover-kultur{ background:linear-gradient(135deg, #4a2a12, #241209); }
+.mapset-card-cover.cover-natur{ background:linear-gradient(135deg, #14401f, #0b2313); }
+.mapset-card-cover.cover-default{ background:linear-gradient(135deg, #232b3d, #141925); }
+
+.mapset-card-play{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(11,14,20,0.35); opacity:0; transition:opacity .18s ease;
+}
+.mapset-card-play svg{ width:26px; height:26px; color:#fff; filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+.mapset-card:hover:not(:disabled) .mapset-card-play{ opacity:1; }
+
+.mapset-card-body{ padding:12px 14px 14px; display:flex; flex-direction:column; gap:6px; }
 .mapset-card-name{ font-weight:600; font-size:0.92rem; }
 .mapset-card-desc{ font-size:0.76rem; color:var(--text-dim); line-height:1.4; }
 .mapset-card-badge{ align-self:flex-start; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.06em; padding:2px 7px; border-radius:5px; }
