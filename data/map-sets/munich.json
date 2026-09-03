@@ -1,0 +1,18 @@
+{
+  "id": "munich",
+  "name": "München Spezial",
+  "description": "Live-Straßenbilder aus München (Marienplatz, Englischer Garten, Nymphenburg und mehr) über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 8,
+  "regions": [
+    { "id": "munich-marienplatz", "name": "Marienplatz", "lat": 48.1374, "lng": 11.5755 },
+    { "id": "munich-frauenkirche", "name": "Frauenkirche", "lat": 48.1385, "lng": 11.5733 },
+    { "id": "munich-englischer-garten", "name": "Englischer Garten / Chinesischer Turm", "lat": 48.1600, "lng": 11.6020 },
+    { "id": "munich-nymphenburg", "name": "Schloss Nymphenburg", "lat": 48.1583, "lng": 11.5030 },
+    { "id": "munich-olympiapark", "name": "Olympiapark", "lat": 48.1755, "lng": 11.5468 },
+    { "id": "munich-viktualienmarkt", "name": "Viktualienmarkt", "lat": 48.1351, "lng": 11.5762 },
+    { "id": "munich-odeonsplatz", "name": "Odeonsplatz", "lat": 48.1425, "lng": 11.5773 },
+    { "id": "munich-deutsches-museum", "name": "Deutsches Museum", "lat": 48.1300, "lng": 11.5836 }
+  ]
+}

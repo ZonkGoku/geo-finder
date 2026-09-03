@@ -1,0 +1,18 @@
+{
+  "id": "london",
+  "name": "London Spezial",
+  "description": "Live-Straßenbilder aus London (Westminster, Tower Bridge, Camden und mehr) über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 10,
+  "regions": [
+    { "id": "london-westminster", "name": "Big Ben / Westminster", "lat": 51.5007, "lng": -0.1246 },
+    { "id": "london-tower-bridge", "name": "Tower Bridge", "lat": 51.5055, "lng": -0.0754 },
+    { "id": "london-buckingham-palace", "name": "Buckingham Palace", "lat": 51.5014, "lng": -0.1419 },
+    { "id": "london-piccadilly-circus", "name": "Piccadilly Circus", "lat": 51.5101, "lng": -0.1342 },
+    { "id": "london-st-pauls", "name": "St Paul's Cathedral", "lat": 51.5138, "lng": -0.0984 },
+    { "id": "london-camden-market", "name": "Camden Market", "lat": 51.5416, "lng": -0.1465 },
+    { "id": "london-notting-hill", "name": "Notting Hill / Portobello Road", "lat": 51.5170, "lng": -0.2050 },
+    { "id": "london-greenwich", "name": "Greenwich Observatory", "lat": 51.4769, "lng": -0.0005 }
+  ]
+}

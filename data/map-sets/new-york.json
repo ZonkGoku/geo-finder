@@ -1,0 +1,18 @@
+{
+  "id": "new-york",
+  "name": "New York Spezial",
+  "description": "Live-Straßenbilder aus New York City (Times Square, Central Park, Brooklyn Bridge und mehr) über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 10,
+  "regions": [
+    { "id": "nyc-times-square", "name": "Times Square", "lat": 40.7580, "lng": -73.9855 },
+    { "id": "nyc-central-park", "name": "Central Park / Bethesda Terrace", "lat": 40.7735, "lng": -73.9712 },
+    { "id": "nyc-brooklyn-bridge", "name": "Brooklyn Bridge", "lat": 40.7061, "lng": -73.9969 },
+    { "id": "nyc-battery-park", "name": "Battery Park / Freiheitsstatue-Blick", "lat": 40.7033, "lng": -74.0170 },
+    { "id": "nyc-empire-state", "name": "Empire State Building", "lat": 40.7484, "lng": -73.9857 },
+    { "id": "nyc-wall-street", "name": "Wall Street", "lat": 40.7069, "lng": -74.0113 },
+    { "id": "nyc-soho", "name": "SoHo", "lat": 40.7233, "lng": -74.0030 },
+    { "id": "nyc-williamsburg", "name": "Williamsburg, Brooklyn", "lat": 40.7081, "lng": -73.9571 }
+  ]
+}

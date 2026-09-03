@@ -53,6 +53,33 @@
       "status": "needs-token",
       "source": "mapillary",
       "locationCount": null
+    },
+    {
+      "id": "munich",
+      "file": "munich.json",
+      "name": "München Spezial",
+      "description": "Live-Straßenbilder aus München über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "locationCount": null
+    },
+    {
+      "id": "london",
+      "file": "london.json",
+      "name": "London Spezial",
+      "description": "Live-Straßenbilder aus London über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "locationCount": null
+    },
+    {
+      "id": "new-york",
+      "file": "new-york.json",
+      "name": "New York Spezial",
+      "description": "Live-Straßenbilder aus New York City über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "locationCount": null
     }
   ]
 }
