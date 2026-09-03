@@ -558,6 +558,12 @@ function wireLobbyControls() {
 
 // ---------------------------------------------------------------- hud
 
+// Zeigt jeweils den Stil, in den ein Klick wechseln WUERDE (wie z.B. bei
+// Google Maps ueblich), nicht den gerade aktiven.
+function updateMapStyleLabel(labelId, currentStyle) {
+  el(labelId).textContent = currentStyle === 'satellite' ? 'Karte' : 'Satellit';
+}
+
 function ensureHudWidgets() {
   if (!panoViewer) panoViewer = new PanoViewer('pano-container');
   if (!guessMap) {
@@ -567,6 +573,7 @@ function ensureHudWidgets() {
       btn.disabled = false;
       btn.classList.add('ready');
     });
+    updateMapStyleLabel('minimap-style-label', guessMap.tiles.style);
   }
 }
 
@@ -716,6 +723,11 @@ function wireHudControls() {
   };
   el('minimap-open-btn').addEventListener('click', expandMap);
   el('minimap-close-btn').addEventListener('click', collapseMap);
+  el('minimap-style-toggle').addEventListener('click', () => {
+    sound.playClick();
+    const style = guessMap.toggleTileStyle();
+    updateMapStyleLabel('minimap-style-label', style);
+  });
 
   el('btn-confirm-guess').addEventListener('click', () => {
     const guess = guessMap.getGuess();
@@ -821,9 +833,10 @@ function renderRoundResult({ results, actual, actualMeta }) {
   el('result-round-total').textContent = String(state.round.total);
 
   if (!resultMap) resultMap = new ResultMap(el('result-map-container'));
+  updateMapStyleLabel('result-map-style-label', resultMap.tiles.style);
   requestAnimationFrame(() => {
     resultMap.invalidate();
-    resultMap.render(actual, results, state.players);
+    resultMap.render(actual, results, state.players, state.self.id);
   });
 
   // funFact kommt jetzt direkt vom Host im ROUND_RESULT (actualMeta) statt
@@ -925,6 +938,11 @@ function wireResultControls() {
     sound.playClick();
     if (state.role === 'host') controller.advanceNow();
   });
+  el('result-map-style-toggle').addEventListener('click', () => {
+    if (!resultMap) return;
+    sound.playClick();
+    updateMapStyleLabel('result-map-style-label', resultMap.toggleTileStyle());
+  });
 }
 
 // ---------------------------------------------------------------- leaderboard
@@ -970,9 +988,10 @@ function renderOverviewMap() {
   }
   wrap.classList.remove('hidden');
   if (!overviewMap) overviewMap = new ResultMap(el('overview-map-container'));
+  updateMapStyleLabel('overview-map-style-label', overviewMap.tiles.style);
   requestAnimationFrame(() => {
     overviewMap.invalidate();
-    overviewMap.renderOverview(rounds, state.players);
+    overviewMap.renderOverview(rounds, state.players, state.self.id);
   });
 }
 
@@ -1038,6 +1057,11 @@ function renderLeaderboard({ finalScores }) {
 }
 
 function wireLeaderboardControls() {
+  el('overview-map-style-toggle').addEventListener('click', () => {
+    if (!overviewMap) return;
+    sound.playClick();
+    updateMapStyleLabel('overview-map-style-label', overviewMap.toggleTileStyle());
+  });
   el('btn-play-again').addEventListener('click', async () => {
     sound.playClick();
     const isSolo = !state.roomCode;

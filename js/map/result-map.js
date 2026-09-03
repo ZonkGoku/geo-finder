@@ -1,4 +1,4 @@
-import { TILE_URL, TILE_OPTIONS } from './tile-config.js';
+import { attachTileLayer } from './tile-config.js';
 
 // Geteilt zwischen der Einzelrunden-Ergebniskarte und der Runden-Uebersicht
 // auf dem Endstand - eine Flagge statt eines weiteren Tropfen-Pins, damit
@@ -16,14 +16,31 @@ function buildTargetIcon() {
   });
 }
 
+// isYou bekommt einen zusaetzlichen hellen Ring (.is-you, siehe styles.css) -
+// bei mehreren Spielerfarben auf einer dichten Karte war sonst nicht auf
+// einen Blick erkennbar, welcher Pin der eigene Tipp war (Nutzerfeedback:
+// "alle Spieler sehen das Gleiche", man erkennt den eigenen Tipp nicht).
+function buildGuessIcon(color, isYou, size) {
+  return window.L.divIcon({
+    className: '',
+    html: `<span class="map-pin${isYou ? ' is-you' : ''}" style="--pin-color:${color}"></span>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+  });
+}
+
 export class ResultMap {
   constructor(containerEl) {
     this.map = window.L.map(containerEl, { zoomControl: false, attributionControl: true }).setView([20, 0], 2);
-    window.L.tileLayer(TILE_URL, TILE_OPTIONS).addTo(this.map);
+    this.tiles = attachTileLayer(this.map);
     this.layerGroup = window.L.layerGroup().addTo(this.map);
   }
 
-  render(actual, results, players) {
+  toggleTileStyle() {
+    return this.tiles.toggle();
+  }
+
+  render(actual, results, players, selfId) {
     this.layerGroup.clearLayers();
     const bounds = [[actual.lat, actual.lng]];
     const lines = [];
@@ -34,19 +51,17 @@ export class ResultMap {
       if (r.lat == null || r.lng == null) continue;
       const player = players.get(r.playerId);
       const color = player?.color || '#8c99b8';
-      const icon = window.L.divIcon({
-        className: '',
-        html: `<span class="map-pin" style="--pin-color:${color}"></span>`,
-        iconSize: [18, 18],
-        iconAnchor: [9, 18],
-      });
-      window.L.marker([r.lat, r.lng], { icon }).addTo(this.layerGroup);
+      const isYou = r.playerId === selfId;
+      const marker = window.L.marker([r.lat, r.lng], { icon: buildGuessIcon(color, isYou, 18) }).addTo(this.layerGroup);
+      if (isYou) {
+        marker.bindTooltip('Du', { permanent: true, direction: 'top', offset: [0, -16], className: 'map-round-label' });
+      }
       const line = window.L.polyline(
         [
           [r.lat, r.lng],
           [actual.lat, actual.lng],
         ],
-        { color, weight: 2, dashArray: '4 6', opacity: 0.85 }
+        { color, weight: isYou ? 3 : 2, dashArray: '4 6', opacity: isYou ? 1 : 0.7 }
       ).addTo(this.layerGroup);
       lines.push(line);
       bounds.push([r.lat, r.lng]);
@@ -74,7 +89,7 @@ export class ResultMap {
    * eigenes Ziel (mit Rundenzahl-Label) und ihre eigenen, korrekt
    * verbundenen Tipp-Pins.
    */
-  renderOverview(rounds, players) {
+  renderOverview(rounds, players, selfId) {
     this.layerGroup.clearLayers();
     const bounds = [];
     const lines = [];
@@ -96,19 +111,17 @@ export class ResultMap {
         if (r.lat == null || r.lng == null) continue;
         const player = players.get(r.playerId);
         const color = player?.color || '#8c99b8';
-        const icon = window.L.divIcon({
-          className: '',
-          html: `<span class="map-pin" style="--pin-color:${color}"></span>`,
-          iconSize: [16, 16],
-          iconAnchor: [8, 16],
-        });
-        window.L.marker([r.lat, r.lng], { icon }).addTo(this.layerGroup);
+        const isYou = r.playerId === selfId;
+        const marker = window.L.marker([r.lat, r.lng], { icon: buildGuessIcon(color, isYou, 16) }).addTo(this.layerGroup);
+        if (isYou) {
+          marker.bindTooltip('Du', { permanent: true, direction: 'bottom', offset: [0, 4], className: 'map-round-label' });
+        }
         const line = window.L.polyline(
           [
             [r.lat, r.lng],
             [actual.lat, actual.lng],
           ],
-          { color, weight: 2, dashArray: '4 6', opacity: 0.85 }
+          { color, weight: isYou ? 3 : 2, dashArray: '4 6', opacity: isYou ? 1 : 0.65 }
         ).addTo(this.layerGroup);
         lines.push(line);
         bounds.push([r.lat, r.lng]);

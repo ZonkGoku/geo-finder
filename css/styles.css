@@ -405,6 +405,21 @@ button{ font-family:inherit; color:inherit; }
 .minimap-close-btn:hover{ border-color:var(--accent); color:var(--accent); }
 .minimap.expanded .minimap-close-btn{ display:flex; }
 
+/* Satellit/Karte-Umschalter - gleiche Glass-Pill-Optik wie die uebrigen
+   Karten-Steuerelemente (.minimap-close-btn/.pano-ctrl-btn), an allen drei
+   Kartenstellen (Minimap, Rundenergebnis, Endstand-Uebersicht) gleich. */
+.map-style-toggle{
+  position:absolute; top:8px; left:8px; z-index:2; display:flex; align-items:center; gap:5px;
+  padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.18);
+  background:rgba(10,15,26,0.72); backdrop-filter:blur(4px); color:#fff; cursor:pointer;
+  font-family:var(--font-body); font-size:0.7rem; font-weight:600;
+  transition:border-color .15s ease, color .15s ease;
+}
+.map-style-toggle svg{ width:14px; height:14px; flex:none; }
+.map-style-toggle:hover{ border-color:var(--accent-2); color:var(--accent-2); }
+/* Im eingeklappten Minimap-Zustand ist kein Platz - nur bei .expanded zeigen. */
+.minimap:not(.expanded) .map-style-toggle{ display:none; }
+
 .leaflet-host{ width:100%; height:100%; background:var(--surface); }
 /* Die Minimap sitzt im HUD ueber echten Fotos und bleibt in beiden Themes
    dunkel; der Ergebnis-Karten-Host (.radar-big) folgt dagegen normal dem
@@ -419,6 +434,12 @@ button{ font-family:inherit; color:inherit; }
   animation:pinDrop .5s cubic-bezier(.34,1.56,.64,1) both;
 }
 .map-pin--you{ --pin-color:#ff7a33; }
+/* Eigener Tipp auf Ergebnis-/Uebersichtskarte: bei mehreren Spielerfarben auf
+   einen Blick war sonst nicht erkennbar, welcher Pin einem selbst gehoert -
+   zusaetzlicher heller Ring+Glow oben auf die normale Pin-Farbe. */
+.map-pin.is-you{
+  box-shadow:0 2px 6px rgba(0,0,0,0.6), 0 0 0 2px rgba(10,15,26,0.6), 0 0 0 4px #fff, 0 0 10px 2px var(--pin-color);
+}
 @keyframes pinDrop{
   0%{ transform:rotate(-45deg) translateY(-22px) scale(0.5); opacity:0; }
   60%{ transform:rotate(-45deg) translateY(3px) scale(1.08); opacity:1; }
@@ -582,7 +603,8 @@ button{ font-family:inherit; color:inherit; }
 
 .overview-map-wrap{ margin-top:26px; }
 .overview-map-wrap h3{ font-size:0.9rem; margin-bottom:10px; color:var(--text-dim); font-weight:600; }
-.overview-map{ height:280px; border-radius:14px; overflow:hidden; border:1px solid var(--line); }
+.overview-map-frame{ position:relative; border-radius:14px; overflow:hidden; border:1px solid var(--line); }
+.overview-map{ height:280px; }
 
 /* ===================== LOBBY: settings & map-set picker ===================== */
 .setting-group{ padding:10px 0; border-bottom:1px solid var(--line); }

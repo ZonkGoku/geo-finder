@@ -294,6 +294,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
               <span>Karte &ouml;ffnen</span>
             </button>
+            <button type="button" class="map-style-toggle" id="minimap-style-toggle" title="Zwischen Satellit und Karte wechseln">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M3 12l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/></svg>
+              <span id="minimap-style-label">Karte</span>
+            </button>
             <button type="button" class="minimap-close-btn" id="minimap-close-btn" aria-label="Karte verkleinern">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
@@ -327,6 +331,10 @@
           <div>
             <div class="radar-big">
               <div id="result-map-container" class="leaflet-host"></div>
+              <button type="button" class="map-style-toggle" id="result-map-style-toggle" title="Zwischen Satellit und Karte wechseln">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M3 12l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/></svg>
+                <span id="result-map-style-label">Karte</span>
+              </button>
             </div>
             <div class="fun-fact hidden" id="result-fun-fact">
               <span class="fun-fact-label">Wusstest du schon?</span>
@@ -353,7 +361,13 @@
 
         <div class="overview-map-wrap hidden" id="overview-map-wrap">
           <h3>Alle Runden im &Uuml;berblick</h3>
-          <div class="overview-map" id="overview-map-container"></div>
+          <div class="overview-map-frame">
+            <div class="overview-map" id="overview-map-container"></div>
+            <button type="button" class="map-style-toggle" id="overview-map-style-toggle" title="Zwischen Satellit und Karte wechseln">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M3 12l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/></svg>
+              <span id="overview-map-style-label">Karte</span>
+            </button>
+          </div>
         </div>
 
         <div class="board-foot">

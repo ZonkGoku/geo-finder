@@ -1,4 +1,4 @@
-import { TILE_URL, TILE_OPTIONS } from './tile-config.js';
+import { attachTileLayer } from './tile-config.js';
 
 export class GuessMap {
   constructor(containerEl, onChange) {
@@ -10,9 +10,13 @@ export class GuessMap {
       worldCopyJump: true,
     }).setView([20, 0], 2);
 
-    window.L.tileLayer(TILE_URL, TILE_OPTIONS).addTo(this.map);
+    this.tiles = attachTileLayer(this.map);
 
     this.map.on('click', (e) => this.setGuess(e.latlng.lat, e.latlng.lng));
+  }
+
+  toggleTileStyle() {
+    return this.tiles.toggle();
   }
 
   setGuess(lat, lng) {
