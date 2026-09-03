@@ -1,0 +1,18 @@
+{
+  "id": "country-roads",
+  "name": "Europäische Landstraßen",
+  "description": "Ländliche Idylle quer durch Europa - Toskana, Cotswolds, Loiretal und mehr - über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 3000,
+  "regions": [
+    { "id": "roads-val-dorcia", "name": "Val d'Orcia, Toskana", "lat": 43.0730, "lng": 11.6070 },
+    { "id": "roads-cotswolds", "name": "Bourton-on-the-Water, Cotswolds", "lat": 51.8811, "lng": -1.7550 },
+    { "id": "roads-loire", "name": "Loiretal bei Amboise, Frankreich", "lat": 47.4133, "lng": 0.9820 },
+    { "id": "roads-bavaria", "name": "Bayerische Alpen bei Neuschwanstein", "lat": 47.5576, "lng": 10.7498 },
+    { "id": "roads-provence", "name": "Lavendelfelder Valensole, Provence", "lat": 43.8370, "lng": 5.9840 },
+    { "id": "roads-kinderdijk", "name": "Kinderdijk, Niederlande", "lat": 51.8825, "lng": 4.6300 },
+    { "id": "roads-lauterbrunnen", "name": "Lauterbrunnen, Schweizer Alpen", "lat": 46.5930, "lng": 7.9080 },
+    { "id": "roads-glencoe", "name": "Glencoe, Schottisches Hochland", "lat": 56.6790, "lng": -5.1020 }
+  ]
+}

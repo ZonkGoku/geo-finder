@@ -1,0 +1,18 @@
+{
+  "id": "coastal",
+  "name": "Küsten & Strände",
+  "description": "Berühmte Strandpromenaden und Küstenorte weltweit über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 3000,
+  "regions": [
+    { "id": "coastal-copacabana", "name": "Copacabana, Rio de Janeiro", "lat": -22.9711, "lng": -43.1822 },
+    { "id": "coastal-bondi", "name": "Bondi Beach, Sydney", "lat": -33.8908, "lng": 151.2743 },
+    { "id": "coastal-miami", "name": "Miami Beach, USA", "lat": 25.7907, "lng": -80.1300 },
+    { "id": "coastal-nice", "name": "Promenade des Anglais, Nizza", "lat": 43.6959, "lng": 7.2660 },
+    { "id": "coastal-camps-bay", "name": "Camps Bay, Kapstadt", "lat": -33.9506, "lng": 18.3775 },
+    { "id": "coastal-positano", "name": "Positano, Amalfiküste", "lat": 40.6280, "lng": 14.4850 },
+    { "id": "coastal-waikiki", "name": "Waikiki Beach, Honolulu", "lat": 21.2760, "lng": -157.8280 },
+    { "id": "coastal-maspalomas", "name": "Maspalomas, Gran Canaria", "lat": 27.7396, "lng": -15.5860 }
+  ]
+}

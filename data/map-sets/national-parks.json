@@ -1,0 +1,18 @@
+{
+  "id": "national-parks",
+  "name": "Nationalparks",
+  "description": "Wilde Natur weltweit - von Yellowstone bis Fjordland - über die Mapillary-API. Bildabdeckung ist in entlegenen Parks oft dünner.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 4000,
+  "regions": [
+    { "id": "park-yellowstone", "name": "Yellowstone-Nationalpark, USA", "lat": 44.4605, "lng": -110.8281 },
+    { "id": "park-yosemite", "name": "Yosemite-Nationalpark, USA", "lat": 37.7456, "lng": -119.5936 },
+    { "id": "park-grand-canyon", "name": "Grand Canyon, USA", "lat": 36.0544, "lng": -112.1401 },
+    { "id": "park-banff", "name": "Banff-Nationalpark, Kanada", "lat": 51.1784, "lng": -115.5708 },
+    { "id": "park-torres-del-paine", "name": "Torres del Paine, Chile", "lat": -50.9423, "lng": -73.4068 },
+    { "id": "park-serengeti", "name": "Serengeti, Tansania", "lat": -2.3333, "lng": 34.8333 },
+    { "id": "park-plitvice", "name": "Plitvicer Seen, Kroatien", "lat": 44.8654, "lng": 15.5820 },
+    { "id": "park-fiordland", "name": "Fiordland, Neuseeland", "lat": -44.6414, "lng": 167.9250 }
+  ]
+}

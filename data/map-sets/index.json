@@ -7,6 +7,7 @@
       "description": "11 handverlesene, echte 360°-Fotos aus Chile und den USA.",
       "status": "ready",
       "source": "static",
+      "tag": null,
       "locationCount": 11
     },
     {
@@ -16,6 +17,7 @@
       "description": "Live-Straßenbilder aus Hamburg über die Mapillary-API — braucht einen Mapillary-Zugangstoken (siehe README).",
       "status": "needs-token",
       "source": "mapillary",
+      "tag": "staedte",
       "locationCount": null
     },
     {
@@ -25,6 +27,7 @@
       "description": "Weltbekannte Sehenswürdigkeiten über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
       "status": "needs-token",
       "source": "mapillary",
+      "tag": "kultur",
       "locationCount": null
     },
     {
@@ -34,6 +37,7 @@
       "description": "Nur Hauptstädte, über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
       "status": "needs-token",
       "source": "mapillary",
+      "tag": "staedte",
       "locationCount": null
     },
     {
@@ -43,6 +47,7 @@
       "description": "Live-Straßenbilder aus Berlin über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
       "status": "needs-token",
       "source": "mapillary",
+      "tag": "staedte",
       "locationCount": null
     },
     {
@@ -52,6 +57,7 @@
       "description": "Live-Straßenbilder aus Paris über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
       "status": "needs-token",
       "source": "mapillary",
+      "tag": "staedte",
       "locationCount": null
     },
     {
@@ -61,6 +67,7 @@
       "description": "Live-Straßenbilder aus München über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
       "status": "needs-token",
       "source": "mapillary",
+      "tag": "staedte",
       "locationCount": null
     },
     {
@@ -70,6 +77,7 @@
       "description": "Live-Straßenbilder aus London über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
       "status": "needs-token",
       "source": "mapillary",
+      "tag": "staedte",
       "locationCount": null
     },
     {
@@ -79,6 +87,107 @@
       "description": "Live-Straßenbilder aus New York City über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
       "status": "needs-token",
       "source": "mapillary",
+      "tag": "staedte",
+      "locationCount": null
+    },
+    {
+      "id": "asian-megacities",
+      "file": "asian-megacities.json",
+      "name": "Asiatische Megacities",
+      "description": "Tokio, Seoul, Bangkok, Hongkong und mehr über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "staedte",
+      "locationCount": null
+    },
+    {
+      "id": "unesco",
+      "file": "unesco.json",
+      "name": "UNESCO-Welterbe",
+      "description": "Zehn Weltkulturerbestätten weltweit über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "kultur",
+      "locationCount": null
+    },
+    {
+      "id": "stadiums",
+      "file": "stadiums.json",
+      "name": "Stadien & Arenen",
+      "description": "Berühmte Fußballstadien und Sportarenen über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "kultur",
+      "locationCount": null
+    },
+    {
+      "id": "ruins-castles",
+      "file": "ruins-castles.json",
+      "name": "Ruinen & Schlösser",
+      "description": "Historische Burgen und Ruinen weltweit über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "kultur",
+      "locationCount": null
+    },
+    {
+      "id": "bridges",
+      "file": "bridges.json",
+      "name": "Brücken der Welt",
+      "description": "Berühmte Brückenbauwerke weltweit über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "kultur",
+      "locationCount": null
+    },
+    {
+      "id": "extreme",
+      "file": "extreme.json",
+      "name": "Extreme Orte",
+      "description": "Die entlegensten Ecken der Welt über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "natur",
+      "locationCount": null
+    },
+    {
+      "id": "coastal",
+      "file": "coastal.json",
+      "name": "Küsten & Strände",
+      "description": "Berühmte Strandpromenaden weltweit über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "natur",
+      "locationCount": null
+    },
+    {
+      "id": "country-roads",
+      "file": "country-roads.json",
+      "name": "Europäische Landstraßen",
+      "description": "Ländliche Idylle quer durch Europa über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "natur",
+      "locationCount": null
+    },
+    {
+      "id": "national-parks",
+      "file": "national-parks.json",
+      "name": "Nationalparks",
+      "description": "Wilde Natur weltweit über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "natur",
+      "locationCount": null
+    },
+    {
+      "id": "islands",
+      "file": "islands.json",
+      "name": "Island Hopper",
+      "description": "Nur Inseln, von Santorin bis Bora Bora, über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "tag": "natur",
       "locationCount": null
     }
   ]

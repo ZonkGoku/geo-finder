@@ -1,0 +1,18 @@
+{
+  "id": "extreme",
+  "name": "Extreme Orte",
+  "description": "Die entlegensten Ecken der Welt - nördlichste Städte, tiefste Punkte, größte Wüsten. Live über die Mapillary-API, Bildabdeckung kann hier lückenhaft sein.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 4000,
+  "regions": [
+    { "id": "extreme-nordkapp", "name": "Nordkapp, Norwegen", "lat": 71.1706, "lng": 25.7854 },
+    { "id": "extreme-ushuaia", "name": "Ushuaia, Argentinien", "lat": -54.8019, "lng": -68.3030 },
+    { "id": "extreme-death-valley", "name": "Death Valley, USA", "lat": 36.5323, "lng": -116.9325 },
+    { "id": "extreme-atacama", "name": "Atacama-Wüste, Chile", "lat": -24.5000, "lng": -69.2500 },
+    { "id": "extreme-sahara", "name": "Erg Chebbi, Sahara, Marokko", "lat": 31.1500, "lng": -3.9800 },
+    { "id": "extreme-longyearbyen", "name": "Longyearbyen, Spitzbergen", "lat": 78.2232, "lng": 15.6267 },
+    { "id": "extreme-dead-sea", "name": "Totes Meer, Jordanien", "lat": 31.5590, "lng": 35.4732 },
+    { "id": "extreme-barrow", "name": "Utqiagvik (Barrow), Alaska", "lat": 71.2906, "lng": -156.7886 }
+  ]
+}

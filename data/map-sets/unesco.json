@@ -1,0 +1,20 @@
+{
+  "id": "unesco",
+  "name": "UNESCO-Welterbe",
+  "description": "Live-Straßenbilder von zehn UNESCO-Weltkulturerbestätten weltweit über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 3000,
+  "regions": [
+    { "id": "unesco-machu-picchu", "name": "Machu Picchu, Peru", "lat": -13.1631, "lng": -72.5450 },
+    { "id": "unesco-petra", "name": "Petra, Jordanien", "lat": 30.3285, "lng": 35.4444 },
+    { "id": "unesco-angkor-wat", "name": "Angkor Wat, Kambodscha", "lat": 13.4125, "lng": 103.8670 },
+    { "id": "unesco-chichen-itza", "name": "Chichén Itzá, Mexiko", "lat": 20.6843, "lng": -88.5678 },
+    { "id": "unesco-acropolis", "name": "Akropolis, Athen", "lat": 37.9715, "lng": 23.7267 },
+    { "id": "unesco-great-wall", "name": "Chinesische Mauer, Badaling", "lat": 40.3584, "lng": 116.0230 },
+    { "id": "unesco-stonehenge", "name": "Stonehenge, England", "lat": 51.1789, "lng": -1.8262 },
+    { "id": "unesco-giza", "name": "Pyramiden von Gizeh, Ägypten", "lat": 29.9792, "lng": 31.1342 },
+    { "id": "unesco-taj-mahal", "name": "Taj Mahal, Indien", "lat": 27.1751, "lng": 78.0421 },
+    { "id": "unesco-colosseum", "name": "Kolosseum, Rom", "lat": 41.8902, "lng": 12.4922 }
+  ]
+}

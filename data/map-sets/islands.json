@@ -1,0 +1,18 @@
+{
+  "id": "islands",
+  "name": "Island Hopper",
+  "description": "Nur Inseln - von Santorin bis Bora Bora - über die Mapillary-API. Bildabdeckung ist auf abgelegenen Inseln oft dünner.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 4000,
+  "regions": [
+    { "id": "island-santorini", "name": "Santorin, Griechenland", "lat": 36.3932, "lng": 25.4615 },
+    { "id": "island-capri", "name": "Capri, Italien", "lat": 40.5532, "lng": 14.2429 },
+    { "id": "island-skye", "name": "Isle of Skye, Schottland", "lat": 57.4126, "lng": -6.1946 },
+    { "id": "island-jeju", "name": "Jeju-Insel, Südkorea", "lat": 33.4996, "lng": 126.5312 },
+    { "id": "island-ibiza", "name": "Ibiza, Spanien", "lat": 38.9067, "lng": 1.4206 },
+    { "id": "island-bali-kuta", "name": "Kuta Beach, Bali", "lat": -8.7183, "lng": 115.1686 },
+    { "id": "island-bora-bora", "name": "Bora Bora, Französisch-Polynesien", "lat": -16.5004, "lng": -151.7415 },
+    { "id": "island-male", "name": "Malé, Malediven", "lat": 4.1755, "lng": 73.5093 }
+  ]
+}

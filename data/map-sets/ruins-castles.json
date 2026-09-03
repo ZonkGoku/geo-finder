@@ -1,0 +1,18 @@
+{
+  "id": "ruins-castles",
+  "name": "Ruinen & Schlösser",
+  "description": "Historische Burgen, Schlösser und antike Ruinen weltweit über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 3000,
+  "regions": [
+    { "id": "castle-neuschwanstein", "name": "Schloss Neuschwanstein, Deutschland", "lat": 47.5576, "lng": 10.7498 },
+    { "id": "castle-edinburgh", "name": "Edinburgh Castle, Schottland", "lat": 55.9486, "lng": -3.1999 },
+    { "id": "castle-windsor", "name": "Windsor Castle, England", "lat": 51.4839, "lng": -0.6044 },
+    { "id": "castle-prague", "name": "Prager Burg, Tschechien", "lat": 50.0910, "lng": 14.4016 },
+    { "id": "castle-alhambra", "name": "Alhambra, Granada", "lat": 37.1760, "lng": -3.5880 },
+    { "id": "castle-himeji", "name": "Burg Himeji, Japan", "lat": 34.8394, "lng": 134.6939 },
+    { "id": "castle-chambord", "name": "Château de Chambord, Frankreich", "lat": 47.6161, "lng": 1.5170 },
+    { "id": "castle-ayutthaya", "name": "Ayutthaya, Thailand", "lat": 14.3532, "lng": 100.5680 }
+  ]
+}

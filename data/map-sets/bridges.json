@@ -1,0 +1,18 @@
+{
+  "id": "bridges",
+  "name": "Brücken der Welt",
+  "description": "Berühmte und spektakuläre Brückenbauwerke weltweit über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 3000,
+  "regions": [
+    { "id": "bridge-golden-gate", "name": "Golden Gate Bridge, San Francisco", "lat": 37.8199, "lng": -122.4783 },
+    { "id": "bridge-tower", "name": "Tower Bridge, London", "lat": 51.5055, "lng": -0.0754 },
+    { "id": "bridge-sydney-harbour", "name": "Sydney Harbour Bridge", "lat": -33.8523, "lng": 151.2108 },
+    { "id": "bridge-brooklyn", "name": "Brooklyn Bridge, New York", "lat": 40.7061, "lng": -73.9969 },
+    { "id": "bridge-millau", "name": "Viaduc de Millau, Frankreich", "lat": 44.0767, "lng": 3.0233 },
+    { "id": "bridge-rialto", "name": "Rialtobrücke, Venedig", "lat": 45.4380, "lng": 12.3358 },
+    { "id": "bridge-charles", "name": "Karlsbrücke, Prag", "lat": 50.0865, "lng": 14.4114 },
+    { "id": "bridge-ponte-vecchio", "name": "Ponte Vecchio, Florenz", "lat": 43.7680, "lng": 11.2530 }
+  ]
+}

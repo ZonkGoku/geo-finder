@@ -1,0 +1,18 @@
+{
+  "id": "stadiums",
+  "name": "Stadien & Arenen",
+  "description": "Berühmte Fußballstadien und Sportarenen weltweit über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 3000,
+  "regions": [
+    { "id": "stadium-wembley", "name": "Wembley Stadium, London", "lat": 51.5560, "lng": -0.2795 },
+    { "id": "stadium-camp-nou", "name": "Camp Nou, Barcelona", "lat": 41.3809, "lng": 2.1228 },
+    { "id": "stadium-maracana", "name": "Maracanã, Rio de Janeiro", "lat": -22.9121, "lng": -43.2302 },
+    { "id": "stadium-allianz-arena", "name": "Allianz Arena, München", "lat": 48.2188, "lng": 11.6247 },
+    { "id": "stadium-yankee", "name": "Yankee Stadium, New York", "lat": 40.8296, "lng": -73.9262 },
+    { "id": "stadium-mcg", "name": "Melbourne Cricket Ground", "lat": -37.8199, "lng": 144.9834 },
+    { "id": "stadium-san-siro", "name": "San Siro, Mailand", "lat": 45.4781, "lng": 9.1240 },
+    { "id": "stadium-old-trafford", "name": "Old Trafford, Manchester", "lat": 53.4631, "lng": -2.2913 }
+  ]
+}

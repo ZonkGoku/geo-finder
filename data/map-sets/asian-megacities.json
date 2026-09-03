@@ -1,0 +1,18 @@
+{
+  "id": "asian-megacities",
+  "name": "Asiatische Megacities",
+  "description": "Tokio, Seoul, Bangkok, Hongkong und mehr - pulsierende Millionenstädte Asiens über die Mapillary-API.",
+  "status": "needs-token",
+  "source": "mapillary",
+  "scaleKm": 3000,
+  "regions": [
+    { "id": "asia-tokyo-shibuya", "name": "Shibuya, Tokio", "lat": 35.6595, "lng": 139.7005 },
+    { "id": "asia-seoul-gangnam", "name": "Gangnam, Seoul", "lat": 37.4979, "lng": 127.0276 },
+    { "id": "asia-bangkok-siam", "name": "Siam Square, Bangkok", "lat": 13.7466, "lng": 100.5347 },
+    { "id": "asia-hongkong-central", "name": "Central, Hongkong", "lat": 22.2793, "lng": 114.1628 },
+    { "id": "asia-singapore-marina", "name": "Marina Bay, Singapur", "lat": 1.2838, "lng": 103.8591 },
+    { "id": "asia-shanghai-bund", "name": "The Bund, Shanghai", "lat": 31.2396, "lng": 121.4907 },
+    { "id": "asia-mumbai-gateway", "name": "Gateway of India, Mumbai", "lat": 18.9220, "lng": 72.8347 },
+    { "id": "asia-jakarta-monas", "name": "Nationaldenkmal, Jakarta", "lat": -6.1754, "lng": 106.8272 }
+  ]
+}
