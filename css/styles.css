@@ -1,17 +1,23 @@
 :root{
-  --ink: #0b0e14;
-  --surface: #141925;
-  --surface-raised: #1b2230;
-  --surface-hi: #232b3d;
-  --line: #232b3d;
+  --ink: #050505;
+  --surface: #101014;
+  --surface-raised: #17171d;
+  --surface-hi: #202028;
+  --line: #28282f;
   --text: #f5f7fa;
   --text-dim: #97a2b8;
   --text-faint: #5a6478;
   --accent: #ff7a33;
   --accent-ink: #0b0e14;
-  --accent-2: #2fe6d6;
+  --accent-2: #17ecff;
   --danger: #f2554a;
+  /* Toxic-Neon-Erweiterung fuer den 2026-Redesign-Pass: Abyss-Black-Basis
+     (--ink) + ein zusaetzlicher Magenta-Akzent nur fuer Hero-/Menue-Momente,
+     um das Orange/Cyan-Markenpaar nicht komplett zu ersetzen, sondern
+     "toxischer" zu machen (siehe Menue-Hero, Kartenpaket-Hero-Cards). */
+  --neon-magenta: #ff1fb0;
   --font-display: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
+  --font-hero: "Rajdhani", var(--font-display);
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
 }
@@ -44,12 +50,13 @@ html,body{ margin:0; padding:0; }
 body{
   background-color: var(--ink);
   background-image:
-    radial-gradient(640px 520px at 50% 50%, rgba(255,122,51,0.16), transparent 65%),
-    radial-gradient(560px 480px at 50% 50%, rgba(47,230,214,0.12), transparent 65%),
-    repeating-linear-gradient(0deg, rgba(151,162,184,0.05) 0 1px, transparent 1px 48px),
-    repeating-linear-gradient(90deg, rgba(151,162,184,0.05) 0 1px, transparent 1px 48px);
-  background-repeat: no-repeat, no-repeat, repeat, repeat;
-  background-position: 18% -6%, 88% 22%, 0 0, 0 0;
+    radial-gradient(680px 560px at 50% 50%, rgba(255,110,30,0.22), transparent 65%),
+    radial-gradient(600px 520px at 50% 50%, rgba(23,236,255,0.16), transparent 65%),
+    radial-gradient(520px 460px at 50% 50%, rgba(255,31,176,0.10), transparent 68%),
+    repeating-linear-gradient(0deg, rgba(151,162,184,0.06) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(90deg, rgba(151,162,184,0.06) 0 1px, transparent 1px 48px);
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
+  background-position: 18% -6%, 88% 22%, 40% 90%, 0 0, 0 0;
   animation: meshDrift 26s ease-in-out infinite alternate;
   color: var(--text);
   font-family: var(--font-body);
@@ -84,8 +91,33 @@ button{ font-family:inherit; color:inherit; }
 .page{ width:100%; max-width:1020px; display:flex; flex-direction:column; gap:22px; align-items:center; }
 
 .page-head{ text-align:center; display:flex; flex-direction:column; gap:6px; align-items:center; }
-.brand{ display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-size:1.9rem; font-weight:700; letter-spacing:0.01em; }
+.brand{ display:flex; align-items:center; gap:10px; font-family:var(--font-hero); font-size:2.1rem; font-weight:700; font-style:italic; letter-spacing:0.02em; }
 .brand svg{ width:28px; height:28px; flex:none; }
+.brand-word{
+  position:relative; color:var(--text);
+  text-shadow: 0 0 12px rgba(255,122,51,0.55), 0 0 26px rgba(23,236,255,0.25);
+}
+/* Kurzer Glitch-Burst nur bei Hover/Focus - RGB-Split ueber zwei Pseudo-
+   Layer, die denselben Text per attr(data-text) duplizieren und leicht
+   versetzt einblenden. Ambient bleibt es beim ruhigen Glow oben. */
+.brand-word::before, .brand-word::after{
+  content: attr(data-text); position:absolute; left:0; top:0; width:100%; height:100%;
+  opacity:0; clip-path: inset(0 0 0 0);
+}
+.brand:hover .brand-word::before{
+  opacity:0.8; color:var(--neon-magenta); animation: brandGlitch 0.5s steps(2, end) 1;
+}
+.brand:hover .brand-word::after{
+  opacity:0.8; color:var(--accent-2); animation: brandGlitch 0.5s steps(2, end) 1 reverse;
+}
+@keyframes brandGlitch{
+  0%{ clip-path: inset(0 0 88% 0); transform:translate(-2px,0); }
+  25%{ clip-path: inset(30% 0 50% 0); transform:translate(2px,0); }
+  50%{ clip-path: inset(60% 0 10% 0); transform:translate(-2px,0); }
+  75%{ clip-path: inset(10% 0 70% 0); transform:translate(2px,0); }
+  100%{ clip-path: inset(0 0 88% 0); transform:translate(0,0); }
+}
+@media (prefers-reduced-motion: reduce){ .brand-word::before, .brand-word::after{ animation:none !important; opacity:0 !important; } }
 .kicker{ margin:0; font-size:0.78rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-dim); }
 
 .device{
@@ -129,28 +161,97 @@ button{ font-family:inherit; color:inherit; }
 .btn-ghost:hover{ border-color:var(--text-faint); }
 .btn-sm{ padding:8px 14px; font-size:0.8rem; border-radius:9px; }
 
-/* ===================== MENU ===================== */
-#screen-menu .menu-grid{ display:grid; grid-template-columns:1.1fr 1fr; gap:32px; margin-top:26px; }
-.menu-title{ font-size: clamp(2.1rem, 4vw, 2.7rem); line-height:1.05; }
-.menu-title em{
-  font-style:normal; background:linear-gradient(90deg, var(--accent), var(--accent-2));
+/* ===================== MENU (full-bleed hero, 2026 redesign) ===================== */
+/* #screen-menu verlaesst die .device-Box komplett und wird zum eigenen
+   Vollbild-Layer (position:fixed, eigener Hintergrund) - .screen/.screen.active
+   sind bewusst NICHT an .device-screen gebunden (siehe styles.css-Historie),
+   das Umziehen ist also strukturell unkritisch fuer showScreen(). */
+#screen-menu.screen{
+  position:fixed; inset:0; z-index:40; margin:0; padding:0; min-height:0;
+  background: var(--ink);
+  overflow:hidden;
+}
+#screen-menu.screen.active{ display:block; }
+.menu-hero{ position:relative; width:100%; height:100%; display:grid; grid-template-columns:1.15fr 0.95fr; }
+.menu-hero-scroll{ overflow-y:auto; height:100%; display:flex; align-items:center; }
+.menu-hero-left{
+  padding: clamp(28px, 6vw, 96px) clamp(24px, 6vw, 88px);
+  display:flex; flex-direction:column; align-items:flex-start; gap:0;
+  max-width:720px;
+}
+.menu-hero-eyebrow{
+  font-family:var(--font-mono); font-size:0.76rem; letter-spacing:0.18em; text-transform:uppercase;
+  color:var(--accent-2); margin:0 0 18px; text-shadow:0 0 14px rgba(23,236,255,0.5);
+}
+.menu-hero-title{
+  font-family:var(--font-hero); font-weight:700; font-style:italic; text-transform:uppercase;
+  font-size: clamp(3.2rem, 8vw, 6.4rem); line-height:0.92; letter-spacing:0.01em; margin:0; color:var(--text);
+}
+.menu-hero-title em{
+  font-style:italic; background:linear-gradient(90deg, var(--accent), var(--neon-magenta) 55%, var(--accent-2));
   -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 0 22px rgba(255,122,51,0.35));
 }
-.action-list{ display:flex; flex-direction:column; gap:12px; }
+.menu-hero-lede{ color:var(--text-dim); font-size:1.02rem; max-width:46ch; margin:22px 0 0; line-height:1.6; }
+.action-list{ display:flex; flex-direction:column; gap:14px; margin-top:34px; width:100%; max-width:440px; }
 .action-card{
-  display:flex; align-items:center; gap:14px; padding:16px 18px; background:var(--surface-raised);
-  border:1px solid var(--line); border-radius:14px; cursor:pointer; text-align:left; width:100%; color:inherit;
-  transition:border-color .15s ease, background .15s ease;
+  position:relative; display:flex; align-items:center; gap:14px; padding:18px 20px;
+  background:color-mix(in srgb, var(--surface-raised) 88%, transparent);
+  border:1px solid var(--line);
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  cursor:pointer; text-align:left; width:100%; color:inherit; overflow:hidden;
+  transition:border-color .15s ease, background .15s ease, transform .15s ease, box-shadow .15s ease;
 }
-.action-card:hover{ border-color:var(--accent-2); background:var(--surface-hi); }
+.action-card:hover{
+  border-color:var(--accent-2); background:var(--surface-hi); transform:translateX(4px);
+  box-shadow:0 0 0 1px rgba(23,236,255,0.35), 0 14px 30px -14px rgba(23,236,255,0.5);
+}
 .action-icon{ width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex:none; background:rgba(255,122,51,0.14); color:var(--accent); }
-.action-card.secondary .action-icon{ background:rgba(47,230,214,0.14); color:var(--accent-2); }
-.action-title{ font-weight:600; font-size:0.98rem; color:var(--text); }
+.action-card.secondary .action-icon{ background:rgba(23,236,255,0.14); color:var(--accent-2); }
+.action-title{ font-weight:700; font-size:1rem; color:var(--text); letter-spacing:0.01em; }
 .action-sub{ font-size:0.8rem; color:var(--text-dim); margin-top:2px; }
 .join-panel{ display:flex; gap:8px; padding:0 4px; }
 .join-panel.hidden{ display:none; }
 .menu-error{ color:var(--danger); font-size:0.85rem; margin-top:14px; }
-.profile-box{ background:var(--surface-raised); border:1px solid var(--line); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:14px; align-self:start; }
+.profile-box{
+  margin-top:30px; background:color-mix(in srgb, var(--surface-raised) 72%, transparent); backdrop-filter:blur(12px);
+  border:1px solid var(--line); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:14px;
+  width:100%; max-width:440px;
+}
+
+/* --- rechte Seite: Panorama-Teaser statt Formularblock --- */
+.menu-hero-right{ position:relative; overflow:hidden; background:var(--ink); }
+.menu-hero-photo{
+  position:absolute; inset:-4%; background-image:url('../assets/panoramas/cerro-toco.jpg');
+  background-size:cover; background-position:center;
+  filter:saturate(0.85) brightness(0.62) contrast(1.05);
+  animation: heroKenBurns 22s ease-in-out infinite alternate;
+}
+@keyframes heroKenBurns{ from{ transform:scale(1) translate(0,0); } to{ transform:scale(1.09) translate(-1%, 1%); } }
+.menu-hero-scanlines{
+  position:absolute; inset:0;
+  background-image: repeating-linear-gradient(180deg, rgba(23,236,255,0.05) 0 2px, transparent 2px 5px);
+  mix-blend-mode:screen; animation: scanDrift 9s linear infinite;
+}
+@keyframes scanDrift{ from{ background-position:0 0; } to{ background-position:0 120px; } }
+.menu-hero-gradient{
+  position:absolute; inset:0;
+  background: linear-gradient(90deg, var(--ink) 0%, rgba(5,5,5,0.55) 24%, transparent 55%),
+              linear-gradient(0deg, var(--ink) 0%, transparent 30%);
+}
+.menu-hero-badge{
+  position:absolute; right:22px; bottom:22px; z-index:2;
+  font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.14em; color:rgba(255,255,255,0.85);
+  background:rgba(0,0,0,0.42); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.14);
+  padding:8px 14px; border-radius:999px;
+}
+@media (prefers-reduced-motion: reduce){ .menu-hero-photo, .menu-hero-scanlines{ animation:none; } }
+@media (max-width: 860px){
+  .menu-hero{ grid-template-columns:1fr; }
+  .menu-hero-right{ display:none; }
+  .menu-hero-scroll{ display:block; overflow-y:auto; }
+  .menu-hero-left{ padding:28px 20px 40px; max-width:none; }
+}
 .field-label{ font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); display:block; }
 .input{ background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:10px 12px; color:var(--text); font-family:var(--font-body); font-size:0.9rem; width:100%; }
 .input:focus, .swatch:focus-visible, .action-card:focus-visible, .btn:focus-visible{ outline:2px solid var(--accent-2); outline-offset:2px; }
@@ -189,18 +290,31 @@ button{ font-family:inherit; color:inherit; }
 .cta-hint{ font-size:0.78rem; color:var(--text-dim); }
 
 .cta-mega{
-  padding:16px 32px; font-size:1.02rem; letter-spacing:0.02em; border-radius:14px;
+  position:relative; overflow:hidden;
+  padding:18px 36px; font-size:1.05rem; font-family:var(--font-hero); font-weight:700; letter-spacing:0.03em;
+  text-transform:uppercase; border-radius:0;
+  clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
   display:inline-flex; align-items:center; gap:10px;
-  box-shadow:0 0 0 1px rgba(255,122,51,0.5), 0 14px 34px -10px rgba(255,122,51,0.6);
+  box-shadow:0 0 0 1px rgba(255,122,51,0.55), 0 14px 34px -10px rgba(255,122,51,0.6), 0 0 40px -14px rgba(23,236,255,0.5);
   animation:ctaBreathe 2.6s ease-in-out infinite;
 }
 .cta-mega svg{ width:19px; height:19px; }
 .cta-mega:disabled{ animation:none; }
 @keyframes ctaBreathe{
-  0%,100%{ box-shadow:0 0 0 1px rgba(255,122,51,0.5), 0 14px 34px -10px rgba(255,122,51,0.6); transform:scale(1); }
-  50%{ box-shadow:0 0 0 1px rgba(255,122,51,0.7), 0 18px 42px -8px rgba(255,122,51,0.85); transform:scale(1.015); }
+  0%,100%{ box-shadow:0 0 0 1px rgba(255,122,51,0.55), 0 14px 34px -10px rgba(255,122,51,0.6), 0 0 40px -14px rgba(23,236,255,0.5); transform:scale(1); }
+  50%{ box-shadow:0 0 0 1px rgba(255,122,51,0.8), 0 18px 42px -8px rgba(255,122,51,0.9), 0 0 55px -10px rgba(23,236,255,0.7); transform:scale(1.018); }
 }
 @media (prefers-reduced-motion: reduce){ .cta-mega{ animation:none; } }
+
+/* Klick-Impact: JS (spawnRipple in app.js) haengt bei jedem Klick einen
+   .btn-ripple-Span an die Klickposition; clip-path des Buttons maskiert ihn
+   automatisch mit auf dieselbe Sechseck-Form. */
+.btn-ripple{
+  position:absolute; border-radius:50%; background:rgba(255,255,255,0.65);
+  transform:scale(0); opacity:0.9; pointer-events:none; animation: rippleExpand .55s ease-out forwards;
+}
+@keyframes rippleExpand{ to{ transform:scale(1); opacity:0; } }
+@media (prefers-reduced-motion: reduce){ .btn-ripple{ animation:none; display:none; } }
 
 /* ===================== HUD ===================== */
 #screen-hud{ padding:0; min-height:600px; position:relative; overflow:hidden; }
@@ -502,46 +616,64 @@ button{ font-family:inherit; color:inherit; }
 }
 .mapset-empty{ color:var(--text-dim); font-size:0.86rem; text-align:center; padding:24px 0; }
 
-/* --- Fancy Kartenpaket-Karten --- */
-.mapset-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:14px; }
+/* --- Kartenpaket-Hero-Cards: horizontale Netflix/PS-Style-Karussell-Leiste
+   statt statischem Grid, echte Foto-Cover (Picsum, seeded pro Paket-ID)
+   statt der alten wiederholten Kategorie-Hausicons. --- */
+.mapset-grid{
+  display:flex; gap:16px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x proximity;
+  padding:4px 4px 12px; margin:0 -4px; scrollbar-width:thin;
+}
 .mapset-card{
-  position:relative; text-align:left; padding:0; border-radius:16px; border:1px solid var(--line);
+  position:relative; text-align:left; padding:0; border-radius:14px; border:1px solid var(--line);
   background:var(--surface); color:var(--text); cursor:pointer; overflow:hidden;
-  transition:transform .2s cubic-bezier(.2,.8,.2,1), border-color .2s ease, box-shadow .2s ease;
+  flex:0 0 232px; scroll-snap-align:start;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1), border-color .2s ease, box-shadow .2s ease;
 }
 .mapset-card:hover:not(:disabled){
-  transform:translateY(-3px) scale(1.015); border-color:var(--accent-2);
-  box-shadow:0 16px 34px -14px rgba(47,230,214,0.45);
+  transform:translateY(-4px) scale(1.02); border-color:var(--accent-2);
+  box-shadow:0 20px 40px -16px rgba(23,236,255,0.5), 0 0 0 1px rgba(23,236,255,0.4);
 }
 .mapset-card.selected{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 16px 34px -14px rgba(255,122,51,0.55); }
-.mapset-card:disabled{ opacity:0.55; cursor:not-allowed; }
+.mapset-card:disabled{ opacity:0.5; cursor:not-allowed; }
 .mapset-card:disabled:hover{ transform:none; box-shadow:none; }
 
 .mapset-card-cover{
-  position:relative; height:72px; display:flex; align-items:center; justify-content:center; overflow:hidden;
+  position:relative; height:130px; overflow:hidden; background-size:cover; background-position:center;
+  background-color:var(--surface-hi);
 }
-.mapset-card-cover svg{ width:30px; height:30px; color:rgba(255,255,255,0.85); position:relative; z-index:1; }
+.mapset-card-cover-img{
+  position:absolute; inset:0; background-size:cover; background-position:center;
+  filter:saturate(0.4) brightness(0.55); transform:scale(1.06);
+  transition:filter .3s ease, transform .3s ease;
+}
+.mapset-card:hover:not(:disabled) .mapset-card-cover-img{ filter:saturate(1.05) brightness(0.85); transform:scale(1.14); }
 .mapset-card-cover::after{
   content:""; position:absolute; inset:0;
-  background:radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.16), transparent 60%);
+  background:linear-gradient(180deg, rgba(5,5,5,0) 30%, rgba(5,5,5,0.85) 100%);
 }
-.mapset-card-cover.cover-staedte{ background:linear-gradient(135deg, #0f3b45, #0b1f28); }
-.mapset-card-cover.cover-kultur{ background:linear-gradient(135deg, #4a2a12, #241209); }
-.mapset-card-cover.cover-natur{ background:linear-gradient(135deg, #14401f, #0b2313); }
-.mapset-card-cover.cover-default{ background:linear-gradient(135deg, #232b3d, #141925); }
+.mapset-card-tag{
+  position:absolute; left:9px; top:9px; z-index:1; display:flex; align-items:center; justify-content:center;
+  width:24px; height:24px; border-radius:7px; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px);
+  color:rgba(255,255,255,0.9);
+}
+.mapset-card-tag svg{ width:14px; height:14px; }
 
 .mapset-card-play{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  background:rgba(11,14,20,0.35); opacity:0; transition:opacity .18s ease;
+  position:absolute; left:50%; bottom:12px; z-index:1;
+  width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, var(--accent), var(--neon-magenta));
+  box-shadow:0 6px 18px -4px rgba(255,31,176,0.6);
+  transform:translate(-50%, 18px); opacity:0;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1), opacity .2s ease;
 }
-.mapset-card-play svg{ width:26px; height:26px; color:#fff; filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
-.mapset-card:hover:not(:disabled) .mapset-card-play{ opacity:1; }
+.mapset-card-play svg{ width:16px; height:16px; color:#0b0e14; margin-left:2px; }
+.mapset-card:hover:not(:disabled) .mapset-card-play{ transform:translate(-50%, 0); opacity:1; }
 
 .mapset-card-body{ padding:12px 14px 14px; display:flex; flex-direction:column; gap:6px; }
 .mapset-card-name{ font-weight:600; font-size:0.92rem; }
 .mapset-card-desc{ font-size:0.76rem; color:var(--text-dim); line-height:1.4; }
 .mapset-card-badge{ align-self:flex-start; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.06em; padding:2px 7px; border-radius:5px; }
-.mapset-card-badge.ready{ background:rgba(47,230,214,0.16); color:var(--accent-2); }
+.mapset-card-badge.ready{ background:rgba(23,236,255,0.16); color:var(--accent-2); }
 .mapset-card-badge.needs-token{ background:rgba(242,85,74,0.16); color:var(--danger); }
 
 /* ===================== HP-Duell ===================== */
@@ -600,7 +732,7 @@ button{ font-family:inherit; color:inherit; }
 @keyframes spin{ to{ transform:rotate(360deg); } }
 
 @media (max-width: 720px){
-  #screen-menu .menu-grid, .lobby-cols, .result-grid{ grid-template-columns:1fr; }
+  .lobby-cols, .result-grid{ grid-template-columns:1fr; }
   .screen{ padding:24px; }
   .hud-top{ flex-direction:column; gap:10px; }
   .minimap-wrap{ right:16px; bottom:16px; }

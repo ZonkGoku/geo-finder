@@ -299,6 +299,12 @@ const MAPSET_CATEGORY_ICONS = {
   default: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 4 6 4 9s-1.5 6.3-4 9c-2.5-2.7-4-6-4-9s1.5-6.3 4-9z"/></svg>',
 };
 const MAPSET_PLAY_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+// Picsum liefert generische, aber seed-stabile Fotos ohne API-Key - echte
+// thematische Fotos pro Kartenpaket sind ohne kostenpflichtige Bild-API nicht
+// verlaesslich zu bekommen. Unsplash Source (urspruenglich vom Nutzer
+// vorgeschlagen) wurde Anfang 2025 von Unsplash abgeschaltet, daher Picsum
+// als noch funktionierende Alternative.
+const mapSetCoverUrl = (id) => `https://picsum.photos/seed/${encodeURIComponent(id)}/400/300`;
 
 function getFilteredMapSets() {
   const term = mapSetSearchTerm.trim().toLowerCase();
@@ -323,11 +329,11 @@ function renderMapSetGrid() {
     card.disabled = !isHost || !entry.available;
     const badgeClass = entry.available ? 'ready' : 'needs-token';
     const badgeText = entry.available ? 'Bereit' : 'Token nötig';
-    const coverClass = entry.tag ? `cover-${entry.tag}` : 'cover-default';
     const icon = MAPSET_CATEGORY_ICONS[entry.tag] || MAPSET_CATEGORY_ICONS.default;
     card.innerHTML = `
-      <div class="mapset-card-cover ${coverClass}">
-        ${icon}
+      <div class="mapset-card-cover">
+        <div class="mapset-card-cover-img" style="background-image:url('${mapSetCoverUrl(entry.id)}');"></div>
+        <span class="mapset-card-tag">${icon}</span>
         <div class="mapset-card-play">${MAPSET_PLAY_ICON}</div>
       </div>
       <div class="mapset-card-body">
@@ -477,6 +483,7 @@ function wireLobbyControls() {
     controller.setReady(!me?.ready);
   });
 
+  attachRipple(el('btn-start-game'));
   el('btn-start-game').addEventListener('click', startGameFromLobby);
 
   const wireChoiceRow = (rowId, settingKey, parse) => {
@@ -1029,6 +1036,9 @@ function wireLeaderboardControls() {
 // ---------------------------------------------------------------- menu wiring
 
 function wireMenuControls() {
+  attachRipple(el('btn-host'));
+  attachRipple(el('btn-join-toggle'));
+  attachRipple(el('btn-solo'));
   el('btn-host').addEventListener('click', hostFlow);
   el('btn-solo').addEventListener('click', soloFlow);
 
@@ -1066,6 +1076,26 @@ function resetToMenu() {
   history.replaceState(null, '', location.pathname + location.search);
   updateChrome('Nicht verbunden', null);
   showScreen('menu');
+}
+
+// Klick-Impact-Ripple fuer die neuen Neo-Brutalism-CTAs (.cta-mega,
+// .action-card): rein visuell, blockiert/ersetzt keinen bestehenden
+// Click-Handler, da nur ein zusaetzlicher Listener registriert wird.
+function attachRipple(button) {
+  if (!button) return;
+  button.addEventListener('click', (e) => {
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 2;
+    const x = (e.clientX ?? rect.left + rect.width / 2) - rect.left - size / 2;
+    const y = (e.clientY ?? rect.top + rect.height / 2) - rect.top - size / 2;
+    const ripple = document.createElement('span');
+    ripple.className = 'btn-ripple';
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
+    button.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+  });
 }
 
 function escapeHtml(str) {
