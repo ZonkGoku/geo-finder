@@ -972,22 +972,7 @@ function renderOverviewMap() {
   if (!overviewMap) overviewMap = new ResultMap(el('overview-map-container'));
   requestAnimationFrame(() => {
     overviewMap.invalidate();
-    const combinedResults = rounds.flatMap((r) => r.results);
-    overviewMap.render(rounds[rounds.length - 1].actual, combinedResults, state.players);
-    for (const round of rounds.slice(0, -1)) {
-      const targetIcon = window.L.divIcon({
-        className: '',
-        html: '<span class="map-pin map-pin--target"></span>',
-        iconSize: [14, 14],
-        iconAnchor: [7, 14],
-      });
-      window.L.marker([round.actual.lat, round.actual.lng], { icon: targetIcon }).addTo(overviewMap.layerGroup);
-    }
-    const allBounds = rounds.flatMap((r) => [
-      [r.actual.lat, r.actual.lng],
-      ...r.results.filter((res) => res.lat != null).map((res) => [res.lat, res.lng]),
-    ]);
-    if (allBounds.length > 1) overviewMap.map.fitBounds(allBounds, { padding: [30, 30] });
+    overviewMap.renderOverview(rounds, state.players);
   });
 }
 

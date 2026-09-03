@@ -419,7 +419,6 @@ button{ font-family:inherit; color:inherit; }
   animation:pinDrop .5s cubic-bezier(.34,1.56,.64,1) both;
 }
 .map-pin--you{ --pin-color:#ff7a33; }
-.map-pin--target{ --pin-color:#2fe6d6; }
 @keyframes pinDrop{
   0%{ transform:rotate(-45deg) translateY(-22px) scale(0.5); opacity:0; }
   60%{ transform:rotate(-45deg) translateY(3px) scale(1.08); opacity:1; }
@@ -428,6 +427,29 @@ button{ font-family:inherit; color:inherit; }
 @media (prefers-reduced-motion: reduce){
   .map-pin{ animation:none; transform:rotate(-45deg); }
 }
+
+/* Ziel-Marker: bewusst eine FLAGGE statt eines weiteren Tropfen-Pins - Farbe
+   allein (die alte .map-pin--target) war auf einer dichten Uebersichtskarte
+   mit mehreren Spieler-/Rundenfarben nicht zuverlaessig von einem Tipp zu
+   unterscheiden. Eine andere FORM ist eindeutig, unabhaengig von der Farbe. */
+.map-pin-target{ display:block; filter:drop-shadow(0 2px 5px rgba(0,0,0,0.6)); animation:flagDrop .5s cubic-bezier(.34,1.56,.64,1) both; }
+.map-pin-target .flag{ fill:#2fe6d6; }
+.map-pin-target .pole{ stroke:#fff; stroke-width:2; }
+.map-pin-target .base{ fill:#fff; }
+@keyframes flagDrop{
+  0%{ transform:translateY(-22px) scale(0.5); opacity:0; }
+  60%{ transform:translateY(3px) scale(1.08); opacity:1; }
+  100%{ transform:translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce){ .map-pin-target{ animation:none; } }
+
+/* Rundenzahl-Label ueber den Ziel-Flaggen in der Endstand-Uebersichtskarte -
+   Leafets Default-Tooltip (weisse Sprechblase) passt nicht zum dunklen Kartenstil. */
+.map-round-label{
+  background:rgba(10,15,26,0.78) !important; border:1px solid rgba(255,255,255,0.16) !important; color:#fff !important;
+  font-family:var(--font-mono); font-size:0.64rem; font-weight:600; padding:2px 6px !important; border-radius:6px !important; box-shadow:none !important;
+}
+.map-round-label::before{ display:none !important; }
 
 /* ===================== RESULT ===================== */
 .result-head{ display:flex; justify-content:space-between; align-items:baseline; gap:16px; flex-wrap:wrap; }
