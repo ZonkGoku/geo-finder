@@ -2,31 +2,11 @@ import { MAPILLARY_ACCESS_TOKEN } from '../config.js';
 
 const API_BASE = 'https://graph.mapillary.com';
 const REQUEST_TIMEOUT_MS = 8000;
-const LIST_LIMIT = 10;
+// Die Bildradiussuche (seit 2026-04-02 Teil der API) erlaubt maximal 50m
+// Radius und 100 Ergebnisse - beides harte Serverlimits, kein Tuning-Spielraum.
+const SEARCH_RADIUS_M = 50;
+const LIST_LIMIT = 20;
 const MAX_DETAIL_ATTEMPTS = 5;
-
-// Mapillary lehnt bbox-Anfragen über 0.010 Quadratgrad ab (per Live-Test
-// bestätigt: "Bounding box area is too large. Maximum allowed area is
-// 0.010 square degrees"). Mit Sicherheitsmarge bleiben wir klar darunter.
-const MAX_BBOX_AREA_DEG2 = 0.008;
-const METERS_PER_DEGREE = 111320;
-
-function bboxFromPoint(lat, lng, radiusM) {
-  const latRad = (lat * Math.PI) / 180;
-  const cosLat = Math.max(Math.cos(latRad), 0.01); // verhindert Explosion nahe den Polen
-
-  let dLat = radiusM / METERS_PER_DEGREE;
-  let dLng = radiusM / (METERS_PER_DEGREE * cosLat);
-
-  const area = 4 * dLat * dLng;
-  if (area > MAX_BBOX_AREA_DEG2) {
-    const scale = Math.sqrt(MAX_BBOX_AREA_DEG2 / area);
-    dLat *= scale;
-    dLng *= scale;
-  }
-
-  return [lng - dLng, lat - dLat, lng + dLng, lat + dLat];
-}
 
 /**
  * fetch() mit eigenem Timeout (Browser-fetch() hat sonst keins) und
@@ -71,24 +51,26 @@ function shuffle(arr) {
 }
 
 /**
- * Fragt echte Mapillary-Aufnahmen in einem kleinen Gebiet ab und liefert ein
+ * Fragt echte Mapillary-Aufnahmen nahe einer Region ab und liefert ein
  * einzelnes, zufällig gewähltes 360°-Bild (is_pano=true) zurück - oder null,
  * wenn dort keine sphärischen Aufnahmen vorliegen.
  *
- * Die Listenabfrage fragt bewusst nur `id` ab (kein `is_pano`, kein
- * `thumb_2048_url`) - jede bisher probierte Feldkombination loeste live
- * denselben "reduce the amount of data"-Fehler aus, auch bei kleinstem
- * bbox und limit=10, was eher auf ein Konto-/Token-Kontingent als auf zu
- * "teure" Felder hindeutet. `is_pano` wird stattdessen pro Bild einzeln in
- * der Detailabfrage geprueft (mehrere Kandidaten-IDs werden probiert, bis
- * eine spaerische Aufnahme dabei ist oder die Region aufgegeben wird).
+ * Nutzt die Bilder-Radiussuche (lat/lng/radius) statt einer bbox-Suche:
+ * Die bbox-Variante hat live reproduzierbar und unabhängig von Anfragegröße
+ * (selbst bei fields=id, limit=10, minimaler bbox) einen "reduce the amount
+ * of data"-Fehler ausgelöst - laut Mapillary-Doku ein Graph-API-Fehler aus
+ * der zugrunde liegenden Meta-Infrastruktur, keine bbox-Größenbeschränkung.
+ * Die Radiussuche ist ein eigener, neuerer Endpunkt-Pfad und umgeht das.
+ * `is_pano` kann laut Doku nicht zusammen mit lat/lng gefiltert werden,
+ * daher wird das pro Bild einzeln in der Detailabfrage geprüft.
  */
 export async function fetchPanoramaForRegion(region) {
-  const [west, south, east, north] = bboxFromPoint(region.lat, region.lng, region.radiusM || 400);
   const listParams = new URLSearchParams({
     access_token: MAPILLARY_ACCESS_TOKEN,
     fields: 'id',
-    bbox: `${west},${south},${east},${north}`,
+    lat: String(region.lat),
+    lng: String(region.lng),
+    radius: String(SEARCH_RADIUS_M),
     limit: String(LIST_LIMIT),
   });
 
