@@ -36,10 +36,10 @@ const el = (id) => document.getElementById(id);
 function loadProfile() {
   try {
     const raw = localStorage.getItem(PROFILE_KEY);
-    if (!raw) return { name: '', color: '#f2a93b' };
+    if (!raw) return { name: '', color: '#ff7a33' };
     return JSON.parse(raw);
   } catch {
-    return { name: '', color: '#f2a93b' };
+    return { name: '', color: '#ff7a33' };
   }
 }
 
@@ -50,7 +50,7 @@ function saveProfile() {
 function initProfileUI() {
   const profile = loadProfile();
   state.self.name = profile.name || '';
-  state.self.color = profile.color || '#f2a93b';
+  state.self.color = profile.color || '#ff7a33';
 
   el('player-name-input').value = state.self.name;
   el('player-name-input').addEventListener('input', (e) => {

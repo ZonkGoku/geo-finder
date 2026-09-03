@@ -83,7 +83,7 @@ export class HostController {
       state.players.set(peerId, {
         id: peerId,
         name: payload.name || 'Spieler',
-        color: payload.color || '#47d6c5',
+        color: payload.color || '#2fe6d6',
         ready: false,
         connected: true,
         isHost: false,

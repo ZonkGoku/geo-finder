@@ -22,7 +22,7 @@ export const bus = new EventBus();
 
 export const state = {
   role: null, // 'host' | 'client'
-  self: { id: null, name: '', color: '#f2a93b' },
+  self: { id: null, name: '', color: '#ff7a33' },
   roomCode: null,
   players: new Map(), // peerId -> { id, name, color, ready, connected, isHost }
   settings: {
