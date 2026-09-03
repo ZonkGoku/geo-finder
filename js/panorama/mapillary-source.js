@@ -83,9 +83,19 @@ export async function fetchPanoramaForRegion(region) {
     fields: 'id,is_pano,geometry,thumb_2048_url',
   });
 
-  for (const [index, id] of ids.slice(0, MAX_DETAIL_ATTEMPTS).entries()) {
-    if (index > 0) await new Promise((r) => setTimeout(r, 350));
-    const detail = await fetchJson(`${API_BASE}/${id}?${detailParams.toString()}`, region.name);
+  // Die Detailabfragen laufen gegen den Entity-Endpunkt (graph.mapillary.com/:id),
+  // nicht gegen den Such-Endpunkt, der die urspruengliche bbox-Anfrage betraf -
+  // laut Doku 60.000 Anfragen/Minute erlaubt, also unproblematisch parallel.
+  // Das serielle Abklappern mit 350ms-Pause war unnoetige Vorsicht und hat
+  // Kartenpakete wie Hamburg spuerbar verlangsamt.
+  const candidateIds = ids.slice(0, MAX_DETAIL_ATTEMPTS);
+  const details = await Promise.allSettled(
+    candidateIds.map((id) => fetchJson(`${API_BASE}/${id}?${detailParams.toString()}`, region.name))
+  );
+
+  for (const result of details) {
+    if (result.status !== 'fulfilled') continue;
+    const detail = result.value;
     if (!detail?.is_pano || !detail?.thumb_2048_url) continue;
 
     const [lng, lat] = detail.geometry?.coordinates || [region.lng, region.lat];

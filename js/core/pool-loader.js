@@ -32,23 +32,23 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
     const candidateCount = Math.min(mapSet.regions.length, roundCount * 3);
     const candidates = pickUniqueLocations(mapSet.regions, candidateCount, seed);
 
-    // Nacheinander mit kurzer Pause, NICHT parallel: mehrere gleichzeitige
-    // Anfragen mit demselben Token loesten live ein Rate-Limit bei Mapillary
-    // aus ("reduce the amount of data you're asking for" kam sogar bei der
-    // guenstigsten Abfrage, sobald mehrere Requests gleichzeitig liefen).
-    // fetchPanoramaForRegion hat weiterhin ein eigenes Timeout, damit ein
-    // einzelner haengender Request nicht die ganze Kette blockiert.
-    const RATE_LIMIT_DELAY_MS = 350;
+    // Alle Kandidaten-Regionen parallel abfragen. Das fruehere sequentielle
+    // Abklappern mit 350ms-Pause beruhte auf der (inzwischen widerlegten)
+    // Annahme, gleichzeitige Anfragen wuerden das "reduce the amount of
+    // data"-Problem ausloesen - das lag tatsaechlich am bbox-Endpunkt selbst,
+    // nicht an Nebenlaeufigkeit (siehe mapillary-source.js). Mit der
+    // Radiussuche ist Parallelisieren unproblematisch und macht das Laden
+    // eines Kartenpakets deutlich spuerbar schneller.
+    const settled = await Promise.allSettled(candidates.map((region) => fetchPanoramaForRegion(region)));
+
     const resolved = [];
-    for (const region of candidates) {
+    for (const result of settled) {
       if (resolved.length >= roundCount) break;
-      try {
-        const loc = await fetchPanoramaForRegion(region);
-        if (loc) resolved.push(loc);
-      } catch (err) {
-        console.error('Mapillary-Abruf fehlgeschlagen:', err);
+      if (result.status === 'fulfilled' && result.value) {
+        resolved.push(result.value);
+      } else if (result.status === 'rejected') {
+        console.error('Mapillary-Abruf fehlgeschlagen:', result.reason);
       }
-      await new Promise((r) => setTimeout(r, RATE_LIMIT_DELAY_MS));
     }
     return resolved;
   }

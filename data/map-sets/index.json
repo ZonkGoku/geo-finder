@@ -35,6 +35,24 @@
       "status": "needs-token",
       "source": "mapillary",
       "locationCount": null
+    },
+    {
+      "id": "berlin",
+      "file": "berlin.json",
+      "name": "Berlin Spezial",
+      "description": "Live-Straßenbilder aus Berlin über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "locationCount": null
+    },
+    {
+      "id": "paris",
+      "file": "paris.json",
+      "name": "Paris Spezial",
+      "description": "Live-Straßenbilder aus Paris über die Mapillary-API — braucht einen Mapillary-Zugangstoken.",
+      "status": "needs-token",
+      "source": "mapillary",
+      "locationCount": null
     }
   ]
 }

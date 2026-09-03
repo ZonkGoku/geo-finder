@@ -6,13 +6,13 @@
   "source": "mapillary",
   "scaleKm": 6,
   "regions": [
-    { "id": "hamburg-landungsbruecken", "name": "Landungsbrücken", "lat": 53.5459, "lng": 9.9683, "radiusM": 900 },
-    { "id": "hamburg-elbphilharmonie", "name": "Elbphilharmonie", "lat": 53.5413, "lng": 9.9840, "radiusM": 900 },
-    { "id": "hamburg-speicherstadt", "name": "Speicherstadt", "lat": 53.5445, "lng": 9.9915, "radiusM": 900 },
-    { "id": "hamburg-stadtpark", "name": "Stadtpark", "lat": 53.5947, "lng": 10.0225, "radiusM": 1000 },
-    { "id": "hamburg-jungfernstieg", "name": "Jungfernstieg / Binnenalster", "lat": 53.5548, "lng": 9.9930, "radiusM": 900 },
-    { "id": "hamburg-reeperbahn", "name": "Reeperbahn / St. Pauli", "lat": 53.5503, "lng": 9.9625, "radiusM": 900 },
-    { "id": "hamburg-planten-un-blomen", "name": "Planten un Blomen", "lat": 53.5613, "lng": 9.9838, "radiusM": 900 },
-    { "id": "hamburg-blankenese", "name": "Blankenese", "lat": 53.5622, "lng": 9.8103, "radiusM": 1000 }
+    { "id": "hamburg-landungsbruecken", "name": "Landungsbrücken", "lat": 53.5459, "lng": 9.9683 },
+    { "id": "hamburg-elbphilharmonie", "name": "Elbphilharmonie", "lat": 53.5413, "lng": 9.9840 },
+    { "id": "hamburg-speicherstadt", "name": "Speicherstadt", "lat": 53.5445, "lng": 9.9915 },
+    { "id": "hamburg-stadtpark", "name": "Stadtpark", "lat": 53.5947, "lng": 10.0225 },
+    { "id": "hamburg-jungfernstieg", "name": "Jungfernstieg / Binnenalster", "lat": 53.5548, "lng": 9.9930 },
+    { "id": "hamburg-reeperbahn", "name": "Reeperbahn / St. Pauli", "lat": 53.5503, "lng": 9.9625 },
+    { "id": "hamburg-planten-un-blomen", "name": "Planten un Blomen", "lat": 53.5613, "lng": 9.9838 },
+    { "id": "hamburg-blankenese", "name": "Blankenese", "lat": 53.5622, "lng": 9.8103 }
   ]
 }

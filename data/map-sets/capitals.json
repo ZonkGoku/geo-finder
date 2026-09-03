@@ -6,13 +6,21 @@
   "source": "mapillary",
   "scaleKm": 1800,
   "regions": [
-    { "id": "berlin", "name": "Berlin, Deutschland", "lat": 52.5200, "lng": 13.4050, "radiusM": 1200 },
-    { "id": "paris", "name": "Paris, Frankreich", "lat": 48.8566, "lng": 2.3522, "radiusM": 1200 },
-    { "id": "london", "name": "London, Vereinigtes Königreich", "lat": 51.5074, "lng": -0.1278, "radiusM": 1200 },
-    { "id": "madrid", "name": "Madrid, Spanien", "lat": 40.4168, "lng": -3.7038, "radiusM": 1200 },
-    { "id": "rome", "name": "Rom, Italien", "lat": 41.9028, "lng": 12.4964, "radiusM": 1200 },
-    { "id": "vienna", "name": "Wien, Österreich", "lat": 48.2082, "lng": 16.3738, "radiusM": 1200 },
-    { "id": "amsterdam", "name": "Amsterdam, Niederlande", "lat": 52.3676, "lng": 4.9041, "radiusM": 1200 },
-    { "id": "tokyo", "name": "Tokio, Japan", "lat": 35.6762, "lng": 139.6503, "radiusM": 1200 }
+    { "id": "berlin-potsdamer-platz", "name": "Potsdamer Platz, Berlin", "lat": 52.5096, "lng": 13.3759 },
+    { "id": "berlin-alexanderplatz", "name": "Alexanderplatz, Berlin", "lat": 52.5219, "lng": 13.4132 },
+    { "id": "paris-concorde", "name": "Place de la Concorde, Paris", "lat": 48.8656, "lng": 2.3212 },
+    { "id": "paris-notre-dame", "name": "Notre-Dame, Paris", "lat": 48.8530, "lng": 2.3499 },
+    { "id": "london-piccadilly", "name": "Piccadilly Circus, London", "lat": 51.5101, "lng": -0.1342 },
+    { "id": "london-trafalgar", "name": "Trafalgar Square, London", "lat": 51.5080, "lng": -0.1281 },
+    { "id": "madrid-sol", "name": "Puerta del Sol, Madrid", "lat": 40.4169, "lng": -3.7033 },
+    { "id": "madrid-plaza-mayor", "name": "Plaza Mayor, Madrid", "lat": 40.4155, "lng": -3.7074 },
+    { "id": "rome-navona", "name": "Piazza Navona, Rom", "lat": 41.8992, "lng": 12.4731 },
+    { "id": "rome-spagna", "name": "Piazza di Spagna, Rom", "lat": 41.9058, "lng": 12.4823 },
+    { "id": "vienna-stephansplatz", "name": "Stephansplatz, Wien", "lat": 48.2085, "lng": 16.3731 },
+    { "id": "vienna-karlsplatz", "name": "Karlsplatz, Wien", "lat": 48.1986, "lng": 16.3695 },
+    { "id": "amsterdam-dam", "name": "Dam-Platz, Amsterdam", "lat": 52.3731, "lng": 4.8926 },
+    { "id": "amsterdam-museumplein", "name": "Museumplein, Amsterdam", "lat": 52.3600, "lng": 4.8852 },
+    { "id": "tokyo-shibuya", "name": "Shibuya-Kreuzung, Tokio", "lat": 35.6595, "lng": 139.7005 },
+    { "id": "tokyo-station", "name": "Tokyo Station, Tokio", "lat": 35.6812, "lng": 139.7671 }
   ]
 }

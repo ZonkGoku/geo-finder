@@ -6,12 +6,12 @@
   "source": "mapillary",
   "scaleKm": 2000,
   "regions": [
-    { "id": "eiffel-tower", "name": "Eiffelturm, Paris", "lat": 48.8584, "lng": 2.2945, "radiusM": 900 },
-    { "id": "colosseum", "name": "Kolosseum, Rom", "lat": 41.8902, "lng": 12.4922, "radiusM": 900 },
-    { "id": "taj-mahal", "name": "Taj Mahal, Agra", "lat": 27.1751, "lng": 78.0421, "radiusM": 1000 },
-    { "id": "brandenburg-gate", "name": "Brandenburger Tor, Berlin", "lat": 52.5163, "lng": 13.3777, "radiusM": 900 },
-    { "id": "big-ben", "name": "Big Ben, London", "lat": 51.5007, "lng": -0.1246, "radiusM": 900 },
-    { "id": "sagrada-familia", "name": "Sagrada Família, Barcelona", "lat": 41.4036, "lng": 2.1744, "radiusM": 900 },
-    { "id": "times-square", "name": "Times Square, New York", "lat": 40.7580, "lng": -73.9855, "radiusM": 800 }
+    { "id": "eiffel-tower", "name": "Eiffelturm, Paris", "lat": 48.8584, "lng": 2.2945 },
+    { "id": "colosseum", "name": "Kolosseum, Rom", "lat": 41.8902, "lng": 12.4922 },
+    { "id": "taj-mahal", "name": "Taj Mahal, Agra", "lat": 27.1751, "lng": 78.0421 },
+    { "id": "brandenburg-gate", "name": "Brandenburger Tor, Berlin", "lat": 52.5163, "lng": 13.3777 },
+    { "id": "big-ben", "name": "Big Ben, London", "lat": 51.5007, "lng": -0.1246 },
+    { "id": "sagrada-familia", "name": "Sagrada Família, Barcelona", "lat": 41.4036, "lng": 2.1744 },
+    { "id": "times-square", "name": "Times Square, New York", "lat": 40.7580, "lng": -73.9855 }
   ]
 }
