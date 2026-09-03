@@ -5,8 +5,11 @@ const REQUEST_TIMEOUT_MS = 8000;
 // Die Bildradiussuche (seit 2026-04-02 Teil der API) erlaubt maximal 50m
 // Radius und 100 Ergebnisse - beides harte Serverlimits, kein Tuning-Spielraum.
 const SEARCH_RADIUS_M = 50;
-const LIST_LIMIT = 20;
-const MAX_DETAIL_ATTEMPTS = 5;
+// Max. erlaubtes limit fuer die Radiussuche ist 100 - ausgeschoepft, damit der
+// anschliessende Shuffle aus einer moeglichst grossen Kandidatenmenge waehlt
+// und nicht jedes Mal dasselbe Foto fuer eine Region liefert.
+const LIST_LIMIT = 100;
+const MAX_DETAIL_ATTEMPTS = 8;
 
 /**
  * fetch() mit eigenem Timeout (Browser-fetch() hat sonst keins) und
