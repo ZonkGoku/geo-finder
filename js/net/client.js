@@ -48,6 +48,9 @@ export class ClientController {
         bus.emit('ui:lobby-joined');
         this.measureClockOffset();
         break;
+      case MSG.ROOM_JOIN_REJECTED:
+        bus.emit('ui:join-rejected', { reason: message.payload.reason });
+        break;
       case MSG.LOBBY_STATE:
         state.settings = message.payload.settings;
         this._applyPlayers(message.payload.players);

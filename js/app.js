@@ -1020,7 +1020,10 @@ function wireBusEvents() {
   bus.on('ui:round-started', renderRoundStart);
   bus.on('ui:player-guessed', ({ peerId }) => {
     renderPeerStatus();
-    if (peerId !== state.self.id) showToast('Gegenspieler hat getippt!');
+    if (peerId !== state.self.id) {
+      const name = state.players.get(peerId)?.name || 'Ein Mitspieler';
+      showToast(`${name} hat getippt!`);
+    }
   });
   bus.on('ui:round-result', renderRoundResult);
   bus.on('ui:game-over', renderLeaderboard);
@@ -1032,6 +1035,10 @@ function wireBusEvents() {
   bus.on('ui:emote-received', ({ peerId, emoji }) => {
     if (peerId === state.self.id) return;
     spawnEmote(emoji);
+  });
+  bus.on('ui:join-rejected', ({ reason }) => {
+    resetToMenu();
+    showMenuError(reason || 'Beitritt abgelehnt.');
   });
   bus.on('ui:host-disconnected', () => {
     showStateOverlay({

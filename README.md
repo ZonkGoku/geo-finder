@@ -1,6 +1,6 @@
 # GeoFinder
 
-Ein GeoGuessr-artiges 360°-Duell, das komplett als statische Seite läuft:
+Ein GeoGuessr-artiges 360°-Multiplayer-Spiel für bis zu 6 Spieler, das komplett als statische Seite läuft:
 kein Backend, kein Account, keine Datenbank. Multiplayer läuft direkt
 Peer-zu-Peer über WebRTC ([PeerJS](https://peerjs.com/)), Panoramen zeigt
 [Pannellum](https://pannellum.org/), die Tipp-Karte ist [Leaflet](https://leafletjs.com/).
@@ -22,9 +22,10 @@ Dann `http://localhost:8080` öffnen.
 
 ## Spielen
 
-- **Duell erstellen**: erzeugt einen Raum-Code + Einladungslink
-  (`#room=CODE`), den man teilen kann. Sobald ein zweiter Spieler beitritt
-  und auf „Bereit" klickt, kann der Host starten.
+- **Raum erstellen**: erzeugt einen Raum-Code + Einladungslink
+  (`#room=CODE`), den man teilen kann. Bis zu 5 weitere Spieler (insgesamt
+  max. 6) können beitreten; sobald mindestens einer beigetreten ist und
+  alle auf „Bereit" geklickt haben, kann der Host starten.
 - **Beitreten**: Code oder kompletten Link einfügen.
 - **Solo spielen**: startet sofort, ganz ohne Netzwerk — nützlich zum Testen
   und für Einzelspieler-Runden.

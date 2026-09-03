@@ -14,6 +14,7 @@ import { ensureCountryData, findCountryAtPointSync } from '../core/country-looku
 
 const ROUND_RESULT_DISPLAY_MS = 8000;
 const LEAVE_GRACE_MS = 15000;
+const MAX_PLAYERS = 6;
 
 export class HostController {
   constructor(peerManager) {
@@ -76,6 +77,14 @@ export class HostController {
     this.leaveTimers.delete(peerId);
 
     const existing = state.players.get(peerId);
+    if (!existing && state.players.size >= MAX_PLAYERS) {
+      this.pm.sendTo(
+        peerId,
+        makeMessage(MSG.ROOM_JOIN_REJECTED, { reason: `Der Raum ist voll (max. ${MAX_PLAYERS} Spieler).` }, state.self.id)
+      );
+      return;
+    }
+
     if (existing) {
       existing.connected = true;
       existing.name = payload.name || existing.name;
