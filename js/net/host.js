@@ -9,7 +9,7 @@ import {
   nextCountryStreak,
 } from '../core/scoring.js';
 import { makeSeed } from '../core/rng.js';
-import { resolveRoundLocations } from '../core/pool-loader.js';
+import { resolveRoundLocations, computeMapSetBounds } from '../core/pool-loader.js';
 import { ensureCountryData, findCountryAtPointSync } from '../core/country-lookup.js';
 
 const ROUND_RESULT_DISPLAY_MS = 8000;
@@ -157,7 +157,11 @@ export class HostController {
   }
 
   async startGame(mapSet) {
-    state.pool = mapSet;
+    // focusBounds hier schon mit anhaengen, damit Host und Mitspieler den
+    // gleichen state.pool.focusBounds-Pfad fuer die Minimap nutzen koennen
+    // (der Host darf die volle Standortliste ohnehin sehen, sie bleibt
+    // trotzdem auf state.pool - nur GAME_START an die Mitspieler laesst sie weg).
+    state.pool = { ...mapSet, focusBounds: computeMapSetBounds(mapSet) };
     resetForNewGame();
     const seed = makeSeed();
 
@@ -174,6 +178,10 @@ export class HostController {
     this.roundLocations = resolved;
     state.round.total = this.roundLocations.length;
 
+    // Nur Name/Quelle/grobe Bounding-Box gehen an die Mitspieler - NICHT die
+    // vollstaendige Standortliste mit echten Koordinaten. Die haelt nur der
+    // Host (in mapSet/state.pool), damit niemand per DevTools-Netzwerktab
+    // die Antworten aller Runden im Voraus nachschlagen kann.
     this.pm.broadcast(
       makeMessage(
         MSG.GAME_START,
@@ -182,6 +190,10 @@ export class HostController {
           timeLimitMs: state.settings.timeLimitMs,
           mode: state.settings.mode,
           modifier: state.settings.modifier,
+          mapSetId: mapSet.id,
+          mapSetName: mapSet.name,
+          mapSetSource: mapSet.source,
+          focusBounds: computeMapSetBounds(mapSet),
         },
         state.self.id
       )
@@ -199,10 +211,15 @@ export class HostController {
       startTimestamp: Date.now(),
       timeLimitMs: state.settings.timeLimitMs,
       actual: { lat: location.lat, lng: location.lng },
+      hint: location.hint ?? null,
+      vaov: location.vaov ?? null,
       guessedPlayerIds: new Set(),
       myGuess: null,
     };
 
+    // hint/vaov sind bewusst die einzigen Vorab-Informationen zum aktuellen
+    // Ort - die Koordinaten selbst (state.round.actual) bleiben bis zum
+    // Rundenende ausschliesslich beim Host.
     this.pm.broadcast(
       makeMessage(
         MSG.ROUND_START,
@@ -211,6 +228,8 @@ export class HostController {
           panoramaUrl: location.panoramaUrl,
           startTimestamp: state.round.startTimestamp,
           timeLimitMs: state.round.timeLimitMs,
+          hint: location.hint ?? null,
+          vaov: location.vaov ?? null,
         },
         state.self.id
       )
@@ -272,16 +291,31 @@ export class HostController {
       }
     }
 
-    state.roundHistory[state.round.index] = { actual, results };
+    const resolvedLocation = this.roundLocations[state.round.index] || {};
+    const actualMeta = {
+      name: resolvedLocation.name ?? null,
+      hint: resolvedLocation.hint ?? null,
+      funFact: resolvedLocation.funFact ?? null,
+    };
+
+    state.roundHistory[state.round.index] = { actual, actualMeta, results };
 
     this.pm.broadcast(
       makeMessage(
         MSG.ROUND_RESULT,
-        { roundIndex: state.round.index, actualLat: actual.lat, actualLng: actual.lng, results },
+        {
+          roundIndex: state.round.index,
+          actualLat: actual.lat,
+          actualLng: actual.lng,
+          actualName: actualMeta.name,
+          actualHint: actualMeta.hint,
+          actualFunFact: actualMeta.funFact,
+          results,
+        },
         state.self.id
       )
     );
-    bus.emit('ui:round-result', { results, actual });
+    bus.emit('ui:round-result', { results, actual, actualMeta });
 
     const isLastRound = state.round.index >= this.roundLocations.length - 1;
     clearTimeout(this.nextRoundTimer);

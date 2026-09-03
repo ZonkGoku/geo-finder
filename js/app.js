@@ -144,12 +144,6 @@ async function getMapSetDetail(id) {
   return detail;
 }
 
-function findLocationByCoords(lat, lng) {
-  const pool = activeMapSetDetail;
-  if (!pool?.locations || lat == null || lng == null) return null;
-  return pool.locations.find((loc) => Math.abs(loc.lat - lat) < 0.001 && Math.abs(loc.lng - lng) < 0.001) || null;
-}
-
 // ---------------------------------------------------------------- state overlay / connection banner
 
 function showStateOverlay({ title, message, actionLabel, onAction }) {
@@ -511,24 +505,26 @@ function renderRoundStart() {
 
   el('hud-round-index').textContent = String(state.round.index + 1).padStart(2, '0');
   el('hud-round-total').textContent = String(state.round.total).padStart(2, '0');
-  el('pano-credit').textContent = activeMapSetDetail?.source === 'mapillary'
+  el('pano-credit').textContent = state.pool?.source === 'mapillary'
     ? 'Foto: Mapillary-Mitwirkende'
     : 'Foto: Matthew Petroff · CC BY-SA 4.0';
 
   const scopeEl = el('minimap-scope');
-  const isDefaultPool = !activeMapSetDetail || activeMapSetDetail.id === 'starter-pool';
-  scopeEl.textContent = isDefaultPool ? '' : `Modus: ${activeMapSetDetail.name}`;
+  const isDefaultPool = !state.pool || state.pool.id === 'starter-pool';
+  scopeEl.textContent = isDefaultPool ? '' : `Modus: ${state.pool.name}`;
   scopeEl.classList.toggle('hidden', isDefaultPool);
 
   renderRoundProgress();
   renderHpBars();
 
-  const location = findLocationByCoords(state.round.actual?.lat, state.round.actual?.lng) ||
-    activeMapSetDetail?.locations?.find((loc) => loc.panoramaUrl === state.round.panoramaUrl);
+  // Hinweistext kommt direkt vom Host per ROUND_START (state.round.hint) -
+  // NICHT mehr aus einer lokal vorgehaltenen Standortliste, damit Mitspieler
+  // nicht per DevTools-Netzwerktab alle Antworten im Voraus nachschlagen
+  // koennen (siehe net/host.js).
   const hintBtn = el('btn-hint-toggle');
   const hintBanner = el('hint-banner');
   hintBanner.classList.add('hidden');
-  if (location?.hint) {
+  if (state.round.hint) {
     hintBtn.hidden = false;
     hintBtn.textContent = 'Hinweis';
   } else {
@@ -541,14 +537,14 @@ function renderRoundStart() {
 
   el('pano-loading').classList.remove('hidden');
   panoViewer.load(state.round.panoramaUrl, {
-    vaov: location?.vaov,
+    vaov: state.round.vaov,
     modifier: state.settings.modifier,
     onLoad: () => el('pano-loading').classList.add('hidden'),
   });
 
   guessMap.reset();
   if (state.round.index === 0) {
-    guessMap.focusOnLocations(activeMapSetDetail?.locations || activeMapSetDetail?.regions);
+    guessMap.focusOnLocations(state.pool?.focusBounds);
   }
   el('minimap').classList.remove('expanded');
   const confirmBtn = el('btn-confirm-guess');
@@ -629,12 +625,10 @@ function wireHudControls() {
 
   el('btn-hint-toggle').addEventListener('click', () => {
     sound.playClick();
-    const location = findLocationByCoords(state.round.actual?.lat, state.round.actual?.lng) ||
-      activeMapSetDetail?.locations?.find((loc) => loc.panoramaUrl === state.round.panoramaUrl);
-    if (!location?.hint) return;
+    if (!state.round.hint) return;
     hintRevealed = !hintRevealed;
     const banner = el('hint-banner');
-    banner.textContent = `💡 ${location.hint}`;
+    banner.textContent = `💡 ${state.round.hint}`;
     banner.classList.toggle('hidden', !hintRevealed);
   });
 
@@ -713,7 +707,7 @@ function animateCounter(elEl, from, to, duration = 700) {
   requestAnimationFrame(step);
 }
 
-function renderRoundResult({ results, actual }) {
+function renderRoundResult({ results, actual, actualMeta }) {
   clearInterval(hudTimerInterval);
   showScreen('result');
 
@@ -726,10 +720,11 @@ function renderRoundResult({ results, actual }) {
     resultMap.render(actual, results, state.players);
   });
 
-  const location = findLocationByCoords(actual.lat, actual.lng);
+  // funFact kommt jetzt direkt vom Host im ROUND_RESULT (actualMeta) statt
+  // aus einer lokal vorgehaltenen Standortliste - siehe net/host.js.
   const funFactEl = el('result-fun-fact');
-  if (location?.funFact) {
-    el('result-fun-fact-text').textContent = location.funFact;
+  if (actualMeta?.funFact) {
+    el('result-fun-fact-text').textContent = actualMeta.funFact;
     funFactEl.classList.remove('hidden');
   } else {
     funFactEl.classList.add('hidden');
@@ -1008,6 +1003,7 @@ function resetToMenu() {
   state.scores = new Map();
   state.roundHistory = [];
   state.hp = new Map();
+  state.pool = null;
   history.replaceState(null, '', location.pathname + location.search);
   updateChrome('Nicht verbunden', null);
   showScreen('menu');
@@ -1034,14 +1030,13 @@ function wireBusEvents() {
   bus.on('ui:lobby-joined', () => {
     enterLobby();
   });
-  bus.on('ui:game-started', async () => {
-    if (!activeMapSetDetail) {
-      try {
-        activeMapSetDetail = await getMapSetDetail(state.settings.mapSetId);
-      } catch (err) {
-        console.error(err);
-      }
-    }
+  bus.on('ui:game-started', () => {
+    // Mitspieler (nicht der Host) fragen hier bewusst NICHT mehr die volle
+    // Kartenpaket-Datei ab - das war eine Sicherheitsluecke: die Datei
+    // enthaelt die echten Koordinaten aller moeglichen Standorte, im
+    // DevTools-Netzwerktab fuer jeden sichtbar. Was fuers HUD noetig ist
+    // (Name/Quelle/Bounding-Box, Hinweistext, Fun-Fact) kommt jetzt direkt
+    // vom Host per GAME_START/ROUND_START/ROUND_RESULT (siehe net/host.js).
     showScreen('hud');
   });
   bus.on('ui:map-resolving', () => showToast('Kartenpaket wird geladen…'));

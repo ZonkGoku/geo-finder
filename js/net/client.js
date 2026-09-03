@@ -63,6 +63,15 @@ export class ClientController {
         state.scores = new Map();
         state.roundHistory = [];
         state.hp = new Map();
+        // Nur die leichten Metadaten - NICHT die volle Standortliste mit
+        // echten Koordinaten. Die haelt nur der Host, damit hier niemand
+        // per DevTools-Netzwerktab die Antworten im Voraus nachschlagen kann.
+        state.pool = {
+          id: message.payload.mapSetId,
+          name: message.payload.mapSetName,
+          source: message.payload.mapSetSource,
+          focusBounds: message.payload.focusBounds,
+        };
         for (const id of state.players.keys()) {
           state.scores.set(id, freshScoreEntry());
           if (message.payload.mode === 'hp') state.hp.set(id, HP_START);
@@ -77,6 +86,8 @@ export class ClientController {
           startTimestamp: message.payload.startTimestamp,
           timeLimitMs: message.payload.timeLimitMs,
           actual: null,
+          hint: message.payload.hint ?? null,
+          vaov: message.payload.vaov ?? null,
           guessedPlayerIds: new Set(),
           myGuess: null,
         };
@@ -86,8 +97,14 @@ export class ClientController {
         state.round.guessedPlayerIds.add(message.payload.playerId);
         bus.emit('ui:player-guessed', { peerId: message.payload.playerId });
         break;
-      case MSG.ROUND_RESULT:
+      case MSG.ROUND_RESULT: {
         state.round.actual = { lat: message.payload.actualLat, lng: message.payload.actualLng };
+        const actualMeta = {
+          name: message.payload.actualName ?? null,
+          hint: message.payload.actualHint ?? null,
+          funFact: message.payload.actualFunFact ?? null,
+        };
+        state.round.actualMeta = actualMeta;
         for (const r of message.payload.results) {
           if (!state.scores.has(r.playerId)) state.scores.set(r.playerId, freshScoreEntry());
           const entry = state.scores.get(r.playerId);
@@ -106,10 +123,12 @@ export class ClientController {
         }
         state.roundHistory[message.payload.roundIndex] = {
           actual: state.round.actual,
+          actualMeta,
           results: message.payload.results,
         };
-        bus.emit('ui:round-result', { results: message.payload.results, actual: state.round.actual });
+        bus.emit('ui:round-result', { results: message.payload.results, actual: state.round.actual, actualMeta });
         break;
+      }
       case MSG.GAME_OVER:
         bus.emit('ui:game-over', { finalScores: message.payload.finalScores });
         break;
