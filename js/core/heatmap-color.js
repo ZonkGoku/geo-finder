@@ -16,8 +16,19 @@ export const HEATMAP_COLORS = {
   near: '#ff3b3b',
   mid: '#ff8a3d',
   far: '#ffd166',
-  cold: '#e8ecf5',
-  unguessed: 'transparent',
+  // War '#e8ecf5' - ein fast weisser Farbton, kaum von der (ebenfalls
+  // weissen) unguessed-Fuellung zu unterscheiden. Ein "sehr weit weg"-Tipp
+  // wirkte dadurch optisch fast wie gar kein Tipp. Jetzt ein klar
+  // erkennbares kuehles Blau statt eines Beinahe-Weiss.
+  cold: '#6fa8dc',
+  // War 'transparent' - eine "transparente Fuellung" bleibt bei JEDER
+  // fillOpacity unsichtbar (0 Alpha ist 0 Alpha), Laender ohne Tipp waren
+  // dadurch nur an ihrer 1px-Umrisslinie erkennbar. Live gemeldet als "man
+  // kann auf Mobile kaum was erkennen" - auf einem kleinen Bildschirm ist
+  // eine fast unsichtbare Weltkarte praktisch unbedienbar. Jetzt ein echter
+  // Farbwert, den heatmap-map.js bei niedriger Deckkraft als dezente
+  // Landmassen-Einfaerbung nutzt (siehe UNGUESSED_FILL_OPACITY dort).
+  unguessed: '#ffffff',
 };
 
 export function getColorForDistance(km, exact = false) {

@@ -17,15 +17,34 @@ const DARK_BASE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canv
 const DARK_LABELS_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
 const DARK_TILE_ATTRIBUTION = '&copy; Esri';
 const DARK_MAX_ZOOM = 12;
+// Laender-Umrisse waren bei weight:1/28% Deckkraft auf kleinen Bildschirmen
+// kaum zu erkennen, und ungetippte Laender hatten wegen HEATMAP_COLORS.
+// unguessed==='transparent' UEBERHAUPT keine Fuellung (0 Alpha bleibt 0
+// Alpha, egal welche fillOpacity dabei stand) - die Weltkarte war praktisch
+// nur eine fast unsichtbare Gitternetzlinie. Jetzt: deutlich kraeftigere
+// Umrisslinie + eine dezente, aber klar sichtbare Grundfuellung fuer JEDES
+// Land, damit die Landmassen-Formen sofort erkennbar sind, auch bevor
+// ueberhaupt getippt wurde. Die "heisse" Einfaerbung nach einem Tipp bleibt
+// bei GUESSED_FILL_OPACITY deutlich kraeftiger, damit sie klar heraussticht.
+const BORDER_COLOR = 'rgba(255,255,255,0.6)';
+const BORDER_WEIGHT = 1.4;
+const UNGUESSED_FILL_OPACITY = 0.1;
+const GUESSED_FILL_OPACITY = 0.82;
 
 export class HeatmapMap {
   constructor(containerEl, { labels = true } = {}) {
+    // Zoom 2 zeigt die GESAMTE Welt - auf einem schmalen Handy-Hochformat
+    // (Breite < Hoehe) presst das jedes Land auf ein paar Pixel zusammen,
+    // selbst mit staerkeren Umrissen/Fuellung von oben kaum noch lesbar.
+    // Etwas naeher heranzoomen ist der groessere Hebel dagegen: Panning per
+    // Wischgeste ist auf Touch-Geraeten ohnehin die natuerliche Erwartung.
+    const isNarrowViewport = typeof window !== 'undefined' && window.innerWidth < 600;
     this.map = window.L.map(containerEl, {
       zoomControl: false,
       attributionControl: true,
       worldCopyJump: true,
       minZoom: 2,
-    }).setView([20, 10], 2);
+    }).setView([20, 10], isNarrowViewport ? 2.6 : 2);
 
     this.baseLayer = window.L.tileLayer(DARK_BASE_URL, {
       attribution: DARK_TILE_ATTRIBUTION,
@@ -67,7 +86,12 @@ export class HeatmapMap {
     }));
 
     this.layer = window.L.geoJSON(features, {
-      style: () => ({ color: 'rgba(255,255,255,0.28)', weight: 1, fillColor: HEATMAP_COLORS.unguessed, fillOpacity: 0 }),
+      style: () => ({
+        color: BORDER_COLOR,
+        weight: BORDER_WEIGHT,
+        fillColor: HEATMAP_COLORS.unguessed,
+        fillOpacity: UNGUESSED_FILL_OPACITY,
+      }),
     }).addTo(this.map);
 
     this.layer.eachLayer((layer) => {
@@ -78,13 +102,16 @@ export class HeatmapMap {
   colorCountry(countryId, color) {
     const layer = this.layerByCountryId.get(String(countryId));
     if (!layer) return;
-    layer.setStyle({ fillColor: color, fillOpacity: color === HEATMAP_COLORS.unguessed ? 0 : 0.78 });
+    const isUnguessed = color === HEATMAP_COLORS.unguessed;
+    layer.setStyle({ fillColor: color, fillOpacity: isUnguessed ? UNGUESSED_FILL_OPACITY : GUESSED_FILL_OPACITY });
     layer.bringToFront();
   }
 
   /** Alle Faerbungen zuruecksetzen - vor jeder neuen Runde. */
   reset() {
-    this.layerByCountryId.forEach((layer) => layer.setStyle({ fillColor: HEATMAP_COLORS.unguessed, fillOpacity: 0 }));
+    this.layerByCountryId.forEach((layer) =>
+      layer.setStyle({ fillColor: HEATMAP_COLORS.unguessed, fillOpacity: UNGUESSED_FILL_OPACITY })
+    );
   }
 
   invalidate() {
