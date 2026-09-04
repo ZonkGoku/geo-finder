@@ -3,14 +3,20 @@ import { HEATMAP_COLORS } from '../core/heatmap-color.js';
 // Fester dunkler Basemap-Kachel-Layer statt des ueblichen Satellit/Karte-
 // Umschalters (attachTileLayer in tile-config.js) - Satellitenbilder wuerden
 // optisch mit den eingefaerbten Laender-Polygonen konkurrieren, ein neutraler
-// dunkler Hintergrund laesst die Distanz-Farben klar hervortreten. CartoDB
-// Dark Matter ist schluessellos nutzbar und bietet ein zusammenpassendes
-// Kachel-Paar MIT und OHNE Beschriftungen vom selben Anbieter (statt Labels
-// nachtraeglich als separaten Overlay-Layer draufzulegen) - genau das braucht
-// die "Karten-Labels An/Aus"-Einstellung (siehe lobby heatmapLabels).
-const DARK_TILE_URL_LABELS = 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png';
-const DARK_TILE_URL_NO_LABELS = 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}.png';
-const DARK_TILE_ATTRIBUTION = '&copy; OpenStreetMap contributors &copy; CARTO';
+// dunkler Hintergrund laesst die Distanz-Farben klar hervortreten.
+// Urspruenglich CartoDB Dark Matter (schluessellos nutzbares Kachel-Paar MIT/
+// OHNE Beschriftungen) - CartoDBs anonymer basemaps.cartocdn.com-Zugang zeigt
+// inzwischen aber (wie schon einmal bei tile-config.js erlebt) ein "API KEY
+// REQUIRED"-Wasserzeichen ueber der gesamten Karte. Stattdessen jetzt Esri's
+// ebenfalls schluessellose "Canvas"-Dienste: World_Dark_Gray_Base (reiner
+// Basemap ohne jede Beschriftung) plus World_Dark_Gray_Reference (nur die
+// Beschriftungen, als transparenter Overlay-Layer) - zusammen ergeben sie
+// dasselbe "mit/ohne Labels"-Paar, nur als zwei uebereinandergelegte Layer
+// statt zwei alternativer Einzel-URLs.
+const DARK_BASE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+const DARK_LABELS_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
+const DARK_TILE_ATTRIBUTION = '&copy; Esri';
+const DARK_MAX_ZOOM = 12;
 
 export class HeatmapMap {
   constructor(containerEl, { labels = true } = {}) {
@@ -21,26 +27,31 @@ export class HeatmapMap {
       minZoom: 2,
     }).setView([20, 10], 2);
 
-    this.tileLayer = window.L.tileLayer(labels ? DARK_TILE_URL_LABELS : DARK_TILE_URL_NO_LABELS, {
+    this.baseLayer = window.L.tileLayer(DARK_BASE_URL, {
       attribution: DARK_TILE_ATTRIBUTION,
-      maxZoom: 12,
-      subdomains: 'abcd',
+      maxZoom: DARK_MAX_ZOOM,
     }).addTo(this.map);
+    this.labelsLayer = null;
+    if (labels) this._addLabelsLayer();
 
     this.layer = null;
     this.layerByCountryId = new Map();
   }
 
-  /** Wechselt den Basemap-Layer nachtraeglich (falls die Einstellung sich
+  _addLabelsLayer() {
+    this.labelsLayer = window.L.tileLayer(DARK_LABELS_URL, { maxZoom: DARK_MAX_ZOOM }).addTo(this.map);
+  }
+
+  /** Wechselt den Beschriftungs-Overlay nachtraeglich (falls die Einstellung sich
    * zwischen zwei Runden nicht aendern kann - hier nur fuer Robustheit, die
    * Lobby-Einstellung steht schon fest bevor die Karte erzeugt wird). */
   setLabels(labels) {
-    this.map.removeLayer(this.tileLayer);
-    this.tileLayer = window.L.tileLayer(labels ? DARK_TILE_URL_LABELS : DARK_TILE_URL_NO_LABELS, {
-      attribution: DARK_TILE_ATTRIBUTION,
-      maxZoom: 12,
-      subdomains: 'abcd',
-    }).addTo(this.map);
+    if (labels && !this.labelsLayer) {
+      this._addLabelsLayer();
+    } else if (!labels && this.labelsLayer) {
+      this.map.removeLayer(this.labelsLayer);
+      this.labelsLayer = null;
+    }
   }
 
   /** countries: [{ id, name, geometry }] - einmal pro Partie aufgerufen. */
