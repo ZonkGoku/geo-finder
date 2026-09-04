@@ -342,6 +342,20 @@ button{ font-family:inherit; color:inherit; }
   .pano-container.pano-foggy{ filter:blur(8px); transition:opacity 220ms ease; }
 }
 .pano-credit{ position:absolute; left:0; right:0; bottom:7px; z-index:1; text-align:center; font-size:0.6rem; letter-spacing:0.02em; color:rgba(237,239,244,0.55); margin:0; pointer-events:none; }
+
+/* Fokus-Blackout (Anti-Cheat-Abschreckung): eigenes Panorama wird sofort
+   schwarz, wenn das Browserfenster den Fokus verliert (window.blur) - siehe
+   initVisibilityWatch() in app.js. Rein lokal/kosmetisch, kein Netzwerk-
+   Effekt fuer sich allein (die eigentliche Meldung an den Host laeuft
+   parallel ueber TAB_SWITCH_WARNING). */
+.pano-focus-blackout{
+  position:absolute; inset:0; z-index:4; background:#000; opacity:0; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+  color:rgba(255,255,255,0.7); font-family:var(--font-mono); font-size:0.8rem; letter-spacing:0.04em;
+  transition:opacity 150ms ease;
+}
+.pano-focus-blackout.active{ opacity:1; }
+@media (prefers-reduced-motion: reduce){ .pano-focus-blackout{ transition:none; } }
 .hud-top{ position:relative; z-index:2; display:flex; justify-content:space-between; align-items:flex-start; padding:22px 26px; pointer-events:none; }
 /* Frosted-Glass-Pills fuers HUD: dunkles Halbtransparent + Blur + duenner
    heller Rand, oben eine feine "Glanzkante" fuer den Glas-Look. */

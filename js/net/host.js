@@ -16,6 +16,15 @@ const ROUND_RESULT_DISPLAY_MS = 8000;
 const LEAVE_GRACE_MS = 15000;
 const MAX_PLAYERS = 6;
 
+// Anti-Cheat-Heuristiken. Beides ist ausdruecklich Abschreckung, keine
+// harte Absicherung: ein Spieler, der die Antwort auf einem ZWEITEN Geraet
+// nachschlaegt, wechselt in diesem Tab nie den Fokus und wird von keiner
+// In-Tab-Erkennung je erfasst. Was das hier trotzdem einfaengt: den
+// haeufigeren Fall "kurz wegtabben, per Google/Bilderrueckwaertssuche
+// nachschauen, sofort zurueck und tippen".
+const MAX_TAB_SWITCHES_PER_GAME = 3;
+const SUSPICIOUS_GUESS_WINDOW_MS = 2500;
+
 // Waermt den Browser-Cache fuer die naechste Runde vor, waehrend die
 // aktuelle noch laeuft - rein lokal im Host-Browser (kein Protokoll-/
 // Broadcast-Feld), damit dabei keine zukuenftigen Runden-URLs an Mitspieler
@@ -35,6 +44,7 @@ export class HostController {
     this.nextRoundTimer = null;
     this.leaveTimers = new Map();
     this.pendingNames = new Map(); // peerId -> {name, color} vor Accept
+    this.tabSwitchCounts = new Map(); // peerId -> Anzahl Tab-Wechsel diese Partie (3 = Kick)
 
     // bus.on() gibt eine Unsubscribe-Funktion zurueck - gesammelt, damit
     // destroy() sie beim Verlassen eines Spiels (z. B. ueber den neuen
@@ -76,12 +86,24 @@ export class HostController {
       case MSG.SUBMIT_GUESS:
         this._handleGuess(peerId, message.payload);
         break;
-      case MSG.TAB_SWITCH_WARNING:
+      case MSG.TAB_SWITCH_WARNING: {
         // an alle ANDEREN weiterleiten - der Absender braucht seine eigene Meldung nicht.
         for (const p of state.players.values()) {
           if (p.id !== peerId) this.pm.sendTo(p.id, makeMessage(MSG.TAB_SWITCH_WARNING, { playerId: peerId }, state.self.id));
         }
         bus.emit('ui:tab-switch-warning', { peerId });
+
+        // Fuer die "verdaechtig schneller Tipp nach Tab-Wechsel"-Pruefung in
+        // _handleGuess() - pro Runde neu, siehe _startRound().
+        if (state.round.lastSwitchAwayAt) state.round.lastSwitchAwayAt.set(peerId, Date.now());
+
+        const count = (this.tabSwitchCounts.get(peerId) || 0) + 1;
+        this.tabSwitchCounts.set(peerId, count);
+        if (count >= MAX_TAB_SWITCHES_PER_GAME) {
+          this._kickPlayer(peerId, `Zu viele Tab-Wechsel (${count}x) in dieser Partie.`);
+        }
+        break;
+      }
         break;
       case MSG.EMOTE:
         for (const p of state.players.values()) {
@@ -150,6 +172,12 @@ export class HostController {
   reportTabSwitch() {
     this.pm.broadcast(makeMessage(MSG.TAB_SWITCH_WARNING, { playerId: state.self.id }, state.self.id));
     bus.emit('ui:tab-switch-warning', { peerId: state.self.id });
+    // Der Host durchlaeuft _onMessage() nicht fuer seine eigenen Nachrichten -
+    // dieselbe Verdachtspruefung wie fuer Mitspieler gilt trotzdem: eigene
+    // Tab-Wechsel zaehlen fuer die "verdaechtig schneller Tipp"-Heuristik
+    // genauso. Der 3-Strikes-Kick bleibt bewusst nur fuer Mitspieler (sich
+    // selbst als Host zu kicken wuerde die Partie fuer alle sofort beenden).
+    if (state.round.lastSwitchAwayAt) state.round.lastSwitchAwayAt.set(state.self.id, Date.now());
   }
 
   sendEmote(emoji) {
@@ -170,6 +198,26 @@ export class HostController {
       bus.emit('ui:lobby-updated');
     }, LEAVE_GRACE_MS);
     this.leaveTimers.set(peerId, timer);
+  }
+
+  /**
+   * Entfernt einen einzelnen Mitspieler zwangsweise (3-Strikes-Regel bei
+   * wiederholten Tab-Wechseln). Schickt KICKED zuerst, damit der
+   * betroffene Client einen konkreten Grund zeigen kann, statt nur die
+   * generische "Verbindung zum Host verloren"-Meldung zu sehen, die
+   * ohnehin gleich danach durch das Schliessen der Verbindung ausgeloest wird.
+   */
+  _kickPlayer(peerId, reason) {
+    this.pm.sendTo(peerId, makeMessage(MSG.KICKED, { reason }, state.self.id));
+    this.pm.closeConnection(peerId);
+    clearTimeout(this.leaveTimers.get(peerId));
+    this.leaveTimers.delete(peerId);
+    state.players.delete(peerId);
+    this.tabSwitchCounts.delete(peerId);
+    this.pm.broadcast(makeMessage(MSG.PLAYER_LEFT, { playerId: peerId }, state.self.id));
+    this._broadcastLobbyState();
+    bus.emit('ui:lobby-updated');
+    bus.emit('ui:player-kicked', { peerId, reason });
   }
 
   _broadcastLobbyState() {
@@ -243,6 +291,7 @@ export class HostController {
       vaov: location.vaov ?? null,
       guessedPlayerIds: new Set(),
       myGuess: null,
+      lastSwitchAwayAt: new Map(), // peerId -> Zeitstempel, fuer die Verdachtspruefung in _handleGuess()
     };
 
     // hint/vaov sind bewusst die einzigen Vorab-Informationen zum aktuellen
@@ -295,11 +344,20 @@ export class HostController {
     if (payload.roundIndex !== state.round.index) return;
     if (state.round.guessedPlayerIds.has(peerId)) return;
 
+    // Heuristik: wer wenige Sekunden nach dem letzten registrierten
+    // Tab-Wechsel dieser Runde tippt, hat vermutlich gerade extern (zweiter
+    // Tab/Bildersuche) nachgeschaut. Kein Beweis, daher nur den Rundenwert
+    // kappen statt den Spieler direkt zu bestrafen - siehe Kommentar an
+    // MAX_TAB_SWITCHES_PER_GAME weiter oben zu den Grenzen dieser Pruefung.
+    const switchedAwayAt = state.round.lastSwitchAwayAt?.get(peerId);
+    const suspicious = switchedAwayAt != null && Date.now() - switchedAwayAt < SUSPICIOUS_GUESS_WINDOW_MS;
+
     if (!state.round.guesses) state.round.guesses = new Map();
     state.round.guesses.set(peerId, {
       lat: payload.lat,
       lng: payload.lng,
       submittedAtMs: payload.submittedAtMs || Date.now(),
+      suspicious,
     });
     state.round.guessedPlayerIds.add(peerId);
 
@@ -374,17 +432,23 @@ export class HostController {
 
     for (const player of state.players.values()) {
       const guess = guesses.get(player.id) || null;
-      const { distanceKm, score: baseScore, noGuess } = scoreGuess(guess, actual, state.pool.scaleKm);
+      const flagged = Boolean(guess?.suspicious);
+      let { distanceKm, score: baseScore, noGuess } = scoreGuess(guess, actual, state.pool.scaleKm);
 
       if (!state.scores.has(player.id)) state.scores.set(player.id, freshScoreEntry());
       const scoreEntry = state.scores.get(player.id);
 
+      // Verdaechtiger Tipp (siehe _handleGuess): Distanz/Pin bleiben fuer
+      // Transparenz sichtbar, aber Basis-/Zeit-/Streak-Bonus werden gekappt -
+      // ein manipulierter Client soll keinen Vorteil aus dem Nachschlagen
+      // ziehen, der Pin selbst wird aber nicht einfach unterschlagen.
       const timeBonus =
-        isDuel && !noGuess
+        !flagged && isDuel && !noGuess
           ? computeTimeBonus(guess.submittedAtMs - state.round.startTimestamp, state.round.timeLimitMs ?? 90000)
           : 0;
-      const streak = nextStreak(scoreEntry.streak, distanceKm);
-      const streakBonus = computeStreakBonus(streak);
+      if (flagged) baseScore = 0;
+      const streak = flagged ? 0 : nextStreak(scoreEntry.streak, distanceKm);
+      const streakBonus = flagged ? 0 : computeStreakBonus(streak);
       const roundTotal = baseScore + timeBonus + streakBonus;
 
       scoreEntry.streak = streak;
@@ -397,6 +461,7 @@ export class HostController {
         streakBonus,
         distanceKm,
         noGuess,
+        flagged,
       };
 
       results.push({
@@ -410,6 +475,7 @@ export class HostController {
         streakBonus,
         score: roundTotal,
         streak,
+        flagged,
       });
     }
     return results;
@@ -422,18 +488,23 @@ export class HostController {
 
     for (const player of state.players.values()) {
       const guess = guesses.get(player.id) || null;
+      const flagged = Boolean(guess?.suspicious);
       const noGuess = !guess;
       const guessedCountry = guess ? findCountryAtPointSync(guess.lat, guess.lng, features) : null;
-      const { correct, score } = scoreCountryGuess(guessedCountry, actualCountry);
+      let { correct, score } = scoreCountryGuess(guessedCountry, actualCountry);
+      if (flagged) {
+        correct = false;
+        score = 0;
+      }
 
       if (!state.scores.has(player.id)) state.scores.set(player.id, freshScoreEntry());
       const scoreEntry = state.scores.get(player.id);
-      const streak = nextCountryStreak(scoreEntry.streak, correct);
+      const streak = flagged ? 0 : nextCountryStreak(scoreEntry.streak, correct);
 
       scoreEntry.streak = streak;
       scoreEntry.bestStreak = Math.max(scoreEntry.bestStreak, streak);
       scoreEntry.total += score;
-      scoreEntry.perRound[state.round.index] = { total: score, correct, guessedCountry, actualCountry, noGuess };
+      scoreEntry.perRound[state.round.index] = { total: score, correct, guessedCountry, actualCountry, noGuess, flagged };
 
       results.push({
         playerId: player.id,
@@ -448,6 +519,7 @@ export class HostController {
         streakBonus: 0,
         score,
         streak,
+        flagged,
       });
     }
     return results;

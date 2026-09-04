@@ -116,6 +116,17 @@ export class PeerManager {
     if (this.hostConnection?.open) this.hostConnection.send(message);
   }
 
+  /**
+   * Schliesst NUR die DataConnection zu einem einzelnen Peer (z. B. um
+   * jemanden nach wiederholten Verdachtsmomenten aus dem Raum zu werfen),
+   * ohne den eigenen Peer/die anderen Verbindungen anzutasten. PeerJS'
+   * DataConnection.close() feuert auf BEIDEN Seiten ein 'close'-Event, der
+   * betroffene Client erkennt das also von selbst als Verbindungsende.
+   */
+  closeConnection(peerId) {
+    this.connections.get(peerId)?.close();
+  }
+
   destroy() {
     this.peer?.destroy();
   }

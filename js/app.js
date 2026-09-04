@@ -893,14 +893,29 @@ function spawnEmote(emoji) {
 // ---------------------------------------------------------------- anti-cheat
 
 function initVisibilityWatch() {
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) return;
-    const onActiveRound = document.getElementById('screen-hud').classList.contains('active');
+  const reportSwitch = () => {
+    const onActiveRound = el('screen-hud').classList.contains('active');
     if (!onActiveRound || !controller) return;
     const now = Date.now();
     if (now - lastTabSwitchSentAt < 3000) return; // Spam-Schutz
     lastTabSwitchSentAt = now;
     controller.reportTabSwitch();
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) reportSwitch();
+  });
+
+  // window.blur/focus faengt zusaetzlich Faelle, die nicht immer
+  // document.hidden ausloesen (z. B. DevTools/ein anderes Fenster in den
+  // Vordergrund holen), UND dimmt lokal sofort das eigene Panorama - rein
+  // kosmetisch, kein zusaetzlicher Netzwerk-Effekt fuer sich allein.
+  window.addEventListener('blur', () => {
+    reportSwitch();
+    el('pano-focus-blackout').classList.add('active');
+  });
+  window.addEventListener('focus', () => {
+    el('pano-focus-blackout').classList.remove('active');
   });
 }
 
@@ -1313,6 +1328,19 @@ function wireBusEvents() {
       actionLabel: 'Zurück zum Menü',
       onAction: resetToMenu,
     });
+  });
+  bus.on('ui:kicked', ({ reason }) => {
+    showStateOverlay({
+      title: 'Aus der Partie entfernt',
+      message: reason || 'Der Host hat dich aus der Partie entfernt.',
+      actionLabel: 'Zurück zum Menü',
+      onAction: resetToMenu,
+    });
+  });
+  bus.on('ui:player-kicked', ({ peerId, reason }) => {
+    if (peerId === state.self.id) return; // eigener Kick laeuft ueber ui:kicked
+    const name = state.players.get(peerId)?.name || 'Ein Mitspieler';
+    showToast(`${name} wurde entfernt: ${reason}`);
   });
   bus.on('net:error', (err) => {
     console.error('Netzwerkfehler', err);

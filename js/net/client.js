@@ -35,9 +35,16 @@ export class ClientController {
     // Unsubscribe-Funktionen sammeln, damit destroy() sie beim Verlassen
     // (z. B. ueber "Spiel verlassen") wieder abmelden kann - siehe
     // HostController.destroy() fuer den gleichen Grund.
+    this._kicked = false;
     this._unsubscribers = [
       bus.on('net:message', ({ message }) => this._onMessage(message)),
-      bus.on('net:host-disconnected', () => bus.emit('ui:host-disconnected')),
+      // Der Host schliesst nach einem KICKED-Versand direkt die Verbindung -
+      // das loest hier ebenfalls 'net:host-disconnected' aus. Ohne den
+      // _kicked-Guard wuerde die generische "Verbindung zum Host verloren"-
+      // Meldung die eben erst gezeigte, konkrete Kick-Begruendung ueberschreiben.
+      bus.on('net:host-disconnected', () => {
+        if (!this._kicked) bus.emit('ui:host-disconnected');
+      }),
     ];
   }
 
@@ -207,6 +214,10 @@ export class ClientController {
       case MSG.PLAYER_LEFT:
         state.players.delete(message.payload.playerId);
         bus.emit('ui:lobby-updated');
+        break;
+      case MSG.KICKED:
+        this._kicked = true;
+        bus.emit('ui:kicked', { reason: message.payload.reason });
         break;
       case MSG.TAB_SWITCH_WARNING:
         bus.emit('ui:tab-switch-warning', { peerId: message.payload.playerId });
