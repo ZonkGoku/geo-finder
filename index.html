@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>GeoFinder — 360°-Multiplayer</title>
 <meta name="description" content="GeoGuessr-artiges 360°-Multiplayer für bis zu 6 Spieler, rein statisch, P2P über WebRTC.">
 <link rel="icon" href="data:,">
@@ -404,7 +404,7 @@
 
         <div class="hud-top">
           <div class="hud-top-left">
-            <div class="round-chip">RUNDE <b id="hud-round-index">01</b> / <span id="hud-round-total">05</span></div>
+            <div class="round-chip"><span class="round-chip-label">RUNDE </span><b id="hud-round-index">01</b> / <span id="hud-round-total">05</span></div>
             <button class="hint-toggle" id="btn-hint-toggle" hidden>Hinweis</button>
           </div>
           <div class="timer"><span class="dot" id="timer-dot"></span><span id="hud-timer">01:30</span></div>
@@ -432,9 +432,10 @@
           <button class="btn btn-primary guess-btn" id="btn-confirm-guess" disabled>Tipp best&auml;tigen</button>
         </div>
 
-        <div class="minimap-wrap">
+        <div class="minimap-wrap" id="minimap-wrap">
           <div class="minimap-scope hidden" id="minimap-scope"></div>
           <div class="minimap" id="minimap">
+            <div class="minimap-drag-handle" id="minimap-drag-handle" aria-hidden="true"></div>
             <div id="guess-map-container" class="leaflet-host"></div>
             <button type="button" class="minimap-open-btn" id="minimap-open-btn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
@@ -499,7 +500,7 @@
       <!-- ===================== HEATMAP-MODUS ===================== -->
       <section class="screen" id="screen-heatmap">
         <div class="heatmap-header">
-          <div class="round-chip">RUNDE <b id="heatmap-round-index">01</b> / <span id="heatmap-round-total">05</span></div>
+          <div class="round-chip"><span class="round-chip-label">RUNDE </span><b id="heatmap-round-index">01</b> / <span id="heatmap-round-total">05</span></div>
           <div class="timer" id="heatmap-timer"></div>
         </div>
 

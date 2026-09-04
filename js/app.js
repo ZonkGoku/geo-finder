@@ -1270,21 +1270,30 @@ function renderPeerStatus() {
     const guessed = state.round.guessedPlayerIds.has(p.id);
     const offline = !p.connected;
     dot.className = `peer-dot${guessed ? '' : ' pending'}${offline ? ' offline' : ''}`;
-    dot.innerHTML = `<i style="background:${guessed ? p.color : ''}"></i>${escapeHtml(p.name)}`;
+    dot.innerHTML = `<i style="background:${guessed ? p.color : ''}"></i><span class="peer-dot-name">${escapeHtml(p.name)}</span>`;
     container.appendChild(dot);
   }
 }
 
 function wireHudControls() {
+  // #minimap-wrap bekommt dieselbe .expanded-Klasse wie #minimap: auf Mobile
+  // (siehe CSS @media max-width:768px) verwandelt sich .minimap-wrap dadurch
+  // von seiner kleinen rechts-unten-Box in ein Vollbild-/Bottom-Sheet-Overlay
+  // - .minimap selbst bleibt bewusst der Groessen-Transition-Owner (siehe
+  // Kommentar bei .minimap{ transition:width,height }), .minimap-wrap liefert
+  // nur den Vollbild-Rahmen drumherum.
   const expandMap = () => {
     sound.playClick();
     el('minimap').classList.add('expanded');
+    el('minimap-wrap').classList.add('expanded');
     guessMap?.invalidate();
     setTimeout(() => guessMap?.invalidate(), 340);
   };
   const collapseMap = () => {
     sound.playClick();
     el('minimap').classList.remove('expanded');
+    el('minimap-wrap').classList.remove('expanded');
+    el('minimap').style.transform = '';
   };
   el('minimap-open-btn').addEventListener('click', expandMap);
   el('minimap-close-btn').addEventListener('click', collapseMap);
@@ -1292,6 +1301,40 @@ function wireHudControls() {
     sound.playClick();
     const style = guessMap.toggleTileStyle();
     updateMapStyleLabel('minimap-style-label', style);
+  });
+
+  // Wisch-nach-unten-zum-Schliessen fuer die Mobile-Bottom-Sheet-Minimap:
+  // nur der schmale Griff-Balken oben reagiert (nicht die ganze Karte, sonst
+  // wuerde jeder Kartenpan/-drag versehentlich das Sheet schliessen). Reines
+  // Touch-Tracking ohne Bibliothek - Finger-Y minus Start-Y als translateY,
+  // bei > 90px oder schneller Wisch-Geste (Distanz/Zeit) schliessen, sonst
+  // zurueckfedern (CSS-Transition macht das, sobald der Inline-Transform
+  // wieder entfernt wird).
+  const dragHandle = el('minimap-drag-handle');
+  let dragStartY = null;
+  let dragStartT = 0;
+  dragHandle.addEventListener('touchstart', (e) => {
+    if (!el('minimap').classList.contains('expanded')) return;
+    dragStartY = e.touches[0].clientY;
+    dragStartT = Date.now();
+    el('minimap').style.transition = 'none';
+  }, { passive: true });
+  dragHandle.addEventListener('touchmove', (e) => {
+    if (dragStartY == null) return;
+    const dy = Math.max(0, e.touches[0].clientY - dragStartY);
+    el('minimap').style.transform = `translateY(${dy}px)`;
+  }, { passive: true });
+  dragHandle.addEventListener('touchend', (e) => {
+    if (dragStartY == null) return;
+    const dy = Math.max(0, (e.changedTouches[0]?.clientY ?? dragStartY) - dragStartY);
+    const dt = Date.now() - dragStartT;
+    el('minimap').style.transition = '';
+    dragStartY = null;
+    if (dy > 90 || (dy > 30 && dt < 200)) {
+      collapseMap();
+    } else {
+      el('minimap').style.transform = '';
+    }
   });
 
   el('btn-confirm-guess').addEventListener('click', () => {

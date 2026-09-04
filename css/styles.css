@@ -73,7 +73,11 @@ body{
   min-height: 100vh;
   display:flex;
   justify-content:center;
-  padding: 40px 20px 56px;
+  /* env(safe-area-inset-*) haengt an den echten Geraeteraendern (iPhone-
+     Notch/Dynamic-Island oben, Home-Bar unten) - addiert zum normalen
+     Innenabstand, nicht ersetzend, damit Desktop/Browser ohne Safe-Areas
+     (Wert dort 0px) unveraendert bleiben. */
+  padding: calc(40px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) calc(56px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
 }
 @keyframes meshDrift{
   from{ background-position: 18% -6%, 88% 22%, 0 0, 0 0; }
@@ -90,6 +94,13 @@ body{
 
 h1,h2,h3{ font-family: var(--font-display); font-weight:600; text-wrap:balance; margin:0; }
 button{ font-family:inherit; color:inherit; }
+/* touch-action:manipulation unterdrueckt Safaris Doppel-Tap-zum-Zoomen auf
+   Buttons/Links/Inputs (schnelles Antippen loeste sonst versehentlich einen
+   Zoom statt eines Klicks aus) - bewusst NUR auf einzelnen Steuerelementen,
+   nicht global auf <html>/<body>: Leaflet-Karten und der Pannellum-
+   Panorama-Viewer brauchen ihre eigene Pinch-/Pan-Touch-Handhabung, die ein
+   globales touch-action hier durchkreuzen wuerde. */
+button, a, input, [role="button"]{ touch-action:manipulation; }
 ::selection{ background:var(--accent); color:var(--accent-ink); }
 .hidden{ display:none !important; }
 /* .btn setzt display:inline-flex - das schlaegt sonst das native [hidden]-
@@ -502,6 +513,7 @@ button{ font-family:inherit; color:inherit; }
   background:rgba(0,0,0,0.4); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   border:1px solid rgba(255,255,255,0.1); box-shadow:0 1px 0 0 rgba(255,255,255,0.08) inset;
   padding:8px 16px; border-radius:999px; font-family:var(--font-mono); font-size:0.78rem; letter-spacing:0.06em; color:#fff;
+  white-space:nowrap; flex:none;
 }
 .round-chip b{ color:var(--accent); }
 .timer{
@@ -509,6 +521,7 @@ button{ font-family:inherit; color:inherit; }
   border:1px solid rgba(255,255,255,0.1); box-shadow:0 1px 0 0 rgba(255,255,255,0.08) inset;
   padding:8px 18px; border-radius:999px; font-family:var(--font-mono); font-size:1.3rem; font-weight:600; color:#fff;
   font-variant-numeric:tabular-nums; display:flex; align-items:center; gap:8px; transition:transform .2s ease;
+  white-space:nowrap; flex:none;
 }
 .timer.critical{ color:#ff4d4d; border-color:rgba(255,77,77,0.55); animation:timerPulse 1s ease-in-out infinite; }
 .timer .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent-2); animation:pulse 1.4s ease-in-out infinite; }
@@ -1172,11 +1185,145 @@ button{ font-family:inherit; color:inherit; }
 @media (prefers-reduced-motion: reduce){ .spinner{ animation:spin 1.6s linear infinite; } }
 @keyframes spin{ to{ transform:rotate(360deg); } }
 
-@media (max-width: 720px){
+/* ===================== Mobile ===================== */
+@media (max-width: 768px){
+  /* --- Lobby: 2-Spalten-Grid (Einstellungen links, Buehne rechts) wird zum
+     1-Spalten-Stack - die Buehne (Hero-Kartenpaket-Vorschau) zuerst, die
+     Einstellungen darunter (grid-auto-flow durch die DOM-Reihenfolge:
+     .lobby-main-left kommt vor .lobby-stage im Markup, also erst per order
+     umsortieren, sonst stuenden die Einstellungen ueber der Buehne). */
   .lobby-main, .result-grid{ grid-template-columns:1fr; }
-  .lobby-stage{ position:static; min-height:0; }
-  .screen{ padding:24px; }
-  .hud-top{ flex-direction:column; gap:10px; }
-  .minimap-wrap{ right:16px; bottom:16px; }
-  .minimap.expanded{ width:min(320px, 80vw); height:220px; }
+  .lobby-main-left{ order:2; }
+  .lobby-stage{ order:1; position:static; min-height:0; }
+  .screen{ padding:18px; }
+
+  /* --- Wischbare Segmented-Controls: verhindert das Umbrechen/Ueberlappen
+     der Runden-/Dauer-/Modus-Buttons auf schmalen Displays (der gemeldete
+     "Menues brechen um"-Bug) - horizontales Scrollen statt Zeilenumbruch,
+     Scrollbar-los fuer den nativen App-Look. .choice-thumb bleibt korrekt
+     positioniert, weil es ein normales (nicht sticky/fixed) Kind von
+     .choice-row ist und mit dem Inhalt mitscrollt. */
+  .choice-row{
+    flex-wrap:nowrap; overflow-x:auto; scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .choice-row::-webkit-scrollbar{ display:none; }
+  .choice-row button{ flex:0 0 auto; min-width:64px; scroll-snap-align:start; }
+  .choice-row[data-setting="mode"] button,
+  .choice-row[data-setting="modifier"] button,
+  .choice-row[data-setting="heatmapOpponentInfo"] button,
+  .choice-row[data-setting="heatmapTurnMode"] button{ min-width:auto; }
+
+  /* --- Kompaktes Top-HUD: Panorama/Karte bekommen den Platz statt langer
+     Labels - "RUNDE" faellt weg (Zahlen bleiben), Timer schrumpft. */
+  /* Nur noch Icons/Zahlen statt langer Labels (Rundenanzeige, Hinweis-
+     Button, Timer, Mitspieler-Pille) - vorher quetschte .round-chip als
+     erstes flex-Element nach, sobald "HINWEIS" + "01:28" + ein
+     Mitspielername nicht mehr in eine Zeile passten, und sein Inhalt brach
+     dabei haesslich um ("01"/"/"/"05" auf drei Zeilen). flex:none oben auf
+     .round-chip/.timer verhindert das Quetschen jetzt grundsaetzlich (auch
+     ausserhalb dieser Media Query); hier zusaetzlich alles kompakter. */
+  .round-chip-label{ display:none; }
+  .round-chip{ padding:6px 10px; font-size:0.7rem; }
+  .timer{ padding:6px 12px; font-size:0.95rem; gap:5px; }
+  .hud-top{ padding:12px 14px; gap:8px; }
+  .hud-top-left{ gap:6px; }
+  .heatmap-header{ padding:12px 14px; }
+  .hint-toggle{ padding:6px 9px; font-size:0.62rem; flex:none; }
+  .peer-status{ gap:5px; }
+  .peer-dot{ padding:4px; }
+  .peer-dot-name{ display:none; }
+
+  /* --- Maximaler Platz fuers Panorama: waehrend einer aktiven Runde
+     (HUD/Heatmap) brauchen weder das Marketing-Logo/-Kicker ueber der
+     "Geraete"-Karte noch die volle 600px-Mindesthoehe wirklich Platz - auf
+     einem 660-830px hohen Handy-Viewport blieb dafuer sonst kaum noch Raum
+     fuer das eigentliche Foto/die Karte uebrig. :has() ist seit 2023/24 in
+     allen gaengigen mobilen Browsern verfuegbar; ohne :has()-Unterstuetzung
+     bleibt einfach die (unveraenderte, weiterhin nutzbare) vorherige
+     Optik bestehen - reine Verbesserung, kein Fallback noetig. */
+  .device-screen, .screen{ min-height:min(600px, 78vh); }
+  body:has(#screen-hud.active) .page-head,
+  body:has(#screen-heatmap.active) .page-head{ display:none; }
+  body:has(#screen-hud.active) .device-chrome,
+  body:has(#screen-heatmap.active) .device-chrome{ padding:6px 14px; }
+
+  /* --- Daumenzone: der Tipp-Button spannt volle Breite unten (statt links
+     verankert mit variabler Textbreite), die Minimap-Bubble sitzt darueber
+     statt daneben. Vorher lagen beide auf derselben Bodenlinie (hud-bottom
+     links:26px, minimap-wrap rechts:24px) - bei 140px Minimap-Breite und
+     einem hinreichend breiten Button ueberlappten sie sich auf schmalen
+     Displays direkt (der gemeldete "Layouts ueberschneiden sich"-Bug). */
+  .hud-bottom{
+    left:16px; right:16px; bottom:calc(16px + env(safe-area-inset-bottom));
+  }
+  .guess-btn{ width:100%; justify-content:center; }
+  .minimap-wrap{
+    right:16px; bottom:calc(88px + env(safe-area-inset-bottom));
+  }
+
+  /* --- Minimap als Vollbild-/Bottom-Sheet-Overlay statt einer kleinen Box
+     unten rechts: .minimap-wrap.expanded verlaesst seine kleine rechts-
+     unten-Ecke und wird selbst zum Vollbild-Rahmen (inset:0, relativ zu
+     .device-screen - seinem schon vorher gueltigen position:relative-
+     Vorfahren, siehe .minimap-wrap{position:absolute} weiter oben), .minimap
+     fuellt ihn komplett aus. Die bestehende width/height-Transition (siehe
+     Kommentar dort - bewusst KEIN transform:scale, Leaflet braucht eine
+     echte Groessenaenderung) laesst es von der kleinen Ecke aus nach oben
+     "aufwachsen" - liest sich wie ein Slide-Up, ohne ein zweites
+     Animationssystem einzufuehren. */
+  .minimap-wrap.expanded{
+    inset:0;
+    display:block; align-items:stretch;
+  }
+  .minimap.expanded{
+    /* width/height muessen hier explizit auf auto zurueckgesetzt werden -
+       die Desktop-Regel .minimap.expanded{width:...;height:300px;} weiter
+       oben gilt sonst weiter (width/height sind Properties, keine Regeln:
+       "spaeter im Stylesheet" gewinnt nur pro Property, nicht pro Selektor)
+       und wuerde zusammen mit links/rechts/oben/unten hier zu einer
+       ueberbestimmten Box fuehren, bei der der Browser dann still meine
+       right/bottom-Werte verwirft statt die Desktop-Breite/-Hoehe. */
+    position:absolute; left:0; right:0; bottom:0; top:12vh; width:auto; height:auto;
+    border-radius:20px 20px 0 0; padding-top:14px;
+    box-shadow:0 -20px 50px -10px rgba(0,0,0,0.6);
+  }
+  .minimap-drag-handle{
+    display:none; position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:44px; height:28px; z-index:4; touch-action:none;
+  }
+  .minimap-drag-handle::after{
+    content:""; position:absolute; top:9px; left:50%; transform:translateX(-50%);
+    width:36px; height:4px; border-radius:999px; background:rgba(255,255,255,0.35);
+  }
+  .minimap.expanded .minimap-drag-handle{ display:block; }
+  .minimap.expanded .minimap-open-btn{ display:none; }
+  .minimap.expanded .minimap-close-btn{ top:14px; right:14px; }
+  @media (prefers-reduced-motion: reduce){ .minimap.expanded{ transition:none; } }
+
+  /* --- Heatmap: Suchfeld/Vorschlaege bleiben am oberen Rand verankert
+     (position:absolute relativ zu .device-screen, nicht an der Fenster-
+     hoehe haengend) - die virtuelle Tastatur schiebt sie so nicht weg. */
+  .heatmap-search-panel{ top:60px; }
+}
+
+/* iOS zoomt bei Fokus automatisch in jedes Eingabefeld mit einer
+   Schriftgroesse < 16px hinein - genau das zerschiesst das Layout beim
+   Tippen im Heatmap-Suchfeld. 16px ist die Safari-Schwelle, unabhaengig vom
+   Viewport - deshalb keine @media-Einschraenkung noetig. */
+.heatmap-search-box input, #mapset-search-input{ font-size:16px; }
+
+/* Touch-Feedback statt Hover: auf Geraeten ohne echtes Hover (Finger statt
+   Maus, siehe @media(hover:none)) ersetzt ein kurzer :active-Press-Effekt
+   den sonst ungenutzten :hover-Zustand - eigener Block statt die
+   bestehenden :hover-Regeln zu entfernen, damit Maus-/Trackpad-Nutzer ihr
+   gewohntes Hover weiterhin bekommen. */
+@media (hover:none){
+  .action-card:active{ transform:scale(0.98); border-color:var(--accent-2); }
+  .mapset-card:active:not(:disabled){ transform:scale(0.97); }
+  .mutator-chip:active{ border-color:var(--accent-2); }
+  .choice-row button:active{ color:var(--text); }
+  .mapset-chip:active, .heatmap-suggestion:active{ background:rgba(255,255,255,0.1); }
+  .pano-ctrl-btn:active{ color:var(--accent-2); border-color:rgba(47,230,214,0.5); }
+  .guess-btn:active:not(:disabled){ transform:scale(0.97); filter:brightness(1.06); }
 }
