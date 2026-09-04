@@ -118,6 +118,7 @@ export class ClientController {
         state.round.total = message.payload.roundCount;
         state.settings.mode = message.payload.mode;
         state.settings.modifier = message.payload.modifier;
+        state.settings.mutators = message.payload.mutators || { fogOfWar: false, brokenCompass: false, noPan: false };
         state.scores = new Map();
         state.roundHistory = [];
         state.hp = new Map();

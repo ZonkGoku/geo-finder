@@ -10,9 +10,18 @@ export class PanoViewer {
     this.zoomLocked = false;
   }
 
-  load(panoramaUrl, { vaov, modifier = 'free', onLoad } = {}) {
+  load(panoramaUrl, { vaov, modifier = 'free', mutators, onLoad } = {}) {
     this.destroy();
     this.zoomLocked = modifier === 'no-zoom';
+    const noPan = Boolean(mutators?.noPan);
+    // "Broken Compass": Mapillary-Panoramen haben ohnehin keine verlaessliche
+    // Ausrichtung an echtem geografischem Norden - yaw:0 ist immer schon nur
+    // eine im Bild selbst beliebige Referenzrichtung, kein "echter Norden".
+    // Der Mutator macht diese Referenz zusaetzlich pro Runde zufaellig, statt
+    // sie (wie sonst) konstant bei 0 zu belassen, damit sich Spieler nicht
+    // auf "der Blick startet immer gleich" verlassen koennen.
+    const brokenCompass = Boolean(mutators?.brokenCompass);
+    const initialYaw = brokenCompass ? Math.random() * 360 - 180 : 0;
     const config = {
       type: 'equirectangular',
       panorama: panoramaUrl,
@@ -22,7 +31,9 @@ export class PanoViewer {
       hfov: DEFAULT_HFOV,
       minHfov: this.zoomLocked ? DEFAULT_HFOV : MIN_HFOV,
       maxHfov: this.zoomLocked ? DEFAULT_HFOV : MAX_HFOV,
-      yaw: 0,
+      yaw: initialYaw,
+      draggable: !noPan,
+      disableKeyboardCtrl: noPan,
     };
     if (vaov) config.vaov = vaov;
     this.viewer = window.pannellum.viewer(this.containerId, config);

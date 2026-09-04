@@ -432,6 +432,15 @@ function renderChoiceRow(rowId, currentValue) {
   }
 }
 
+function renderMutators() {
+  const isHost = state.role === 'host';
+  const mutators = state.settings.mutators || {};
+  el('mutator-list').querySelectorAll('.mutator-chip').forEach((chip) => {
+    chip.classList.toggle('selected', Boolean(mutators[chip.dataset.mutator]));
+    chip.disabled = !isHost;
+  });
+}
+
 function renderLobby() {
   const isHost = state.role === 'host';
   const isSolo = !state.roomCode;
@@ -469,6 +478,7 @@ function renderLobby() {
   renderChoiceRow('choice-duration', state.settings.timeLimitMs);
   renderChoiceRow('choice-mode', state.settings.mode);
   renderChoiceRow('choice-modifier', state.settings.modifier);
+  renderMutators();
   if (mapSetIndex.length) renderMapSetGrid();
 
   const readyBtn = el('btn-ready-toggle');
@@ -568,6 +578,20 @@ function wireLobbyControls() {
   wireChoiceRow('choice-mode', 'mode', (v) => v);
   wireChoiceRow('choice-modifier', 'modifier', (v) => v);
 
+  el('mutator-list').querySelectorAll('.mutator-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      if (state.role !== 'host') return;
+      sound.playClick();
+      const key = chip.dataset.mutator;
+      const current = state.settings.mutators || {};
+      // updateSettings() macht ein flaches Object.assign - ein verschachteltes
+      // Feld muss also komplett (nicht nur der eine Schluessel) mitgeschickt
+      // werden, sonst gingen die anderen zwei Mutatoren beim Umschalten verloren.
+      controller.updateSettings({ mutators: { ...current, [key]: !current[key] } });
+      renderLobby();
+    });
+  });
+
   el('mapset-search-input').addEventListener('input', (e) => {
     mapSetSearchTerm = e.target.value;
     renderMapSetGrid();
@@ -651,15 +675,26 @@ const GUESS_BTN_DEFAULT_LABEL = 'Tipp best&auml;tigen';
 // perceptible delay left.
 function transitionPanorama() {
   const container = el('pano-container');
+  const mutators = state.settings.mutators || {};
   container.classList.add('pano-fade-out');
+  // Fog of War: startet stark verschwommen und klart ueber PANO_FOG_CLEAR_MS
+  // per CSS-Transition sichtbar auf, statt sofort gestochen scharf zu sein.
+  container.classList.toggle('pano-foggy', Boolean(mutators.fogOfWar));
   setTimeout(() => {
     el('pano-loading').classList.remove('hidden');
     panoViewer.load(state.round.panoramaUrl, {
       vaov: state.round.vaov,
       modifier: state.settings.modifier,
+      mutators,
       onLoad: () => {
         el('pano-loading').classList.add('hidden');
         container.classList.remove('pano-fade-out');
+        if (mutators.fogOfWar) {
+          // Reflow erzwingen, damit der Browser den unscharfen Startzustand
+          // tatsaechlich rendert, bevor die lange Clear-Up-Transition beginnt.
+          container.getBoundingClientRect();
+          requestAnimationFrame(() => container.classList.remove('pano-foggy'));
+        }
       },
     });
   }, PANO_FADE_MS);
@@ -698,9 +733,15 @@ function renderRoundStart() {
     hintBtn.hidden = true;
   }
 
-  const zoomLocked = state.settings.modifier === 'no-zoom';
+  const mutators = state.settings.mutators || {};
+  const zoomLocked = state.settings.modifier === 'no-zoom' || mutators.noPan;
   el('btn-zoom-in').classList.toggle('hidden', zoomLocked);
   el('btn-zoom-out').classList.toggle('hidden', zoomLocked);
+  // "Broken Compass": der Kompass-Button setzt sonst auf eine konstante
+  // Referenzrichtung zurueck - unter dem Mutator ist diese Referenz pro
+  // Runde zufaellig (siehe PanoViewer.load()), der Button waere also
+  // irrefuehrend und wird ausgeblendet.
+  el('btn-compass').classList.toggle('hidden', Boolean(mutators.brokenCompass));
 
   transitionPanorama();
 

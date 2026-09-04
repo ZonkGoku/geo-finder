@@ -331,9 +331,16 @@ button{ font-family:inherit; color:inherit; }
 /* ===================== HUD ===================== */
 #screen-hud{ padding:0; min-height:600px; position:relative; overflow:hidden; }
 .pano{ position:absolute; inset:0; overflow:hidden; background:#0d1420; }
-.pano-container{ position:absolute; inset:0; opacity:1; transition:opacity 220ms ease; }
+.pano-container{ position:absolute; inset:0; opacity:1; filter:blur(0); transition:opacity 220ms ease, filter 15s linear; }
 .pano-container.pano-fade-out{ opacity:0; }
-@media (prefers-reduced-motion: reduce){ .pano-container{ transition:none; } }
+/* Fog-of-War-Mutator: startet stark unscharf, die eigentliche 15s-Klarung
+   passiert ueber die filter-transition oben, sobald .pano-foggy wieder
+   entfernt wird (siehe transitionPanorama() in app.js). */
+.pano-container.pano-foggy{ filter:blur(22px); transition:opacity 220ms ease, filter 0ms; }
+@media (prefers-reduced-motion: reduce){
+  .pano-container{ transition:opacity 220ms ease; }
+  .pano-container.pano-foggy{ filter:blur(8px); transition:opacity 220ms ease; }
+}
 .pano-credit{ position:absolute; left:0; right:0; bottom:7px; z-index:1; text-align:center; font-size:0.6rem; letter-spacing:0.02em; color:rgba(237,239,244,0.55); margin:0; pointer-events:none; }
 .hud-top{ position:relative; z-index:2; display:flex; justify-content:space-between; align-items:flex-start; padding:22px 26px; pointer-events:none; }
 /* Frosted-Glass-Pills fuers HUD: dunkles Halbtransparent + Blur + duenner
@@ -647,6 +654,22 @@ button{ font-family:inherit; color:inherit; }
 .setting-group{ padding:10px 0; border-bottom:1px solid var(--line); }
 .setting-group:last-child{ border-bottom:none; }
 .setting-group-label{ font-size:0.78rem; color:var(--text-dim); margin-bottom:8px; }
+
+/* Mutatoren: unabhaengig voneinander an/ausschaltbare Chips (kein
+   Segmented-Control wie Runden/Dauer/Modus, da hier mehrere gleichzeitig
+   aktiv sein koennen). */
+.mutator-list{ display:flex; flex-direction:column; gap:8px; }
+.mutator-chip{
+  display:flex; flex-direction:column; gap:2px; text-align:left; width:100%;
+  padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface);
+  color:var(--text); cursor:pointer; transition:border-color .15s ease, background .15s ease;
+}
+.mutator-chip:hover{ border-color:var(--accent-2); }
+.mutator-chip:disabled{ opacity:0.5; cursor:not-allowed; }
+.mutator-chip.selected{ border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.mutator-chip-title{ font-weight:600; font-size:0.86rem; display:flex; align-items:center; gap:6px; }
+.mutator-chip.selected .mutator-chip-title::before{ content:"✓"; color:var(--accent); }
+.mutator-chip-desc{ font-size:0.74rem; color:var(--text-dim); }
 
 /* Segmented Control mit gleitendem Thumb: .choice-thumb wird per JS auf die
    Position/Breite des ausgewaehlten Buttons gesetzt (renderChoiceRow) und

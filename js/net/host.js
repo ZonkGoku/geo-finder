@@ -217,6 +217,7 @@ export class HostController {
           timeLimitMs: state.settings.timeLimitMs,
           mode: state.settings.mode,
           modifier: state.settings.modifier,
+          mutators: state.settings.mutators,
           mapSetId: mapSet.id,
           mapSetName: mapSet.name,
           mapSetSource: mapSet.source,

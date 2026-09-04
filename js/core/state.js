@@ -31,6 +31,7 @@ export const state = {
     mapSetId: 'weltweit',
     mode: 'points', // 'points' | 'hp'
     modifier: 'free', // 'free' | 'no-zoom'
+    mutators: { fogOfWar: false, brokenCompass: false, noPan: false },
   },
   pool: null, // aufgeloestes Kartenpaket (nur Host braucht Koordinaten)
   hp: new Map(), // peerId -> number (nur im HP-Duell-Modus genutzt)
