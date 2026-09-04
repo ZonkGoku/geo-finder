@@ -11,7 +11,7 @@
 // weil GitHub Pages dieses Projekt unter einem Unterpfad
 // (https://<user>.github.io/geo-finder/) ausliefert, nicht unter der
 // Domain-Wurzel.
-const CACHE_VERSION = 'geofinder-v2';
+const CACHE_VERSION = 'geofinder-v3';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -117,19 +117,27 @@ async function cacheFirst(request, cacheName) {
   return response;
 }
 
-async function staleWhileRevalidate(request, cacheName) {
+// War bis hierher stale-while-revalidate: sofort aus dem Cache antworten
+// (falls vorhanden), das Netz aktualisiert den Cache nur im Hintergrund fuer
+// den NAECHSTEN Aufruf. Live-Symptom: ein echter Bugfix im Code aenderte am
+// bereits geladenen Verhalten nichts, weil genau dieser (schon lokal
+// gespeicherte) alte Stand sofort wieder ausgeliefert wurde, bevor das Netz
+// ueberhaupt gefragt wurde - selbst nachdem skipWaiting()/clients.claim() den
+// Service Worker selbst korrekt aktualisiert hatten, blieb der ALTE Cache-
+// Inhalt unter demselben Cache-Namen bestehen. Jetzt umgekehrt: zuerst das
+// Netz versuchen (App-Shell-Dateien sind klein, der Umweg kostet praktisch
+// nichts), der Cache dient nur noch als Fallback ohne Netz (z. B. offline
+// oder bei einem kurzen Verbindungsaussetzer mitten in einer Partie).
+async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
-  const networkPromise = fetch(request)
-    .then((response) => {
-      if (response.ok) cache.put(request, response.clone());
-      return response;
-    })
-    .catch(() => null);
-  // Sofort aus dem Cache antworten, wenn vorhanden - die Netzwerkantwort
-  // aktualisiert den Cache im Hintergrund fuer den NAECHSTEN Aufruf, blockiert
-  // aber nicht die aktuelle Anfrage.
-  return cached || (await networkPromise) || Response.error();
+  try {
+    const response = await fetch(request);
+    if (response.ok) cache.put(request, response.clone());
+    return response;
+  } catch {
+    const cached = await cache.match(request);
+    return cached || Response.error();
+  }
 }
 
 self.addEventListener('fetch', (event) => {
@@ -145,7 +153,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.origin === self.location.origin) {
-    event.respondWith(staleWhileRevalidate(request, APP_SHELL_CACHE));
+    event.respondWith(networkFirst(request, APP_SHELL_CACHE));
   }
   // Alles andere (z.B. das PeerJS-Signaling, sonstige Drittanbieter) laeuft
   // unangetastet durch den Service Worker durch.
