@@ -8,6 +8,7 @@ import { PanoViewer } from './panorama/pano-viewer.js';
 import { showScreen } from './ui/router.js';
 import { showToast } from './ui/toast.js';
 import { loadMapSetIndex, loadMapSetDetail } from './core/pool-loader.js';
+import { getHighScore, recordScoreIfBest } from './core/high-scores.js';
 import * as sound from './audio/sound.js';
 
 const PROFILE_KEY = 'geofinder.profile';
@@ -128,6 +129,53 @@ function initLeaveGameButton() {
       sound.playClick();
       resetToMenu();
     }
+  });
+}
+
+// Logo als Router-Link zurueck ins Hauptmenue. Anders als der bestehende
+// #btn-leave-game (der IMMER fragt, sobald man ueberhaupt in Lobby/Spiel
+// ist), soll das Logo nur mitten in einer laufenden Runde (#screen-hud
+// aktiv) warnen - aus der Lobby (Spiel noch nicht gestartet) geht es ohne
+// Rueckfrage direkt zurueck, weil dort noch kein Fortschritt existiert, der
+// verloren gehen koennte.
+function isRoundInProgress() {
+  return document.getElementById('screen-hud').classList.contains('active');
+}
+
+function showConfirmLeaveModal() {
+  el('confirm-leave-modal').classList.remove('hidden');
+}
+
+function hideConfirmLeaveModal() {
+  el('confirm-leave-modal').classList.add('hidden');
+}
+
+function initBrandHomeLink() {
+  const goHome = () => {
+    if (isRoundInProgress()) {
+      showConfirmLeaveModal();
+      return;
+    }
+    sound.playClick();
+    resetToMenu();
+  };
+  el('brand-home-link').addEventListener('click', goHome);
+  el('brand-home-link-hero').addEventListener('click', goHome);
+
+  el('confirm-leave-cancel').addEventListener('click', () => {
+    sound.playClick();
+    hideConfirmLeaveModal();
+  });
+  el('confirm-leave-confirm').addEventListener('click', () => {
+    sound.playClick();
+    hideConfirmLeaveModal();
+    resetToMenu();
+  });
+  el('confirm-leave-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'confirm-leave-modal') hideConfirmLeaveModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !el('confirm-leave-modal').classList.contains('hidden')) hideConfirmLeaveModal();
   });
 }
 
@@ -433,6 +481,42 @@ function renderMapSetGrid() {
       }
     });
     grid.appendChild(card);
+  }
+  renderLobbyStage();
+}
+
+// "Die Buehne" - rechte Spalte der Desktop-Lobby. Zeigt eine grosse Vorschau
+// des aktuell gewaehlten Kartenpakets samt persoenlichem Highscore (siehe
+// core/high-scores.js), statt dass die halbe Lobby leer bleibt. Wird von
+// renderMapSetGrid() nach jedem Neuzeichnen mit-aufgerufen, damit sie mit
+// der Kartenpaket-Auswahl (state.settings.mapSetId) immer synchron bleibt.
+function renderLobbyStage() {
+  const entry = mapSetIndex.find((e) => e.id === state.settings.mapSetId);
+  const empty = el('lobby-stage-empty');
+  const content = el('lobby-stage-content');
+  if (!entry) {
+    empty.classList.remove('hidden');
+    content.classList.add('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  content.classList.remove('hidden');
+
+  const coverClass = entry.tag ? `cover-${entry.tag}` : 'cover-default';
+  const icon = MAPSET_ICONS[entry.id] || MAPSET_CATEGORY_ICONS[entry.tag] || MAPSET_CATEGORY_ICONS.default;
+  el('lobby-stage-art').className = `lobby-stage-art ${coverClass}`;
+  el('lobby-stage-icon').innerHTML = icon;
+
+  const badge = el('lobby-stage-badge');
+  badge.className = `mapset-card-badge ${entry.available ? 'ready' : 'needs-token'}`;
+  badge.textContent = entry.available ? 'Bereit' : 'Token nötig';
+  el('lobby-stage-name').textContent = entry.name;
+  el('lobby-stage-desc').textContent = entry.description;
+
+  const best = getHighScore(entry.id, state.settings.mode);
+  el('lobby-stage-best').classList.toggle('hidden', best == null);
+  if (best != null) {
+    el('lobby-stage-best-text').textContent = `Persönlicher Bestwert: ${best.toLocaleString('de-DE')} Punkte`;
   }
 }
 
@@ -1138,6 +1222,11 @@ function renderLeaderboard({ finalScores }) {
   clearInterval(resultCountdownInterval);
   showScreen('leaderboard');
 
+  if (state.pool?.id) {
+    const ownEntry = finalScores.find((e) => e.playerId === state.self.id);
+    if (ownEntry) recordScoreIfBest(state.pool.id, state.settings.mode, ownEntry.total);
+  }
+
   const isHpMode = state.settings.mode === 'hp';
   const isCountryMode = state.settings.mode === 'country-streak';
   const sorted = [...finalScores].sort((a, b) => {
@@ -1391,6 +1480,7 @@ async function boot() {
   initThemeToggle();
   initSoundToggle();
   initLeaveGameButton();
+  initBrandHomeLink();
   initVisibilityWatch();
   wireMenuControls();
   wireLobbyControls();

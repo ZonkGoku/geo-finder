@@ -99,6 +99,12 @@ button{ font-family:inherit; color:inherit; }
    und ein filigranes Wireframe-Globe-Icon (reines stroke, kein Fill/Box)
    statt des Diamant-Icons in der abgerundeten Box. */
 .brand{ display:flex; align-items:center; gap:14px; }
+/* Logo ist jetzt ein <button> (Router-Link zurueck ins Hauptmenue) statt
+   eines rein dekorativen <div> - Reset der Button-Defaults, damit es genau
+   wie vorher aussieht, nur mit Zeigercursor + dezentem Hover-Feedback. */
+.brand-link{ background:none; border:none; padding:0; font:inherit; cursor:pointer; }
+.brand-link:hover .brand-globe{ filter:drop-shadow(0 0 10px rgba(23,236,255,0.55)); }
+.brand-link:focus-visible{ outline:2px solid var(--accent-2); outline-offset:4px; border-radius:8px; }
 .brand-globe{ width:34px; height:34px; flex:none; animation:globeSpin 18s linear infinite; }
 @keyframes globeSpin{ to{ transform:rotate(360deg); } }
 @media (prefers-reduced-motion: reduce){ .brand-globe{ animation:none; } }
@@ -173,7 +179,35 @@ button{ font-family:inherit; color:inherit; }
 .btn-primary:disabled{ background:var(--surface-hi); color:var(--text-faint); cursor:not-allowed; filter:none; }
 .btn-ghost{ background:transparent; border-color:var(--line); color:var(--text); }
 .btn-ghost:hover{ border-color:var(--text-faint); }
+.btn-danger{ background:var(--danger); color:#fff; }
+.btn-danger:hover{ filter:brightness(1.1); }
 .btn-sm{ padding:8px 14px; font-size:0.8rem; border-radius:9px; }
+
+/* Glassmorphism-Warnmodal beim Verlassen eines laufenden Spiels ueber das
+   Logo (siehe initBrandHomeLink() in app.js) - anders als der native
+   confirm() beim Chrome-Leave-Button, weil der Nutzer hier explizit einen
+   "atemberaubenden" Zwei-Knopf-Dialog statt eines Browser-Popups wollte. */
+.confirm-modal{
+  position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+  background:rgba(6,9,16,0.72); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  padding:24px; animation:confirmModalFadeIn .18s ease;
+}
+.confirm-modal.hidden{ display:none; }
+.confirm-modal-card{
+  max-width:380px; width:100%; text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px;
+  background:color-mix(in srgb, var(--surface-raised) 88%, transparent);
+  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--line); border-radius:16px; padding:30px 26px;
+  box-shadow:0 24px 60px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  animation:confirmModalPop .22s cubic-bezier(.2,.8,.2,1);
+}
+.confirm-modal-icon{ font-size:2rem; }
+.confirm-modal-card h3{ font-size:1.05rem; }
+.confirm-modal-card p{ color:var(--text-dim); font-size:0.88rem; margin:0; }
+.confirm-modal-actions{ display:flex; gap:12px; margin-top:8px; flex-wrap:wrap; justify-content:center; }
+@keyframes confirmModalFadeIn{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes confirmModalPop{ from{ opacity:0; transform:scale(0.94) translateY(6px); } to{ opacity:1; transform:scale(1) translateY(0); } }
+@media (prefers-reduced-motion: reduce){ .confirm-modal, .confirm-modal-card{ animation:none; } }
 
 /* ===================== MENU (full-bleed hero, 2026 redesign) ===================== */
 /* #screen-menu verlaesst die .device-Box komplett und wird zum eigenen
@@ -280,7 +314,46 @@ button{ font-family:inherit; color:inherit; }
 .room-code b{ color:var(--accent); letter-spacing:0.08em; font-size:0.95rem; }
 .share-row{ display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
 .share-link{ flex:1; min-width:220px; background:var(--surface-raised); border:1px solid var(--line); border-radius:10px; padding:11px 14px; font-family:var(--font-mono); font-size:0.78rem; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.lobby-cols{ display:grid; grid-template-columns:1.1fr 0.9fr; gap:24px; margin-top:28px; }
+.lobby-main{ display:grid; grid-template-columns:1.05fr 0.95fr; gap:24px; margin-top:28px; align-items:start; }
+.lobby-main-left{ display:flex; flex-direction:column; gap:24px; min-width:0; }
+
+/* "Die Buehne" - rechte Spalte der Desktop-Lobby. Vorher komplett leerer
+   Raum neben den Einstellungen; zeigt jetzt eine grosse Vorschau des
+   aktuell gewaehlten Kartenpakets inkl. persoenlichem Highscore und dem
+   Start-Button, damit die rechte Haelfte nicht mehr brachliegt. */
+.lobby-stage{
+  background:color-mix(in srgb, var(--surface-raised) 72%, transparent);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--line); border-radius:14px;
+  display:flex; flex-direction:column; overflow:hidden;
+  position:sticky; top:24px; min-height:420px;
+}
+.lobby-stage-empty{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+  padding:60px 30px; color:var(--text-dim); text-align:center;
+}
+.lobby-stage-empty svg{ width:52px; height:52px; opacity:0.45; }
+.lobby-stage-empty p{ font-size:0.86rem; }
+
+.lobby-stage-content{ display:flex; flex-direction:column; }
+.lobby-stage-content.hidden{ display:none; }
+.lobby-stage-art{
+  position:relative; height:220px; flex:none; display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.lobby-stage-art::after{ content:""; position:absolute; inset:0; background:radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.18), transparent 60%); }
+.lobby-stage-art.cover-staedte{ background:linear-gradient(135deg, #0f3b45, #0b1f28); }
+.lobby-stage-art.cover-kultur{ background:linear-gradient(135deg, #4a2a12, #241209); }
+.lobby-stage-art.cover-natur{ background:linear-gradient(135deg, #14401f, #0b2313); }
+.lobby-stage-art.cover-default{ background:linear-gradient(135deg, #232b3d, #141925); }
+.lobby-stage-icon{ position:relative; z-index:1; width:88px; height:88px; color:rgba(255,255,255,0.92); filter:drop-shadow(0 6px 18px rgba(0,0,0,0.5)); }
+.lobby-stage-icon svg{ width:100%; height:100%; }
+.lobby-stage-body{ padding:22px 24px 4px; display:flex; flex-direction:column; gap:8px; }
+.lobby-stage-body h3{ font-size:1.25rem; font-family:var(--font-hero); }
+.lobby-stage-body p{ font-size:0.86rem; color:var(--text-dim); line-height:1.5; }
+.lobby-stage-best{ display:flex; align-items:center; gap:8px; margin-top:2px; font-size:0.82rem; color:var(--accent); }
+.lobby-stage-best.hidden{ display:none; }
+.lobby-stage-best svg{ width:16px; height:16px; flex:none; }
+.lobby-stage .lobby-cta{ padding:18px 24px 24px; margin-top:auto; }
 .panel{
   background:color-mix(in srgb, var(--surface-raised) 72%, transparent);
   backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
@@ -872,7 +945,8 @@ button{ font-family:inherit; color:inherit; }
 @keyframes spin{ to{ transform:rotate(360deg); } }
 
 @media (max-width: 720px){
-  .lobby-cols, .result-grid{ grid-template-columns:1fr; }
+  .lobby-main, .result-grid{ grid-template-columns:1fr; }
+  .lobby-stage{ position:static; min-height:0; }
   .screen{ padding:24px; }
   .hud-top{ flex-direction:column; gap:10px; }
   .minimap-wrap{ right:16px; bottom:16px; }

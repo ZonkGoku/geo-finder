@@ -28,7 +28,7 @@
 <div class="page">
 
   <div class="page-head">
-    <div class="brand">
+    <button class="brand brand-link" id="brand-home-link" type="button" aria-label="Zur&uuml;ck zum Hauptmen&uuml;">
       <svg class="brand-globe" viewBox="0 0 40 40" fill="none" aria-hidden="true">
         <defs>
           <linearGradient id="brandGlobeGradient" x1="2" y1="4" x2="38" y2="36" gradientUnits="userSpaceOnUse">
@@ -42,8 +42,23 @@
         <ellipse cx="20" cy="20" rx="16.5" ry="6.2" stroke="url(#brandGlobeGradient)" stroke-width="1" transform="rotate(120 20 20)"/>
       </svg>
       <span class="brand-word"><span class="brand-word-geo">GEO</span><span class="brand-word-finder">FINDER</span></span>
-    </div>
+    </button>
     <p class="kicker">360°-Multiplayer &middot; bis zu 6 Spieler &middot; P2P &uuml;ber WebRTC</p>
+  </div>
+
+  <!-- Bewusst wie #screen-menu AUSSERHALB von .device platziert (siehe
+       Kommentar dort zu backdrop-filter/position:fixed) - das Logo, das
+       dieses Modal ausloest, sitzt selbst ausserhalb von .device. -->
+  <div class="confirm-modal hidden" id="confirm-leave-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-leave-title">
+    <div class="confirm-modal-card">
+      <div class="confirm-modal-icon">&#9888;</div>
+      <h3 id="confirm-leave-title">Laufendes Spiel verlassen?</h3>
+      <p>Willst du das laufende Spiel wirklich verlassen? Dein Fortschritt geht verloren.</p>
+      <div class="confirm-modal-actions">
+        <button class="btn btn-ghost" id="confirm-leave-cancel">Weiterspielen</button>
+        <button class="btn btn-danger" id="confirm-leave-confirm">Verlassen</button>
+      </div>
+    </div>
   </div>
 
   <!-- ===================== MENU ===================== -->
@@ -57,7 +72,7 @@
     <div class="menu-hero">
       <div class="menu-hero-scroll">
         <div class="menu-hero-left">
-          <div class="brand menu-hero-brand">
+          <button class="brand menu-hero-brand brand-link" id="brand-home-link-hero" type="button" aria-label="Zur&uuml;ck zum Hauptmen&uuml;">
             <svg class="brand-globe" viewBox="0 0 40 40" fill="none" aria-hidden="true">
               <defs>
                 <linearGradient id="brandGlobeGradientHero" x1="2" y1="4" x2="38" y2="36" gradientUnits="userSpaceOnUse">
@@ -71,7 +86,7 @@
               <ellipse cx="20" cy="20" rx="16.5" ry="6.2" stroke="url(#brandGlobeGradientHero)" stroke-width="1" transform="rotate(120 20 20)"/>
             </svg>
             <span class="brand-word"><span class="brand-word-geo">GEO</span><span class="brand-word-finder">FINDER</span></span>
-          </div>
+          </button>
           <p class="menu-hero-eyebrow">360&deg; &middot; Live-Multiplayer &middot; bis zu 6 Spieler</p>
           <h1 class="menu-hero-title">ERRATE<br><em>DIE&nbsp;WELT.</em></h1>
           <p class="menu-hero-lede">Kein Account. Kein Server. Peer-to-Peer &uuml;ber WebRTC &mdash; ein Link gen&uuml;gt, um live gegeneinander anzutreten.</p>
@@ -190,76 +205,111 @@
           <button class="btn btn-primary" id="copy-link-btn">Link kopieren</button>
         </div>
 
-        <div class="lobby-cols">
-          <div class="panel" id="lobby-players-panel">
-            <h3>Spieler (<span id="lobby-player-count">0</span>)</h3>
-            <div id="lobby-player-list"></div>
+        <div class="lobby-main">
+          <div class="lobby-main-left">
+            <div class="panel" id="lobby-players-panel">
+              <h3>Spieler (<span id="lobby-player-count">0</span>)</h3>
+              <div id="lobby-player-list"></div>
+            </div>
+            <div class="panel" id="lobby-settings-panel">
+              <h3>Spielregeln</h3>
+
+              <div class="setting-group">
+                <div class="setting-group-label">Runden</div>
+                <div class="choice-row" id="choice-rounds" data-setting="roundCount">
+                  <div class="choice-thumb" aria-hidden="true"></div>
+                  <button type="button" data-value="3">3</button>
+                  <button type="button" data-value="5">5</button>
+                  <button type="button" data-value="10">10</button>
+                </div>
+              </div>
+
+              <div class="setting-group">
+                <div class="setting-group-label">Rundendauer</div>
+                <div class="choice-row" id="choice-duration" data-setting="timeLimitMs">
+                  <div class="choice-thumb" aria-hidden="true"></div>
+                  <button type="button" data-value="30000">30s</button>
+                  <button type="button" data-value="60000">60s</button>
+                  <button type="button" data-value="90000">90s</button>
+                  <button type="button" data-value="180000">180s</button>
+                  <button type="button" data-value="null">&#8734;</button>
+                </div>
+              </div>
+
+              <div class="setting-group">
+                <div class="setting-group-label">Modus</div>
+                <div class="choice-row" id="choice-mode" data-setting="mode">
+                  <div class="choice-thumb" aria-hidden="true"></div>
+                  <button type="button" data-value="points">Punkte-Duell</button>
+                  <button type="button" data-value="hp">HP-Duell (6000 HP)</button>
+                  <button type="button" data-value="country-streak">Country-Streak</button>
+                </div>
+              </div>
+
+              <div class="setting-group">
+                <div class="setting-group-label">Panorama-Steuerung</div>
+                <div class="choice-row" id="choice-modifier" data-setting="modifier">
+                  <div class="choice-thumb" aria-hidden="true"></div>
+                  <button type="button" data-value="free">Frei (Zoom erlaubt)</button>
+                  <button type="button" data-value="no-zoom">Zoom gesperrt</button>
+                </div>
+              </div>
+
+              <div class="setting-group">
+                <div class="setting-group-label">Mutatoren</div>
+                <div class="mutator-list" id="mutator-list">
+                  <button type="button" class="mutator-chip" data-mutator="fogOfWar">
+                    <span class="mutator-chip-title">Fog of War</span>
+                    <span class="mutator-chip-desc">Panorama startet verschwommen, klart über 15s auf</span>
+                  </button>
+                  <button type="button" class="mutator-chip" data-mutator="brokenCompass">
+                    <span class="mutator-chip-title">Broken Compass</span>
+                    <span class="mutator-chip-desc">Blick startet in eine zufällige Richtung</span>
+                  </button>
+                  <button type="button" class="mutator-chip" data-mutator="noPan">
+                    <span class="mutator-chip-title">No-Pan (Hardcore)</span>
+                    <span class="mutator-chip-desc">Panorama fest, kein Umsehen/Zoomen</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="panel" id="lobby-settings-panel">
-            <h3>Spielregeln</h3>
 
-            <div class="setting-group">
-              <div class="setting-group-label">Runden</div>
-              <div class="choice-row" id="choice-rounds" data-setting="roundCount">
-                <div class="choice-thumb" aria-hidden="true"></div>
-                <button type="button" data-value="3">3</button>
-                <button type="button" data-value="5">5</button>
-                <button type="button" data-value="10">10</button>
-              </div>
+          <!-- Die Buehne: zeigt das aktuell gewaehlte Kartenpaket gross statt
+               die rechte Bildschirmhaelfte leer zu lassen. Wird von
+               renderMapSetGrid()/renderLobby() befuellt, sobald ein Paket
+               unten ausgewaehlt ist. -->
+          <div class="lobby-stage" id="lobby-stage">
+            <div class="lobby-stage-empty" id="lobby-stage-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 4 6 4 9s-1.5 6.3-4 9c-2.5-2.7-4-6-4-9s1.5-6.3 4-9z"/></svg>
+              <p>W&auml;hle unten ein Kartenpaket aus</p>
             </div>
-
-            <div class="setting-group">
-              <div class="setting-group-label">Rundendauer</div>
-              <div class="choice-row" id="choice-duration" data-setting="timeLimitMs">
-                <div class="choice-thumb" aria-hidden="true"></div>
-                <button type="button" data-value="30000">30s</button>
-                <button type="button" data-value="60000">60s</button>
-                <button type="button" data-value="90000">90s</button>
-                <button type="button" data-value="180000">180s</button>
-                <button type="button" data-value="null">&#8734;</button>
+            <div class="lobby-stage-content hidden" id="lobby-stage-content">
+              <div class="lobby-stage-art" id="lobby-stage-art">
+                <span class="lobby-stage-icon" id="lobby-stage-icon"></span>
               </div>
-            </div>
-
-            <div class="setting-group">
-              <div class="setting-group-label">Modus</div>
-              <div class="choice-row" id="choice-mode" data-setting="mode">
-                <div class="choice-thumb" aria-hidden="true"></div>
-                <button type="button" data-value="points">Punkte-Duell</button>
-                <button type="button" data-value="hp">HP-Duell (6000 HP)</button>
-                <button type="button" data-value="country-streak">Country-Streak</button>
+              <div class="lobby-stage-body">
+                <span class="mapset-card-badge" id="lobby-stage-badge"></span>
+                <h3 id="lobby-stage-name"></h3>
+                <p id="lobby-stage-desc"></p>
+                <div class="lobby-stage-best hidden" id="lobby-stage-best">
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.7 6.6 7.1.6-5.4 4.6 1.7 6.9L12 17l-6.1 3.7 1.7-6.9-5.4-4.6 7.1-.6z"/></svg>
+                  <span id="lobby-stage-best-text"></span>
+                </div>
               </div>
-            </div>
-
-            <div class="setting-group">
-              <div class="setting-group-label">Panorama-Steuerung</div>
-              <div class="choice-row" id="choice-modifier" data-setting="modifier">
-                <div class="choice-thumb" aria-hidden="true"></div>
-                <button type="button" data-value="free">Frei (Zoom erlaubt)</button>
-                <button type="button" data-value="no-zoom">Zoom gesperrt</button>
-              </div>
-            </div>
-
-            <div class="setting-group">
-              <div class="setting-group-label">Mutatoren</div>
-              <div class="mutator-list" id="mutator-list">
-                <button type="button" class="mutator-chip" data-mutator="fogOfWar">
-                  <span class="mutator-chip-title">Fog of War</span>
-                  <span class="mutator-chip-desc">Panorama startet verschwommen, klart über 15s auf</span>
+              <div class="lobby-cta">
+                <button class="btn btn-primary" id="btn-ready-toggle">Bereit</button>
+                <button class="btn btn-primary cta-mega" id="btn-start-game" hidden>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+                  Match starten
                 </button>
-                <button type="button" class="mutator-chip" data-mutator="brokenCompass">
-                  <span class="mutator-chip-title">Broken Compass</span>
-                  <span class="mutator-chip-desc">Blick startet in eine zufällige Richtung</span>
-                </button>
-                <button type="button" class="mutator-chip" data-mutator="noPan">
-                  <span class="mutator-chip-title">No-Pan (Hardcore)</span>
-                  <span class="mutator-chip-desc">Panorama fest, kein Umsehen/Zoomen</span>
-                </button>
+                <span class="cta-hint" id="lobby-hint"></span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="panel" id="lobby-mapset-panel" style="margin-top:20px;">
+        <div class="panel" id="lobby-mapset-panel">
           <h3>Kartenpaket</h3>
           <div class="mapset-toolbar">
             <div class="mapset-search">
@@ -275,15 +325,6 @@
           </div>
           <div class="mapset-grid" id="mapset-grid"></div>
           <p class="mapset-empty hidden" id="mapset-empty">Keine Kartenpakete gefunden.</p>
-        </div>
-
-        <div class="lobby-cta">
-          <button class="btn btn-primary" id="btn-ready-toggle">Bereit</button>
-          <button class="btn btn-primary cta-mega" id="btn-start-game" hidden>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
-            Match starten
-          </button>
-          <span class="cta-hint" id="lobby-hint"></span>
         </div>
       </section>
 
