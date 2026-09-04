@@ -10,6 +10,8 @@ import { ensureCountryStore, searchCountries, findCountryByName } from './core/c
 import { getColorForDistance } from './core/heatmap-color.js';
 import { showScreen } from './ui/router.js';
 import { showToast } from './ui/toast.js';
+import { burst as particleBurst } from './ui/particles.js';
+import * as haptics from './ui/haptics.js';
 import { loadMapSetIndex, loadMapSetDetail } from './core/pool-loader.js';
 import { getHighScore, recordScoreIfBest } from './core/high-scores.js';
 import { getPlayerStats, averageScore, recordGamePlayed } from './core/player-stats.js';
@@ -817,6 +819,7 @@ function ensureHudWidgets() {
   if (!guessMap) {
     guessMap = new GuessMap(el('guess-map-container'), () => {
       sound.playPinSet();
+      haptics.tapLight();
       const btn = el('btn-confirm-guess');
       btn.disabled = false;
       btn.classList.add('ready');
@@ -959,6 +962,10 @@ function renderHeatmapRoundResult({ winnerPlayerId, target }) {
   if (winnerPlayerId) {
     const won = winnerPlayerId === state.self.id;
     title.textContent = won ? 'Du hast es gefunden!' : `${heatmapPlayerName(winnerPlayerId)} war am schnellsten!`;
+    if (won) {
+      particleBurst({ colors: ['#39ff8f', '#17ecff', '#ff1fb0'] });
+      haptics.tapStrong();
+    }
   } else {
     title.textContent = 'Die Zeit ist abgelaufen.';
   }
@@ -1132,11 +1139,16 @@ function renderRoundStart() {
   clearInterval(hudTimerInterval);
   const timerEl = el('hud-timer');
   const timerBox = timerEl.closest('.timer');
+  sound.stopRoundAmbience();
   if (state.round.timeLimitMs == null) {
     timerEl.textContent = '∞';
     timerBox.classList.remove('critical');
   } else {
+    sound.startRoundAmbience();
     let tickedCriticalSecond = null;
+    // "Puls" der Ambience in den letzten 10s: Intensitaet steigt linear von
+    // 0 (10s uebrig) auf 1 (0s uebrig) - siehe setRoundTension() in sound.js.
+    const TENSION_WINDOW_S = 10;
     const tick = () => {
       const remainingMs = state.round.startTimestamp + state.round.timeLimitMs - Date.now();
       const clamped = Math.max(0, remainingMs);
@@ -1150,7 +1162,12 @@ function renderRoundStart() {
         tickedCriticalSecond = totalSeconds;
         sound.playTick(totalSeconds <= 3);
       }
-      if (clamped <= 0) clearInterval(hudTimerInterval);
+      const tension = 1 - Math.max(0, Math.min(TENSION_WINDOW_S, clamped / 1000)) / TENSION_WINDOW_S;
+      sound.setRoundTension(tension);
+      if (clamped <= 0) {
+        clearInterval(hudTimerInterval);
+        sound.stopRoundAmbience();
+      }
     };
     tick();
     hudTimerInterval = setInterval(tick, 250);
@@ -1309,6 +1326,7 @@ function animateCounter(elEl, from, to, duration = 700) {
 
 function renderRoundResult({ results, actual, actualMeta }) {
   clearInterval(hudTimerInterval);
+  sound.stopRoundAmbience();
   showScreen('result');
   el('result-next-hint').classList.remove('buffering');
 
@@ -1393,10 +1411,23 @@ function renderRoundResult({ results, actual, actualMeta }) {
     if (myResult?.correct) sound.playSuccess();
     else sound.playRoundReveal();
     if (myResult?.correct && myResult.streak >= 2) sound.playStreak();
+    haptics.tapMedium();
   } else {
     if (myBestScore > 4000) sound.playSuccess();
     else sound.playRoundReveal();
     if (myResult?.streakBonus > 0) sound.playStreak();
+    // Volltreffer-Feiermoment: Konfetti + starkes Haptik-Feedback bei einem
+    // sehr nahen Tipp (<5km) statt nur beim theoretischen Punktemaximum -
+    // ein 4999-von-5000-Punkte-Tipp UND ein technisch perfekter Tipp fuehlen
+    // sich beide wie "extrem nah" an, sollen also beide feiern.
+    if (!myResult?.noGuess && myResult?.distanceKm != null && myResult.distanceKm < 5) {
+      particleBurst({ colors: ['#ff7a33', '#17ecff', '#ff1fb0', '#39ff8f'] });
+      haptics.tapStrong();
+    } else if (myResult?.hpDamage > 0) {
+      haptics.tapStrong();
+    } else {
+      haptics.tapMedium();
+    }
   }
 
   const isHost = state.role === 'host';
@@ -1508,6 +1539,16 @@ function renderLeaderboard({ finalScores }) {
     return b.total - a.total;
   });
   renderPodium(sorted);
+
+  // Podium-Konfetti: nur bei echten Mehrspieler-Partien (renderPodium selbst
+  // blendet das Podium bei <2 Spielern aus - Solo hat kein "Rang", das
+  // feiernswert waere) und nur, wenn der eigene Rang tatsaechlich unter den
+  // ersten drei liegt.
+  const ownRank = sorted.findIndex((e) => e.playerId === state.self.id);
+  if (sorted.length >= 2 && ownRank >= 0 && ownRank < 3) {
+    setTimeout(() => particleBurst({ count: 90, spread: 1.3 }), 400);
+    haptics.tapStrong();
+  }
 
   const heading = document.querySelector('#screen-leaderboard h2');
   if (state.challenge?.type === 'daily') {
@@ -1645,6 +1686,7 @@ function wireMenuControls() {
 function resetToMenu() {
   clearInterval(hudTimerInterval);
   clearInterval(resultCountdownInterval);
+  sound.stopRoundAmbience();
   hideStateOverlay();
   el('connection-banner').classList.add('hidden');
   panoViewer?.destroy();

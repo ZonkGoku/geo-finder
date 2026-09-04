@@ -1056,6 +1056,24 @@ button{ font-family:inherit; color:inherit; }
   .heatmap-activity-feed{ left:20px; right:20px; width:auto; bottom:110px; }
 }
 
+/* ===================== "Juice" / Game Feel ===================== */
+/* Leuchtender Puls fuer die Tipp-Ziel-Linie auf der Ergebniskarte, NACHDEM
+   sie per stroke-dashoffset eingezeichnet wurde (siehe result-map.js
+   _animateLines()) - drop-shadow statt box-shadow, weil das Element ein SVG
+   <path> ist. will-change nur auf der Klasse, die tatsaechlich animiert,
+   damit der Browser nicht dauerhaft eine GPU-Layer-Reservierung fuer jede
+   Linie vorhaelt. */
+.result-line.drawn{ will-change:filter; animation:resultLineGlow 2.2s ease-in-out infinite; }
+@keyframes resultLineGlow{
+  0%,100%{ filter:drop-shadow(0 0 2px currentColor); }
+  50%{ filter:drop-shadow(0 0 7px currentColor); }
+}
+@media (prefers-reduced-motion: reduce){ .result-line.drawn{ animation:none; } }
+
+/* Vollbild-Canvas fuer Konfetti-/Partikelbursts (ui/particles.js) - liegt
+   ueber allem, blockiert aber keine Klicks. */
+.particle-canvas{ position:fixed; inset:0; z-index:400; pointer-events:none; }
+
 /* ===================== Panorama loading ===================== */
 .pano-loading{
   position:absolute; inset:0; z-index:5; display:flex; align-items:center; justify-content:center; gap:10px;
