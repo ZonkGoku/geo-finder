@@ -193,6 +193,7 @@ button{ font-family:inherit; color:inherit; }
   display:flex; flex-direction:column; align-items:flex-start; gap:0;
   max-width:720px;
 }
+.menu-hero-brand{ margin-bottom:28px; }
 .menu-hero-eyebrow{
   font-family:var(--font-mono); font-size:0.76rem; letter-spacing:0.18em; text-transform:uppercase;
   color:var(--accent-2); margin:0 0 18px; text-shadow:0 0 14px rgba(23,236,255,0.5);
