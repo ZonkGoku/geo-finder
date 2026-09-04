@@ -49,15 +49,39 @@ function saveStoredStyle(style) {
  * jeder neuen Karteninstanz (Minimap/Ergebnis/Uebersicht) auf Satellit
  * zurueckspringt.
  */
+// Beide Kachel-Sets sind unabhaengige Esri-REST-Endpunkte - ein Ausfall/
+// Rate-Limit betrifft praktisch nie beide gleichzeitig. Bekommt eine frisch
+// angehaengte Karte innerhalb dieser Zeit KEIN einziges Kachelbild (siehe
+// TILE_FALLBACK_MS unten), wechselt attachTileLayer() automatisch einmalig
+// auf den jeweils anderen Dienst, statt dauerhaft leer zu bleiben (live
+// gemeldet: Minimap zeigte nur den Pin, keine Kacheln).
+const TILE_FALLBACK_MS = 4000;
+
 export function attachTileLayer(map) {
   let style = loadStoredStyle();
+  let loadedAnyTile = false;
+  let fallbackTried = false;
 
   function buildLayer(key) {
     const cfg = TILE_SETS[key] || TILE_SETS[DEFAULT_STYLE];
-    return window.L.tileLayer(cfg.url, { attribution: cfg.attribution, maxZoom: cfg.maxZoom });
+    const tileLayer = window.L.tileLayer(cfg.url, { attribution: cfg.attribution, maxZoom: cfg.maxZoom });
+    tileLayer.on('tileload', () => {
+      loadedAnyTile = true;
+    });
+    return tileLayer;
   }
 
   let layer = buildLayer(style).addTo(map);
+
+  setTimeout(() => {
+    if (loadedAnyTile || fallbackTried) return;
+    fallbackTried = true;
+    const next = style === 'satellite' ? 'street' : 'satellite';
+    console.warn(`[GeoFinder] Keine Kacheln von "${style}" erhalten, wechsle automatisch auf "${next}".`);
+    map.removeLayer(layer);
+    style = next;
+    layer = buildLayer(style).addTo(map);
+  }, TILE_FALLBACK_MS);
 
   return {
     get style() {
