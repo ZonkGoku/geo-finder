@@ -638,14 +638,22 @@ function renderLobby() {
   renderChoiceRow('choice-modifier', state.settings.modifier);
   renderMutators();
 
-  // Heatmap-Modus braucht kein Kartenpaket (keine Panoramen) - Kartenpaket-
-  // Auswahl (rechte Buehne + Grid darunter) ergibt hier keinen Sinn und wird
-  // durch einen kurzen Hinweistext ersetzt.
+  // Heatmap-Modus braucht kein Kartenpaket (keine Panoramen) und keine
+  // Panorama-Steuerung - stattdessen eigene Regeln (Labels/Gegner-Info/
+  // Spielablauf) und ein kurzer Hinweistext statt der Kartenpaket-Auswahl.
   const isHeatmap = state.settings.mode === 'heatmap';
   el('lobby-mapset-panel').classList.toggle('hidden', isHeatmap);
   el('heatmap-mode-note').classList.toggle('hidden', !isHeatmap);
-  if (isHeatmap) renderLobbyStage();
-  else if (mapSetIndex.length) renderMapSetGrid();
+  el('heatmap-settings-group').classList.toggle('hidden', !isHeatmap);
+  el('panorama-controls-group').classList.toggle('hidden', isHeatmap);
+  if (isHeatmap) {
+    renderChoiceRow('choice-heatmap-labels', state.settings.heatmapLabels);
+    renderChoiceRow('choice-heatmap-opponent-info', state.settings.heatmapOpponentInfo);
+    renderChoiceRow('choice-heatmap-turn-mode', state.settings.heatmapTurnMode);
+    renderLobbyStage();
+  } else if (mapSetIndex.length) {
+    renderMapSetGrid();
+  }
 
   const readyBtn = el('btn-ready-toggle');
   const startBtn = el('btn-start-game');
@@ -777,6 +785,9 @@ function wireLobbyControls() {
   wireChoiceRow('choice-duration', 'timeLimitMs', (v) => (v === 'null' ? null : Number(v)));
   wireChoiceRow('choice-mode', 'mode', (v) => v);
   wireChoiceRow('choice-modifier', 'modifier', (v) => v);
+  wireChoiceRow('choice-heatmap-labels', 'heatmapLabels', (v) => v);
+  wireChoiceRow('choice-heatmap-opponent-info', 'heatmapOpponentInfo', (v) => v);
+  wireChoiceRow('choice-heatmap-turn-mode', 'heatmapTurnMode', (v) => v);
 
   el('mutator-list').querySelectorAll('.mutator-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
@@ -869,9 +880,14 @@ let countryStore = null;
 let heatmapTimerInterval = null;
 let heatmapGuessedThisRound = new Set(); // countryId - verhindert wiederholtes Antippen desselben Vorschlags
 let heatmapSuggestionIndex = -1;
+let heatmapOwnGuesses = []; // [{name, distanceKm}] - fuer das Top-3-Panel, pro Runde neu
+let heatmapOpponentRecordKm = null; // heatmapOpponentInfo==='best': bisher bester GEGNER-Wert dieser Runde
+let heatmapActiveTurnPlayerId = null; // heatmapTurnMode==='turns': wer gerade dran ist, sonst null
 
 async function ensureHeatmapWidgets() {
-  if (!heatmapMap) heatmapMap = new HeatmapMap(el('heatmap-map-container'));
+  const labels = state.settings.heatmapLabels !== 'off';
+  if (!heatmapMap) heatmapMap = new HeatmapMap(el('heatmap-map-container'), { labels });
+  else heatmapMap.setLabels(labels); // Einstellung kann sich zwischen zwei Partien in derselben Session geaendert haben
   if (!countryStore) countryStore = await ensureCountryStore();
   heatmapMap.setCountries(countryStore.countries);
 }
@@ -909,17 +925,67 @@ async function renderHeatmapRoundStart() {
   heatmapMap.invalidate();
   heatmapGuessedThisRound = new Set();
   heatmapSuggestionIndex = -1;
+  heatmapOwnGuesses = [];
+  heatmapOpponentRecordKm = null;
+  heatmapActiveTurnPlayerId = null;
 
   el('heatmap-round-index').textContent = String(state.round.index + 1).padStart(2, '0');
   el('heatmap-round-total').textContent = String(state.round.total).padStart(2, '0');
   el('heatmap-activity-feed').innerHTML = '';
   el('heatmap-result-banner').classList.add('hidden');
+  el('heatmap-top3-panel').classList.add('hidden');
+  el('heatmap-top3-list').innerHTML = '';
+  el('heatmap-opponent-record').classList.add('hidden');
+  el('heatmap-turn-status').classList.add('hidden');
+  el('heatmap-search-box').classList.remove('locked');
   const input = el('heatmap-search-input');
   input.value = '';
   input.disabled = false;
   el('heatmap-suggestions').classList.add('hidden');
   renderHeatmapTimer();
   requestAnimationFrame(() => input.focus());
+}
+
+function renderHeatmapTop3() {
+  const list = el('heatmap-top3-list');
+  const panel = el('heatmap-top3-panel');
+  if (heatmapOwnGuesses.length === 0) {
+    panel.classList.add('hidden');
+    return;
+  }
+  panel.classList.remove('hidden');
+  const top3 = [...heatmapOwnGuesses].sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 3);
+  list.innerHTML = top3
+    .map(
+      (g, i) =>
+        `<li><span class="rank">${i + 1}.</span> ${escapeHtml(g.name)} <span class="dist">${Math.round(g.distanceKm).toLocaleString('de-DE')} km</span></li>`
+    )
+    .join('');
+}
+
+/** heatmapOpponentInfo==='best': aktualisiert das pulsierende "Gegner-Rekord"-Widget. */
+function renderHeatmapOpponentRecord(recordKm) {
+  heatmapOpponentRecordKm = recordKm;
+  const widget = el('heatmap-opponent-record');
+  widget.classList.remove('hidden');
+  el('heatmap-opponent-record-text').textContent = `Gegner-Rekord: ${Math.round(recordKm).toLocaleString('de-DE')} km`;
+}
+
+/** heatmapTurnMode==='turns': sperrt/entsperrt das Suchfeld je nachdem, wer dran ist. */
+function renderHeatmapTurnUpdate({ activePlayerId }) {
+  heatmapActiveTurnPlayerId = activePlayerId;
+  const isMyTurn = activePlayerId === state.self.id;
+  const input = el('heatmap-search-input');
+  const status = el('heatmap-turn-status');
+  input.disabled = !isMyTurn;
+  el('heatmap-search-box').classList.toggle('locked', !isMyTurn);
+  if (isMyTurn) {
+    status.classList.add('hidden');
+    if (document.activeElement !== input) input.focus();
+  } else {
+    status.classList.remove('hidden');
+    status.textContent = `Warten auf ${heatmapPlayerName(activePlayerId)}…`;
+  }
 }
 
 function heatmapActivityLine(text, tone = '') {
@@ -936,14 +1002,30 @@ function heatmapActivityLine(text, tone = '') {
 function renderHeatmapGuessResult({ countryId, distanceKm, exact }) {
   heatmapMap?.colorCountry(countryId, getColorForDistance(distanceKm, exact));
   const country = countryStore?.byId.get(countryId);
+  const name = country?.name ?? countryId;
   if (exact) {
-    heatmapActivityLine(`Volltreffer! ${country?.name ?? countryId} war richtig.`, 'exact');
+    heatmapActivityLine(`Volltreffer! ${name} war richtig.`, 'exact');
   } else {
-    heatmapActivityLine(`${country?.name ?? countryId}: ${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt`);
+    heatmapActivityLine(`${name}: ${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt`);
   }
+  heatmapOwnGuesses.push({ name, distanceKm });
+  renderHeatmapTop3();
 }
 
-function renderHeatmapActivity({ peerId, distanceKm, exact }) {
+// Payload-Form haengt von heatmapOpponentInfo ab (siehe net/host.js
+// _handleHeatmapGuess()): 'all' liefert {peerId, distanceKm, exact} pro
+// Tipp, 'best' liefert nur bei einer Verbesserung {recordKm, exact} ohne
+// peerId. 'blind' sendet gar keine ui:heatmap-activity-Events.
+function renderHeatmapActivity(payload) {
+  if ('recordKm' in payload) {
+    if (payload.exact) {
+      heatmapActivityLine('Ein Gegner hat das Zielland gefunden!', 'exact');
+    } else {
+      renderHeatmapOpponentRecord(payload.recordKm);
+    }
+    return;
+  }
+  const { peerId, distanceKm, exact } = payload;
   if (peerId === state.self.id) return; // eigene Tipps kommen ueber ui:heatmap-guess-result mit Details
   const name = heatmapPlayerName(peerId);
   if (exact) heatmapActivityLine(`${name} hat das Zielland gefunden!`, 'exact');
@@ -992,6 +1074,10 @@ function renderHeatmapSuggestions(query) {
 }
 
 function handleHeatmapGuessPick(countryId) {
+  // UI sollte das Suchfeld hierfuer schon gesperrt haben (renderHeatmapTurnUpdate) -
+  // dieser Guard ist nur die zweite Verteidigungslinie, autoritativ blockt
+  // ohnehin der Host selbst (siehe _handleHeatmapGuess() in host.js).
+  if (heatmapActiveTurnPlayerId != null && heatmapActiveTurnPlayerId !== state.self.id) return;
   if (!countryId || heatmapGuessedThisRound.has(countryId)) return;
   heatmapGuessedThisRound.add(countryId);
   sound.playClick();
@@ -1866,6 +1952,7 @@ function wireBusEvents() {
   bus.on('ui:heatmap-guess-result', renderHeatmapGuessResult);
   bus.on('ui:heatmap-activity', renderHeatmapActivity);
   bus.on('ui:heatmap-round-result', renderHeatmapRoundResult);
+  bus.on('ui:heatmap-turn-update', renderHeatmapTurnUpdate);
   bus.on('ui:map-resolving', renderLoadProgress);
   bus.on('ui:map-resolve-failed', () => {
     hideLoadProgress();

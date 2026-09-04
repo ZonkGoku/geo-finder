@@ -1050,10 +1050,56 @@ button{ font-family:inherit; color:inherit; }
   background:color-mix(in srgb, var(--surface-raised) 60%, transparent); border:1px solid var(--line);
 }
 .heatmap-mode-note.hidden{ display:none; }
+.heatmap-only.hidden{ display:none; }
+
+/* "Deine Top 3 Tipps" - kompaktes Panel am linken Rand, damit man bei vielen
+   Tipps nicht nur auf die (bei dichten Laendergrenzen schwer lesbaren)
+   Kartenfarben angewiesen ist. */
+.heatmap-top3-panel{
+  position:absolute; left:20px; top:78px; z-index:4; width:min(230px, calc(50% - 30px));
+  background:color-mix(in srgb, var(--surface-raised) 80%, transparent);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:12px 14px;
+  box-shadow:0 16px 40px -16px rgba(0,0,0,0.6);
+}
+.heatmap-top3-panel.hidden{ display:none; }
+.heatmap-top3-title{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); margin-bottom:8px; }
+.heatmap-top3-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.heatmap-top3-list li{
+  display:flex; align-items:baseline; gap:8px; font-size:0.82rem; color:#fff;
+  animation:heatmapLineIn .2s ease;
+}
+.heatmap-top3-list .rank{ font-family:var(--font-mono); color:var(--accent-2); font-weight:700; width:1.2em; flex:none; }
+.heatmap-top3-list .dist{ margin-left:auto; color:var(--text-dim); font-family:var(--font-mono); font-size:0.78rem; }
+
+/* "Gegner-Rekord"-Puls (heatmapOpponentInfo==='best') - rot statt der
+   sonstigen Marken-Akzentfarben, weil es explizit Druck/Warnung signalisieren
+   soll, nicht "gut gemacht". */
+.heatmap-opponent-record{
+  position:absolute; left:50%; top:14px; transform:translateX(-50%); z-index:6;
+  background:rgba(242,85,74,0.16); border:1px solid rgba(242,85,74,0.5); color:#ff8a80;
+  padding:7px 16px; border-radius:999px; font-size:0.82rem; font-weight:600;
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  animation:heatmapRecordPulse 1.6s ease-in-out infinite;
+}
+.heatmap-opponent-record.hidden{ display:none; }
+@keyframes heatmapRecordPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(242,85,74,0.45); } 50%{ box-shadow:0 0 0 7px rgba(242,85,74,0); } }
+@media (prefers-reduced-motion: reduce){ .heatmap-opponent-record{ animation:none; } }
+
+/* Turn-basierter Ablauf: Suchfeld optisch gesperrt + Statuszeile, wenn ein
+   anderer Spieler gerade an der Reihe ist (siehe wireHeatmapControls()/
+   renderHeatmapTurn() in app.js). */
+.heatmap-search-box.locked{ opacity:0.55; }
+.heatmap-turn-status{
+  margin:6px 2px 0; font-size:0.78rem; color:var(--accent-2); text-align:center;
+  animation:heatmapLineIn .2s ease;
+}
+.heatmap-turn-status.hidden{ display:none; }
 
 @media (max-width: 720px){
   .heatmap-search-panel{ top:64px; }
   .heatmap-activity-feed{ left:20px; right:20px; width:auto; bottom:110px; }
+  .heatmap-top3-panel{ width:calc(100% - 40px); top:auto; bottom:110px; left:20px; }
 }
 
 /* ===================== "Juice" / Game Feel ===================== */

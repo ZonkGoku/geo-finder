@@ -132,6 +132,12 @@ export class ClientController {
         state.settings.mode = message.payload.mode;
         state.settings.modifier = message.payload.modifier;
         state.settings.mutators = message.payload.mutators || { fogOfWar: false, brokenCompass: false, noPan: false };
+        // Heatmap-spezifische Regeln (nur im Payload vorhanden, wenn
+        // mode==='heatmap' - siehe host.js _startHeatmapGame()). Defaults
+        // greifen fuer alle anderen Modi, wo diese Felder ungenutzt bleiben.
+        state.settings.heatmapLabels = message.payload.heatmapLabels ?? 'on';
+        state.settings.heatmapOpponentInfo = message.payload.heatmapOpponentInfo ?? 'all';
+        state.settings.heatmapTurnMode = message.payload.heatmapTurnMode ?? 'simultaneous';
         state.scores = new Map();
         state.roundHistory = [];
         state.hp = new Map();
@@ -266,6 +272,9 @@ export class ClientController {
         break;
       case MSG.HEATMAP_ACTIVITY:
         bus.emit('ui:heatmap-activity', message.payload);
+        break;
+      case MSG.HEATMAP_TURN_UPDATE:
+        bus.emit('ui:heatmap-turn-update', message.payload);
         break;
       case MSG.HEATMAP_WIN: {
         const { winnerPlayerId, targetCountryId, targetCountryName, results } = message.payload;

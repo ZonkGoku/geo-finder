@@ -276,7 +276,31 @@
                 Kein Kartenpaket n&ouml;tig: tippe im Spiel Landesnamen, die Weltkarte f&auml;rbt sich nach Entfernung zum Zielland ein.
               </p>
 
-              <div class="setting-group">
+              <div class="setting-group heatmap-only hidden" id="heatmap-settings-group">
+                <div class="setting-group-label">Karten-Labels</div>
+                <div class="choice-row" id="choice-heatmap-labels" data-setting="heatmapLabels">
+                  <div class="choice-thumb" aria-hidden="true"></div>
+                  <button type="button" data-value="on">An</button>
+                  <button type="button" data-value="off">Aus</button>
+                </div>
+
+                <div class="setting-group-label" style="margin-top:14px;">Gegner-Info</div>
+                <div class="choice-row" id="choice-heatmap-opponent-info" data-setting="heatmapOpponentInfo">
+                  <div class="choice-thumb" aria-hidden="true"></div>
+                  <button type="button" data-value="best">Nur beste Distanz</button>
+                  <button type="button" data-value="all">Alle Tipps</button>
+                  <button type="button" data-value="blind">Blind</button>
+                </div>
+
+                <div class="setting-group-label" style="margin-top:14px;">Spielablauf</div>
+                <div class="choice-row" id="choice-heatmap-turn-mode" data-setting="heatmapTurnMode">
+                  <div class="choice-thumb" aria-hidden="true"></div>
+                  <button type="button" data-value="simultaneous">Gleichzeitig (Speed)</button>
+                  <button type="button" data-value="turns">Abwechselnd (Taktik)</button>
+                </div>
+              </div>
+
+              <div class="setting-group" id="panorama-controls-group">
                 <div class="setting-group-label">Panorama-Steuerung</div>
                 <div class="choice-row" id="choice-modifier" data-setting="modifier">
                   <div class="choice-thumb" aria-hidden="true"></div>
@@ -482,11 +506,21 @@
         <div class="heatmap-stage">
           <div id="heatmap-map-container" class="heatmap-map"></div>
 
+          <div class="heatmap-top3-panel hidden" id="heatmap-top3-panel">
+            <div class="heatmap-top3-title">Deine Top 3 Tipps</div>
+            <ol class="heatmap-top3-list" id="heatmap-top3-list"></ol>
+          </div>
+
+          <div class="heatmap-opponent-record hidden" id="heatmap-opponent-record">
+            🔥 <span id="heatmap-opponent-record-text"></span>
+          </div>
+
           <div class="heatmap-search-panel">
-            <div class="heatmap-search-box">
+            <div class="heatmap-search-box" id="heatmap-search-box">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
               <input type="text" id="heatmap-search-input" placeholder="Land eingeben…" autocomplete="off" spellcheck="false">
             </div>
+            <p class="heatmap-turn-status hidden" id="heatmap-turn-status"></p>
             <div class="heatmap-suggestions hidden" id="heatmap-suggestions"></div>
           </div>
 

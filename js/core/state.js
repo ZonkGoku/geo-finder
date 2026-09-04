@@ -32,6 +32,10 @@ export const state = {
     mode: 'points', // 'points' | 'hp'
     modifier: 'free', // 'free' | 'no-zoom'
     mutators: { fogOfWar: false, brokenCompass: false, noPan: false },
+    // Nur im Heatmap-Modus genutzt (siehe net/host.js _startHeatmapGame()):
+    heatmapLabels: 'on', // 'on' | 'off' - Kartenbeschriftungen (String statt Bool, siehe renderChoiceRow() in app.js)
+    heatmapOpponentInfo: 'all', // 'all' | 'best' | 'blind' - wie viel vom Gegner-Live-Feed ankommt
+    heatmapTurnMode: 'simultaneous', // 'simultaneous' | 'turns' - gleichzeitig oder reihum tippen
   },
   pool: null, // aufgeloestes Kartenpaket (nur Host braucht Koordinaten)
   challenge: null, // { type: 'daily' | 'link', seed } - siehe core/challenge.js, sonst null fuer normale Spiele

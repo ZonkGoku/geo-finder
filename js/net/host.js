@@ -204,6 +204,13 @@ export class HostController {
     this._broadcastLobbyState();
     bus.emit('ui:lobby-updated');
 
+    // Heatmap Turn-Modus: haengt die Partie gerade auf genau diesem
+    // Spieler, sofort weiterschieben - sonst wartet die Runde ewig auf
+    // einen Tipp, der nie mehr kommt.
+    if (this._heatmapTurnOrder && peerId === this._currentHeatmapTurnPlayerId()) {
+      this._advanceHeatmapTurn();
+    }
+
     const timer = setTimeout(() => {
       state.players.delete(peerId);
       this.pm.broadcast(makeMessage(MSG.PLAYER_LEFT, { playerId: peerId }, state.self.id));
@@ -657,6 +664,12 @@ export class HostController {
           mapSetName: 'Heatmap',
           mapSetSource: 'heatmap',
           focusBounds: null,
+          // Neue konfigurierbare Heatmap-Regeln (siehe state.js) - muessen
+          // explizit mitgeschickt werden, sonst kennen Mitspieler nur die
+          // Defaults statt der vom Host in der Lobby gewaehlten Werte.
+          heatmapLabels: state.settings.heatmapLabels,
+          heatmapOpponentInfo: state.settings.heatmapOpponentInfo,
+          heatmapTurnMode: state.settings.heatmapTurnMode,
         },
         state.self.id
       )
@@ -668,6 +681,7 @@ export class HostController {
   _startHeatmapRound(index) {
     const target = randomCountry(this._heatmapStore, this._heatmapRand);
     this._heatmapTarget = target; // NUR host-intern - wird nie gebroadcastet, siehe _handleHeatmapGuess()
+    this._heatmapOpponentBestKm = Infinity; // fuer heatmapOpponentInfo==='best', pro Runde neu
     state.round = {
       index,
       total: state.settings.roundCount,
@@ -677,6 +691,18 @@ export class HostController {
       guessedPlayerIds: new Set(),
       heatmapGuessesByPlayer: new Map(), // peerId -> Set(countryId), verhindert doppelte Wertung desselben Tipps
     };
+
+    // Turn-basierter Ablauf: Reihenfolge bei jeder Runde neu aus den
+    // AKTUELL verbundenen Spielern bilden (jemand kann zwischen Runden
+    // gehen/beitreten), Start immer bei Index 0.
+    if (state.settings.heatmapTurnMode === 'turns') {
+      this._heatmapTurnOrder = [...state.players.values()].filter((p) => p.connected).map((p) => p.id);
+      this._heatmapTurnIndex = 0;
+      this._broadcastHeatmapTurn();
+    } else {
+      this._heatmapTurnOrder = null;
+      this._heatmapTurnIndex = -1;
+    }
 
     this.pm.broadcast(
       makeMessage(
@@ -693,12 +719,41 @@ export class HostController {
     }
   }
 
+  _currentHeatmapTurnPlayerId() {
+    if (!this._heatmapTurnOrder || this._heatmapTurnOrder.length === 0) return null;
+    return this._heatmapTurnOrder[this._heatmapTurnIndex % this._heatmapTurnOrder.length];
+  }
+
+  _broadcastHeatmapTurn() {
+    const activePlayerId = this._currentHeatmapTurnPlayerId();
+    this.pm.broadcast(makeMessage(MSG.HEATMAP_TURN_UPDATE, { activePlayerId }, state.self.id));
+    bus.emit('ui:heatmap-turn-update', { activePlayerId });
+  }
+
+  /** Schiebt den Turn zum naechsten noch verbundenen Spieler weiter. */
+  _advanceHeatmapTurn() {
+    if (!this._heatmapTurnOrder || this._heatmapTurnOrder.length === 0) return;
+    for (let i = 0; i < this._heatmapTurnOrder.length; i++) {
+      this._heatmapTurnIndex = (this._heatmapTurnIndex + 1) % this._heatmapTurnOrder.length;
+      const candidate = state.players.get(this._currentHeatmapTurnPlayerId());
+      if (candidate?.connected) break; // naechsten NOCH verbundenen Spieler ueberspringen, keinen toten Turn vergeben
+    }
+    this._broadcastHeatmapTurn();
+  }
+
   submitLocalHeatmapGuess(countryId) {
     this._handleHeatmapGuess(state.self.id, { roundIndex: state.round.index, countryId });
   }
 
   _handleHeatmapGuess(peerId, payload) {
     if (payload.roundIndex !== state.round.index || !this._heatmapTarget) return;
+
+    // Turn-basierter Ablauf: Tipps von jemandem, der gerade nicht dran ist,
+    // werden ignoriert - der Host bleibt Autoritaet, ein manipulierter
+    // Client kann sich so keinen Vorteil verschaffen, selbst wenn das
+    // Suchfeld dort clientseitig nicht gesperrt waere.
+    if (this._heatmapTurnOrder && peerId !== this._currentHeatmapTurnPlayerId()) return;
+
     const country = this._heatmapStore.byId.get(payload.countryId);
     if (!country) return;
 
@@ -720,18 +775,46 @@ export class HostController {
     this.pm.sendTo(peerId, makeMessage(MSG.HEATMAP_GUESS_RESULT, { countryId: country.id, distanceKm, exact }, state.self.id));
     if (peerId === state.self.id) bus.emit('ui:heatmap-guess-result', { countryId: country.id, distanceKm, exact });
 
-    // Live-Feed fuer alle ANDEREN: nur die Distanz, NIE welches Land
-    // getippt wurde - sonst koennten Mitspieler durch reines Mitlesen der
-    // Tipps anderer auf das Zielland schliessen, ohne selbst zu raten. Das
-    // ist genau der in der Aufgabenstellung gewuenschte Zeitdruck-Effekt,
-    // ohne die Antwort zu verraten.
-    for (const p of state.players.values()) {
-      if (p.id === peerId) continue;
-      this.pm.sendTo(p.id, makeMessage(MSG.HEATMAP_ACTIVITY, { playerId: peerId, distanceKm, exact }, state.self.id));
+    // Live-Feed fuer alle ANDEREN: Form haengt von heatmapOpponentInfo ab.
+    // Nie wird das getippte Land selbst verraten, egal in welchem Modus -
+    // sonst koennten Mitspieler durch reines Mitlesen auf das Zielland
+    // schliessen, ohne selbst zu raten.
+    const opponentInfo = state.settings.heatmapOpponentInfo;
+    if (opponentInfo === 'all') {
+      for (const p of state.players.values()) {
+        if (p.id === peerId) continue;
+        this.pm.sendTo(p.id, makeMessage(MSG.HEATMAP_ACTIVITY, { playerId: peerId, distanceKm, exact }, state.self.id));
+      }
+      bus.emit('ui:heatmap-activity', { peerId, distanceKm, exact });
+    } else if (opponentInfo === 'best') {
+      // Nur eine Verbesserung des bisher besten GEGNER-Werts loest ueberhaupt
+      // eine Nachricht aus - baut Druck auf ("jemand kam naeher ran"), ohne
+      // bei jedem einzelnen Tipp das UI zu fluten. Kein playerId im Payload:
+      // es geht um den Rekordwert selbst, nicht darum, WER ihn haelt.
+      if (distanceKm < this._heatmapOpponentBestKm) {
+        this._heatmapOpponentBestKm = distanceKm;
+        for (const p of state.players.values()) {
+          if (p.id === peerId) continue;
+          this.pm.sendTo(p.id, makeMessage(MSG.HEATMAP_ACTIVITY, { recordKm: distanceKm, exact }, state.self.id));
+        }
+        // Anders als im 'all'-Zweig traegt dieses Payload bewusst KEIN
+        // playerId (siehe Kommentar oben) - die lokale UI kann einen
+        // eigenen vs. fremden Rekord also nicht selbst unterscheiden. Nur
+        // lokal emittieren, wenn NICHT der Host/Solo-Spieler selbst den
+        // Rekord gesetzt hat, sonst zeigt das "Gegner-Rekord"-Widget
+        // faelschlich den eigenen Tipp als gegnerische Leistung an (live
+        // beobachtet: Solo-Partie zeigte "Gegner-Rekord" fuer den eigenen
+        // ersten Tipp, obwohl es gar keine Gegner gibt).
+        if (peerId !== state.self.id) bus.emit('ui:heatmap-activity', { recordKm: distanceKm, exact });
+      }
     }
-    bus.emit('ui:heatmap-activity', { peerId, distanceKm, exact });
+    // opponentInfo === 'blind': keine Aktivitaetsmeldung ueberhaupt.
 
-    if (exact) this._endHeatmapRound(peerId);
+    if (exact) {
+      this._endHeatmapRound(peerId);
+      return;
+    }
+    if (this._heatmapTurnOrder) this._advanceHeatmapTurn();
   }
 
   /**

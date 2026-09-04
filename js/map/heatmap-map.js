@@ -3,14 +3,17 @@ import { HEATMAP_COLORS } from '../core/heatmap-color.js';
 // Fester dunkler Basemap-Kachel-Layer statt des ueblichen Satellit/Karte-
 // Umschalters (attachTileLayer in tile-config.js) - Satellitenbilder wuerden
 // optisch mit den eingefaerbten Laender-Polygonen konkurrieren, ein neutraler
-// dunkler Hintergrund laesst die Distanz-Farben klar hervortreten. Esri's
-// "Canvas/World_Dark_Gray_Base" ist wie die anderen Esri-Layer dieser App
-// schluessellos nutzbar (gleiche {z}/{y}/{x}-Reihenfolge-Eigenheit).
-const DARK_TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
-const DARK_TILE_ATTRIBUTION = '&copy; Esri';
+// dunkler Hintergrund laesst die Distanz-Farben klar hervortreten. CartoDB
+// Dark Matter ist schluessellos nutzbar und bietet ein zusammenpassendes
+// Kachel-Paar MIT und OHNE Beschriftungen vom selben Anbieter (statt Labels
+// nachtraeglich als separaten Overlay-Layer draufzulegen) - genau das braucht
+// die "Karten-Labels An/Aus"-Einstellung (siehe lobby heatmapLabels).
+const DARK_TILE_URL_LABELS = 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png';
+const DARK_TILE_URL_NO_LABELS = 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}.png';
+const DARK_TILE_ATTRIBUTION = '&copy; OpenStreetMap contributors &copy; CARTO';
 
 export class HeatmapMap {
-  constructor(containerEl) {
+  constructor(containerEl, { labels = true } = {}) {
     this.map = window.L.map(containerEl, {
       zoomControl: false,
       attributionControl: true,
@@ -18,10 +21,26 @@ export class HeatmapMap {
       minZoom: 2,
     }).setView([20, 10], 2);
 
-    window.L.tileLayer(DARK_TILE_URL, { attribution: DARK_TILE_ATTRIBUTION, maxZoom: 12 }).addTo(this.map);
+    this.tileLayer = window.L.tileLayer(labels ? DARK_TILE_URL_LABELS : DARK_TILE_URL_NO_LABELS, {
+      attribution: DARK_TILE_ATTRIBUTION,
+      maxZoom: 12,
+      subdomains: 'abcd',
+    }).addTo(this.map);
 
     this.layer = null;
     this.layerByCountryId = new Map();
+  }
+
+  /** Wechselt den Basemap-Layer nachtraeglich (falls die Einstellung sich
+   * zwischen zwei Runden nicht aendern kann - hier nur fuer Robustheit, die
+   * Lobby-Einstellung steht schon fest bevor die Karte erzeugt wird). */
+  setLabels(labels) {
+    this.map.removeLayer(this.tileLayer);
+    this.tileLayer = window.L.tileLayer(labels ? DARK_TILE_URL_LABELS : DARK_TILE_URL_NO_LABELS, {
+      attribution: DARK_TILE_ATTRIBUTION,
+      maxZoom: 12,
+      subdomains: 'abcd',
+    }).addTo(this.map);
   }
 
   /** countries: [{ id, name, geometry }] - einmal pro Partie aufgerufen. */
