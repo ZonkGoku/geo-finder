@@ -142,20 +142,23 @@ button{ font-family:inherit; color:inherit; }
 
 .device-screen{ position:relative; min-height:600px; }
 .screen{ display:none; padding:36px; min-height:600px; }
-.screen.active{ display:block; animation: fade 260ms cubic-bezier(.2,.8,.2,1); }
+.screen.active{ display:block; animation: fade 260ms cubic-bezier(.2,.8,.2,1); will-change:opacity, transform; }
 /* router.js legt den bisherigen Screen waehrend des Uebergangs kurz absolut
    ueber den neuen (statt ihn abrupt auf display:none zu setzen), damit
-   beide sich per Crossfade ueberlappen statt sich hart abzuloesen. */
+   beide sich per Crossfade ueberlappen statt sich hart abzuloesen.
+   translate3d/will-change heben beide Screens waehrend des Crossfades auf
+   eigene Compositor-Layer, damit das Ueberblenden nicht bei jedem Frame
+   Layout/Paint auf dem Main-Thread ausloest. */
 .screen.leaving{
   display:block; position:absolute; inset:0; z-index:5; pointer-events:none;
-  animation: screenLeave 220ms ease forwards;
+  animation: screenLeave 220ms ease forwards; will-change:opacity, transform;
 }
 @media (prefers-reduced-motion: reduce){
-  .screen.active{ animation:none; }
-  .screen.leaving{ animation:none; opacity:0; }
+  .screen.active{ animation:none; will-change:auto; }
+  .screen.leaving{ animation:none; opacity:0; will-change:auto; }
 }
-@keyframes fade{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:none; } }
-@keyframes screenLeave{ from{ opacity:1; transform:none; } to{ opacity:0; transform:translateY(-8px) scale(0.99); } }
+@keyframes fade{ from{ opacity:0; transform:translate3d(0,4px,0); } to{ opacity:1; transform:translate3d(0,0,0); } }
+@keyframes screenLeave{ from{ opacity:1; transform:translate3d(0,0,0) scale(1); } to{ opacity:0; transform:translate3d(0,-8px,0) scale(0.99); } }
 
 .eyebrow{ font-size:0.72rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent-2); font-weight:600; margin:0 0 8px; }
 .lede{ color:var(--text-dim); font-size:0.95rem; max-width:46ch; margin:8px 0 0; }
@@ -308,7 +311,7 @@ button{ font-family:inherit; color:inherit; }
   clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
   display:inline-flex; align-items:center; gap:10px;
   box-shadow:0 0 0 1px rgba(255,122,51,0.55), 0 14px 34px -10px rgba(255,122,51,0.6), 0 0 40px -14px rgba(23,236,255,0.5);
-  animation:ctaBreathe 2.6s ease-in-out infinite;
+  animation:ctaBreathe 2.6s ease-in-out infinite; will-change:transform, box-shadow;
 }
 .cta-mega svg{ width:19px; height:19px; }
 .cta-mega:disabled{ animation:none; }
@@ -331,7 +334,7 @@ button{ font-family:inherit; color:inherit; }
 /* ===================== HUD ===================== */
 #screen-hud{ padding:0; min-height:600px; position:relative; overflow:hidden; }
 .pano{ position:absolute; inset:0; overflow:hidden; background:#0d1420; }
-.pano-container{ position:absolute; inset:0; opacity:1; filter:blur(0); transition:opacity 220ms ease, filter 15s linear; }
+.pano-container{ position:absolute; inset:0; opacity:1; filter:blur(0); transition:opacity 220ms ease, filter 15s linear; will-change:opacity, filter; }
 .pano-container.pano-fade-out{ opacity:0; }
 /* Fog-of-War-Mutator: startet stark unscharf, die eigentliche 15s-Klarung
    passiert ueber die filter-transition oben, sobald .pano-foggy wieder
@@ -404,7 +407,7 @@ button{ font-family:inherit; color:inherit; }
   background:linear-gradient(135deg, var(--accent), #ff9a52); color:#fff; opacity:0.92;
   box-shadow:0 12px 26px -10px rgba(255,122,51,0.5); cursor:default;
   display:inline-flex; align-items:center; gap:10px;
-  animation:guessLockedPulse 1.6s ease-in-out infinite;
+  animation:guessLockedPulse 1.6s ease-in-out infinite; will-change:opacity;
 }
 @keyframes guessLockedPulse{ 0%,100%{ opacity:0.92; } 50%{ opacity:0.7; } }
 .btn-spinner{
@@ -424,9 +427,14 @@ button{ font-family:inherit; color:inherit; }
 }
 /* HUD-Karte liegt ueber echten Fotos und bleibt in beiden Themes dunkel -
    deshalb hier bewusst Hex-Werte statt var(--surface)/var(--line). */
+/* Animiert bewusst width/height statt transform:scale() - die Leaflet-Karte
+   darin braucht eine ECHTE Groessenaenderung (invalidateSize() wird beim
+   Expand/Collapse aufgerufen), ein skaliertes Compositor-Layer wuerde die
+   Kachel-/Text-Darstellung verzerren. will-change hilft dem Browser trotzdem,
+   die Layout-Kosten dieser spezifischen Property-Aenderung vorzubereiten. */
 .minimap{
   position:relative; width:140px; height:140px; border-radius:16px; background:#141925; border:1px solid #232b3d;
-  overflow:hidden;
+  overflow:hidden; will-change:width, height;
   transition:width .32s cubic-bezier(.34,1.4,.4,1), height .32s cubic-bezier(.34,1.4,.4,1),
              box-shadow .2s ease, border-color .2s ease;
   box-shadow:0 14px 30px -14px rgba(0,0,0,0.7);
@@ -568,7 +576,7 @@ button{ font-family:inherit; color:inherit; }
 
 .foot-note{ text-align:center; font-size:0.78rem; color:var(--text-faint); max-width:60ch; }
 
-.toast{ position:fixed; left:50%; bottom:28px; transform:translateX(-50%); background:var(--surface-hi); border:1px solid var(--line); color:var(--text); padding:11px 18px; border-radius:10px; font-size:0.85rem; box-shadow:0 14px 30px -12px rgba(0,0,0,0.6); z-index:50; }
+.toast{ position:fixed; left:50%; bottom:28px; transform:translate3d(-50%,0,0); will-change:transform, opacity; background:var(--surface-hi); border:1px solid var(--line); color:var(--text); padding:11px 18px; border-radius:10px; font-size:0.85rem; box-shadow:0 14px 30px -12px rgba(0,0,0,0.6); z-index:50; }
 
 /* ===================== CONNECTION STATES ===================== */
 .connection-banner{
@@ -794,6 +802,19 @@ button{ font-family:inherit; color:inherit; }
 .mapset-card-badge{ align-self:flex-start; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.06em; padding:2px 7px; border-radius:5px; }
 .mapset-card-badge.ready{ background:rgba(23,236,255,0.16); color:var(--accent-2); }
 .mapset-card-badge.needs-token{ background:rgba(242,85,74,0.16); color:var(--danger); }
+
+/* Skeleton-Platzhalter waehrend der Kartenpaket-Index laedt - die Lobby
+   zeigt sich sofort statt auf den fetch zu warten (siehe enterLobby() in
+   app.js). */
+.mapset-skeleton{ cursor:default; pointer-events:none; }
+.mapset-skeleton .mapset-card-cover{ background:var(--surface-hi); }
+.skeleton-line{
+  display:block; height:10px; border-radius:5px; margin:6px 0;
+  background:linear-gradient(90deg, var(--surface-hi) 25%, var(--surface-raised) 50%, var(--surface-hi) 75%);
+  background-size:200% 100%; animation:skeletonShimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeletonShimmer{ from{ background-position:200% 0; } to{ background-position:-200% 0; } }
+@media (prefers-reduced-motion: reduce){ .skeleton-line{ animation:none; } }
 
 /* ===================== HP-Duell ===================== */
 .hp-bars{ position:relative; z-index:2; display:flex; flex-direction:column; gap:6px; padding:10px 26px 0; }

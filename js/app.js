@@ -303,13 +303,22 @@ function updateChrome(statusText, peerId) {
 // ---------------------------------------------------------------- lobby
 
 async function enterLobby() {
-  await ensureMapSetIndex();
   // Screen zuerst sichtbar machen, DANACH rendern: renderChoiceRow() misst
   // offsetLeft/offsetWidth der Buttons fuer den gleitenden Thumb - auf einem
   // noch display:none-Screen liefert das immer 0.
   showScreen('lobby');
-  renderMapSetGrid();
   renderLobby();
+  // Die Lobby darf nicht mehr auf den Kartenpaket-Index warten, bevor
+  // ueberhaupt irgendetwas angezeigt wird ("laedt teils nicht" bei
+  // langsamer Verbindung) - stattdessen sofort Platzhalter zeigen und die
+  // echten Karten nachreichen, sobald der Fetch durch ist. boot() stoesst
+  // ensureMapSetIndex() ausserdem schon beim Seitenaufruf im Hintergrund an,
+  // in der Praxis ist die Liste hier also meistens schon da.
+  if (mapSetIndex.length === 0) {
+    renderMapSetSkeletons();
+    await ensureMapSetIndex();
+  }
+  renderMapSetGrid();
 }
 
 // Fallback pro Kategorie, falls ein Kartenpaket unten keine eigene ID hat
@@ -359,6 +368,25 @@ function getFilteredMapSets() {
     const matchesTerm = !term || entry.name.toLowerCase().includes(term) || entry.description.toLowerCase().includes(term);
     return matchesTag && matchesTerm;
   });
+}
+
+function renderMapSetSkeletons(count = 6) {
+  const grid = el('mapset-grid');
+  el('mapset-empty').classList.add('hidden');
+  grid.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const card = document.createElement('div');
+    card.className = 'mapset-card mapset-skeleton';
+    card.innerHTML = `
+      <div class="mapset-card-cover"></div>
+      <div class="mapset-card-body">
+        <span class="skeleton-line" style="width:38%"></span>
+        <span class="skeleton-line" style="width:78%"></span>
+        <span class="skeleton-line" style="width:55%"></span>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
 }
 
 function renderMapSetGrid() {
@@ -1350,7 +1378,15 @@ function wireBusEvents() {
   });
 }
 
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  // file:// oder ein Dev-Server ohne HTTPS/localhost wuerden hier ohnehin
+  // ablehnen - der catch() faengt das ab, statt den Boot zu stoeren.
+  navigator.serviceWorker.register('./sw.js').catch((err) => console.warn('Service Worker nicht registriert:', err.message));
+}
+
 async function boot() {
+  registerServiceWorker();
   initProfileUI();
   initThemeToggle();
   initSoundToggle();
