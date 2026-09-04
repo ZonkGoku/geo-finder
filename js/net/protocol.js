@@ -17,6 +17,14 @@ export const MSG = {
   EMOTE: 'EMOTE',
   PING: 'PING',
   PONG: 'PONG',
+  // Heatmap-Modus (Globle-inspiriert, siehe core/country-store.js): Client
+  // schickt eine getippte Laender-ID; der Host bleibt auch hier
+  // autoritativ (bewertet/erkennt den Treffer selbst) statt einem
+  // client-gemeldeten "gewonnen" zu vertrauen, das trivial faelschbar waere.
+  HEATMAP_GUESS: 'HEATMAP_GUESS',
+  HEATMAP_GUESS_RESULT: 'HEATMAP_GUESS_RESULT', // Host -> NUR der ratende Spieler: eigene Distanz/Farbe
+  HEATMAP_ACTIVITY: 'HEATMAP_ACTIVITY', // Host -> alle ANDEREN: nur Distanz, NIE welches Land geraten wurde
+  HEATMAP_WIN: 'HEATMAP_WIN', // Host -> alle: Runde vorbei, Zielland + Gewinner werden aufgedeckt
 };
 
 export function makeMessage(type, payload, senderId) {

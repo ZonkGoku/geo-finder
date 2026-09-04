@@ -1,4 +1,4 @@
-const SCREENS = ['menu', 'lobby', 'hud', 'result', 'leaderboard'];
+const SCREENS = ['menu', 'lobby', 'hud', 'result', 'heatmap', 'leaderboard'];
 const TRANSITION_MS = 220;
 
 let pendingCleanup = null;

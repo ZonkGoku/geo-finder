@@ -7,10 +7,14 @@ import {
   computeStreakBonus,
   scoreCountryGuess,
   nextCountryStreak,
+  haversineDistanceKm,
 } from '../core/scoring.js';
-import { makeSeed } from '../core/rng.js';
+import { makeSeed, mulberry32 } from '../core/rng.js';
 import { resolveRoundLocations, computeMapSetBounds } from '../core/pool-loader.js';
 import { ensureCountryData, findCountryAtPointSync } from '../core/country-lookup.js';
+import { ensureCountryStore, randomCountry } from '../core/country-store.js';
+
+const HEATMAP_WIN_POINTS = 1000;
 
 const ROUND_RESULT_DISPLAY_MS = 8000;
 const LEAVE_GRACE_MS = 15000;
@@ -85,6 +89,9 @@ export class HostController {
         break;
       case MSG.SUBMIT_GUESS:
         this._handleGuess(peerId, message.payload);
+        break;
+      case MSG.HEATMAP_GUESS:
+        this._handleHeatmapGuess(peerId, message.payload);
         break;
       case MSG.TAB_SWITCH_WARNING: {
         // an alle ANDEREN weiterleiten - der Absender braucht seine eigene Meldung nicht.
@@ -237,6 +244,14 @@ export class HostController {
   // Spiel schon deterministisch, normale Spiele nutzen einfach weiterhin
   // einen frischen Zufalls-Seed als Default.
   async startGame(mapSet, seed = makeSeed()) {
+    // Heatmap-Modus braucht kein Kartenpaket (keine Panoramen) - eigener,
+    // deutlich leichterer Ablauf statt durch die Panorama-Rundenauflösung
+    // unten zu laufen. mapSet kann hier bewusst null sein (siehe
+    // startGameFromLobby() in app.js).
+    if (state.settings.mode === 'heatmap') {
+      return this._startHeatmapGame(seed);
+    }
+
     // focusBounds hier schon mit anhaengen, damit Host und Mitspieler den
     // gleichen state.pool.focusBounds-Pfad fuer die Minimap nutzen koennen
     // (der Host darf die volle Standortliste ohnehin sehen, sie bleibt
@@ -532,8 +547,161 @@ export class HostController {
     return results;
   }
 
+  // ---------------------------------------------------------------- Heatmap-Modus
+
+  async _startHeatmapGame(seed) {
+    state.pool = null; // kein Kartenpaket in diesem Modus
+    resetForNewGame();
+    this._heatmapRand = mulberry32(seed);
+    this._heatmapStore = await ensureCountryStore();
+    state.round.total = state.settings.roundCount;
+
+    this.pm.broadcast(
+      makeMessage(
+        MSG.GAME_START,
+        {
+          roundCount: state.settings.roundCount,
+          timeLimitMs: state.settings.timeLimitMs,
+          mode: 'heatmap',
+          modifier: state.settings.modifier,
+          mutators: state.settings.mutators,
+          mapSetId: null,
+          mapSetName: 'Heatmap',
+          mapSetSource: 'heatmap',
+          focusBounds: null,
+        },
+        state.self.id
+      )
+    );
+    bus.emit('ui:game-started');
+    this._startHeatmapRound(0);
+  }
+
+  _startHeatmapRound(index) {
+    const target = randomCountry(this._heatmapStore, this._heatmapRand);
+    this._heatmapTarget = target; // NUR host-intern - wird nie gebroadcastet, siehe _handleHeatmapGuess()
+    state.round = {
+      index,
+      total: state.settings.roundCount,
+      startTimestamp: Date.now(),
+      timeLimitMs: state.settings.timeLimitMs,
+      actual: null,
+      guessedPlayerIds: new Set(),
+      heatmapGuessesByPlayer: new Map(), // peerId -> Set(countryId), verhindert doppelte Wertung desselben Tipps
+    };
+
+    this.pm.broadcast(
+      makeMessage(
+        MSG.ROUND_START,
+        { roundIndex: index, startTimestamp: state.round.startTimestamp, timeLimitMs: state.round.timeLimitMs },
+        state.self.id
+      )
+    );
+    bus.emit('ui:heatmap-round-started', { roundIndex: index });
+
+    clearTimeout(this.roundTimer);
+    if (state.round.timeLimitMs != null) {
+      this.roundTimer = setTimeout(() => this._endHeatmapRound(null), state.round.timeLimitMs);
+    }
+  }
+
+  submitLocalHeatmapGuess(countryId) {
+    this._handleHeatmapGuess(state.self.id, { roundIndex: state.round.index, countryId });
+  }
+
+  _handleHeatmapGuess(peerId, payload) {
+    if (payload.roundIndex !== state.round.index || !this._heatmapTarget) return;
+    const country = this._heatmapStore.byId.get(payload.countryId);
+    if (!country) return;
+
+    let seen = state.round.heatmapGuessesByPlayer.get(peerId);
+    if (!seen) {
+      seen = new Set();
+      state.round.heatmapGuessesByPlayer.set(peerId, seen);
+    }
+    if (seen.has(country.id)) return; // schon geraten - keine doppelte Aktivitaet/Wertung fuer denselben Tipp
+    seen.add(country.id);
+
+    const distanceKm = haversineDistanceKm(country.lat, country.lng, this._heatmapTarget.lat, this._heatmapTarget.lng);
+    const exact = country.id === this._heatmapTarget.id;
+
+    // Privat NUR an den ratenden Spieler zurueck: er kennt sein eigenes
+    // getipptes Land bereits, braucht aber die Distanz, um seine EIGENE
+    // Karte einzufaerben (siehe Kommentar an MSG.HEATMAP_ACTIVITY unten,
+    // warum das nicht einfach gebroadcastet wird).
+    this.pm.sendTo(peerId, makeMessage(MSG.HEATMAP_GUESS_RESULT, { countryId: country.id, distanceKm, exact }, state.self.id));
+    if (peerId === state.self.id) bus.emit('ui:heatmap-guess-result', { countryId: country.id, distanceKm, exact });
+
+    // Live-Feed fuer alle ANDEREN: nur die Distanz, NIE welches Land
+    // getippt wurde - sonst koennten Mitspieler durch reines Mitlesen der
+    // Tipps anderer auf das Zielland schliessen, ohne selbst zu raten. Das
+    // ist genau der in der Aufgabenstellung gewuenschte Zeitdruck-Effekt,
+    // ohne die Antwort zu verraten.
+    for (const p of state.players.values()) {
+      if (p.id === peerId) continue;
+      this.pm.sendTo(p.id, makeMessage(MSG.HEATMAP_ACTIVITY, { playerId: peerId, distanceKm, exact }, state.self.id));
+    }
+    bus.emit('ui:heatmap-activity', { peerId, distanceKm, exact });
+
+    if (exact) this._endHeatmapRound(peerId);
+  }
+
+  /**
+   * Beendet die Heatmap-Runde entweder weil jemand exakt getroffen hat
+   * (winnerPlayerId gesetzt) oder weil das Zeitlimit ablief (null - niemand
+   * gewinnt die Runde, alle bekommen 0 Punkte fuer diese Runde). Anders als
+   * der Punkte-Modus ist Heatmap ein reines Wettrennen: kein graduelles
+   * "naeher ist besser", nur der exakte Treffer zaehlt.
+   */
+  _endHeatmapRound(winnerPlayerId) {
+    clearTimeout(this.roundTimer);
+    const target = this._heatmapTarget;
+    if (!target) return;
+
+    const results = [];
+    for (const player of state.players.values()) {
+      if (!state.scores.has(player.id)) state.scores.set(player.id, freshScoreEntry());
+      const scoreEntry = state.scores.get(player.id);
+      const won = player.id === winnerPlayerId;
+      const timeBonus =
+        won && state.round.timeLimitMs != null
+          ? computeTimeBonus(Date.now() - state.round.startTimestamp, state.round.timeLimitMs)
+          : 0;
+      const roundTotal = won ? HEATMAP_WIN_POINTS + timeBonus : 0;
+
+      scoreEntry.total += roundTotal;
+      scoreEntry.perRound[state.round.index] = { total: roundTotal, won };
+      results.push({ playerId: player.id, won, score: roundTotal });
+    }
+
+    state.roundHistory[state.round.index] = { targetCountryId: target.id, targetCountryName: target.name, results };
+
+    this.pm.broadcast(
+      makeMessage(
+        MSG.HEATMAP_WIN,
+        { roundIndex: state.round.index, winnerPlayerId, targetCountryId: target.id, targetCountryName: target.name, results },
+        state.self.id
+      )
+    );
+    bus.emit('ui:heatmap-round-result', { winnerPlayerId, target, results });
+
+    this._heatmapTarget = null;
+    const isLastRound = state.round.index >= state.settings.roundCount - 1;
+    clearTimeout(this.nextRoundTimer);
+    this.nextRoundTimer = setTimeout(() => {
+      if (isLastRound) this._endGame();
+      else this._startHeatmapRound(state.round.index + 1);
+    }, ROUND_RESULT_DISPLAY_MS);
+  }
+
   advanceNow() {
     clearTimeout(this.nextRoundTimer);
+    if (state.settings.mode === 'heatmap') {
+      const isLastRound = state.round.index >= state.settings.roundCount - 1;
+      if (isLastRound) this._endGame();
+      else this._startHeatmapRound(state.round.index + 1);
+      return;
+    }
     const isLastRound = state.round.index >= this.roundLocations.length - 1;
     const eliminated = state.settings.mode === 'hp' && [...state.hp.values()].some((hp) => hp <= 0);
     if (isLastRound || eliminated) this._endGame();

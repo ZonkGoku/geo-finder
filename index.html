@@ -268,8 +268,13 @@
                   <button type="button" data-value="points">Punkte-Duell</button>
                   <button type="button" data-value="hp">HP-Duell (6000 HP)</button>
                   <button type="button" data-value="country-streak">Country-Streak</button>
+                  <button type="button" data-value="heatmap">Heatmap</button>
                 </div>
               </div>
+
+              <p class="heatmap-mode-note hidden" id="heatmap-mode-note">
+                Kein Kartenpaket n&ouml;tig: tippe im Spiel Landesnamen, die Weltkarte f&auml;rbt sich nach Entfernung zum Zielland ein.
+              </p>
 
               <div class="setting-group">
                 <div class="setting-group-label">Panorama-Steuerung</div>
@@ -460,6 +465,33 @@
         <div class="result-foot">
           <span class="next-hint" id="result-next-hint">N&auml;chste Runde in K&uuml;rze&hellip;</span>
           <button class="btn btn-ghost btn-sm" id="btn-advance-round" hidden>Weiter &rarr;</button>
+        </div>
+      </section>
+
+      <!-- ===================== HEATMAP-MODUS ===================== -->
+      <section class="screen" id="screen-heatmap">
+        <div class="heatmap-header">
+          <div class="round-chip">RUNDE <b id="heatmap-round-index">01</b> / <span id="heatmap-round-total">05</span></div>
+          <div class="timer" id="heatmap-timer"></div>
+        </div>
+
+        <div class="heatmap-stage">
+          <div id="heatmap-map-container" class="heatmap-map"></div>
+
+          <div class="heatmap-search-panel">
+            <div class="heatmap-search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="heatmap-search-input" placeholder="Land eingeben…" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="heatmap-suggestions hidden" id="heatmap-suggestions"></div>
+          </div>
+
+          <div class="heatmap-activity-feed" id="heatmap-activity-feed"></div>
+
+          <div class="heatmap-result-banner hidden" id="heatmap-result-banner">
+            <p class="heatmap-result-title" id="heatmap-result-title"></p>
+            <p class="heatmap-result-sub" id="heatmap-result-sub"></p>
+          </div>
         </div>
       </section>
 

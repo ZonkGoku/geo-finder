@@ -91,6 +91,12 @@ export class ClientController {
     clearTimeout(this._guessRetryTimer);
   }
 
+  // Heatmap-Modus: schickt nur die getippte Laender-ID, der Host bewertet
+  // (Distanz/exakter Treffer) - siehe net/host.js _handleHeatmapGuess().
+  submitHeatmapGuess(countryId) {
+    this.pm.sendToHost(makeMessage(MSG.HEATMAP_GUESS, { roundIndex: state.round.index, countryId }, state.self.id));
+  }
+
   measureClockOffset() {
     const echoTs = Date.now();
     this.pm.sendToHost(makeMessage(MSG.PING, { echoTs }, state.self.id));
@@ -228,6 +234,24 @@ export class ClientController {
       case MSG.PONG:
         state.clockOffsetMs = Math.round((Date.now() - message.payload.echoTs) / 2);
         break;
+      case MSG.HEATMAP_GUESS_RESULT:
+        bus.emit('ui:heatmap-guess-result', message.payload);
+        break;
+      case MSG.HEATMAP_ACTIVITY:
+        bus.emit('ui:heatmap-activity', message.payload);
+        break;
+      case MSG.HEATMAP_WIN: {
+        const { winnerPlayerId, targetCountryId, targetCountryName, results } = message.payload;
+        for (const r of results) {
+          if (!state.scores.has(r.playerId)) state.scores.set(r.playerId, freshScoreEntry());
+          const entry = state.scores.get(r.playerId);
+          entry.total += r.score;
+          entry.perRound[message.payload.roundIndex] = { total: r.score, won: r.won };
+        }
+        state.roundHistory[message.payload.roundIndex] = { targetCountryId, targetCountryName, results };
+        bus.emit('ui:heatmap-round-result', { winnerPlayerId, target: { id: targetCountryId, name: targetCountryName }, results });
+        break;
+      }
       default:
         break;
     }

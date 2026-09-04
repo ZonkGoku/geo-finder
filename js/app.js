@@ -4,7 +4,10 @@ import { HostController } from './net/host.js';
 import { ClientController } from './net/client.js';
 import { GuessMap } from './map/guess-map.js';
 import { ResultMap } from './map/result-map.js';
+import { HeatmapMap } from './map/heatmap-map.js';
 import { PanoViewer } from './panorama/pano-viewer.js';
+import { ensureCountryStore, searchCountries, findCountryByName } from './core/country-store.js';
+import { getColorForDistance } from './core/heatmap-color.js';
 import { showScreen } from './ui/router.js';
 import { showToast } from './ui/toast.js';
 import { loadMapSetIndex, loadMapSetDetail } from './core/pool-loader.js';
@@ -149,7 +152,10 @@ function initLeaveGameButton() {
 // Rueckfrage direkt zurueck, weil dort noch kein Fortschritt existiert, der
 // verloren gehen koennte.
 function isRoundInProgress() {
-  return document.getElementById('screen-hud').classList.contains('active');
+  return (
+    document.getElementById('screen-hud').classList.contains('active') ||
+    document.getElementById('screen-heatmap').classList.contains('active')
+  );
 }
 
 function showConfirmLeaveModal() {
@@ -257,7 +263,8 @@ function hideStateOverlay() {
 function updateConnectionBanner() {
   const banner = el('connection-banner');
   const onGameScreen = document.getElementById('screen-hud').classList.contains('active') ||
-    document.getElementById('screen-result').classList.contains('active');
+    document.getElementById('screen-result').classList.contains('active') ||
+    document.getElementById('screen-heatmap').classList.contains('active');
   if (!onGameScreen) {
     banner.classList.add('hidden');
     return;
@@ -506,10 +513,31 @@ function renderMapSetGrid() {
 // core/high-scores.js), statt dass die halbe Lobby leer bleibt. Wird von
 // renderMapSetGrid() nach jedem Neuzeichnen mit-aufgerufen, damit sie mit
 // der Kartenpaket-Auswahl (state.settings.mapSetId) immer synchron bleibt.
+const HEATMAP_STAGE_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
+
 function renderLobbyStage() {
-  const entry = mapSetIndex.find((e) => e.id === state.settings.mapSetId);
   const empty = el('lobby-stage-empty');
   const content = el('lobby-stage-content');
+
+  // Heatmap-Modus braucht kein Kartenpaket - die Buehne zeigt hier
+  // stattdessen kurz, worum es in diesem Modus geht. Bleibt bewusst
+  // sichtbar (statt wie die Kartenpaket-Auswahl ausgeblendet), weil der
+  // Start-Button (#btn-start-game) strukturell IN dieser Buehne sitzt.
+  if (state.settings.mode === 'heatmap') {
+    empty.classList.add('hidden');
+    content.classList.remove('hidden');
+    el('lobby-stage-art').className = 'lobby-stage-art cover-default';
+    el('lobby-stage-icon').innerHTML = HEATMAP_STAGE_ICON;
+    el('lobby-stage-badge').className = 'mapset-card-badge ready';
+    el('lobby-stage-badge').textContent = 'Bereit';
+    el('lobby-stage-name').textContent = 'Heatmap-Modus';
+    el('lobby-stage-desc').textContent = 'Tippe Landesnamen, statt auf der Karte zu klicken - die Welt färbt sich nach Entfernung zum gesuchten Land ein. Wer zuerst richtig liegt, gewinnt die Runde.';
+    el('lobby-stage-best').classList.add('hidden');
+    return;
+  }
+
+  const entry = mapSetIndex.find((e) => e.id === state.settings.mapSetId);
   if (!entry) {
     empty.classList.remove('hidden');
     content.classList.add('hidden');
@@ -607,7 +635,15 @@ function renderLobby() {
   renderChoiceRow('choice-mode', state.settings.mode);
   renderChoiceRow('choice-modifier', state.settings.modifier);
   renderMutators();
-  if (mapSetIndex.length) renderMapSetGrid();
+
+  // Heatmap-Modus braucht kein Kartenpaket (keine Panoramen) - Kartenpaket-
+  // Auswahl (rechte Buehne + Grid darunter) ergibt hier keinen Sinn und wird
+  // durch einen kurzen Hinweistext ersetzt.
+  const isHeatmap = state.settings.mode === 'heatmap';
+  el('lobby-mapset-panel').classList.toggle('hidden', isHeatmap);
+  el('heatmap-mode-note').classList.toggle('hidden', !isHeatmap);
+  if (isHeatmap) renderLobbyStage();
+  else if (mapSetIndex.length) renderMapSetGrid();
 
   const readyBtn = el('btn-ready-toggle');
   const startBtn = el('btn-start-game');
@@ -661,6 +697,11 @@ async function startGameFromLobby(seed) {
   const hint = el('lobby-hint');
   const previousHint = hint.textContent;
   try {
+    if (state.settings.mode === 'heatmap') {
+      // Heatmap-Modus braucht kein Kartenpaket - siehe HostController.startGame()/_startHeatmapGame().
+      await controller.startGame(null, seed);
+      return;
+    }
     hint.textContent = 'Lade Kartenpaket…';
     const detail = await getMapSetDetail(state.settings.mapSetId);
     activeMapSetDetail = detail;
@@ -791,6 +832,174 @@ function renderHpBars() {
     `;
     container.appendChild(row);
   }
+}
+
+// ---------------------------------------------------------------- Heatmap-Modus
+
+let heatmapMap = null;
+let countryStore = null;
+let heatmapTimerInterval = null;
+let heatmapGuessedThisRound = new Set(); // countryId - verhindert wiederholtes Antippen desselben Vorschlags
+let heatmapSuggestionIndex = -1;
+
+async function ensureHeatmapWidgets() {
+  if (!heatmapMap) heatmapMap = new HeatmapMap(el('heatmap-map-container'));
+  if (!countryStore) countryStore = await ensureCountryStore();
+  heatmapMap.setCountries(countryStore.countries);
+}
+
+function heatmapPlayerName(peerId) {
+  return state.players.get(peerId)?.name || 'Ein Mitspieler';
+}
+
+function clearHeatmapTimer() {
+  clearInterval(heatmapTimerInterval);
+  heatmapTimerInterval = null;
+}
+
+function renderHeatmapTimer() {
+  const el2 = el('heatmap-timer');
+  if (state.round.timeLimitMs == null) {
+    el2.textContent = '';
+    return;
+  }
+  const update = () => {
+    const remainingMs = state.round.startTimestamp + state.round.timeLimitMs - Date.now();
+    const remainingS = Math.max(0, Math.ceil(remainingMs / 1000));
+    el2.textContent = `${remainingS}s`;
+    if (remainingMs <= 0) clearHeatmapTimer();
+  };
+  clearHeatmapTimer();
+  update();
+  heatmapTimerInterval = setInterval(update, 250);
+}
+
+async function renderHeatmapRoundStart() {
+  showScreen('heatmap');
+  await ensureHeatmapWidgets();
+  heatmapMap.reset();
+  heatmapMap.invalidate();
+  heatmapGuessedThisRound = new Set();
+  heatmapSuggestionIndex = -1;
+
+  el('heatmap-round-index').textContent = String(state.round.index + 1).padStart(2, '0');
+  el('heatmap-round-total').textContent = String(state.round.total).padStart(2, '0');
+  el('heatmap-activity-feed').innerHTML = '';
+  el('heatmap-result-banner').classList.add('hidden');
+  const input = el('heatmap-search-input');
+  input.value = '';
+  input.disabled = false;
+  el('heatmap-suggestions').classList.add('hidden');
+  renderHeatmapTimer();
+  requestAnimationFrame(() => input.focus());
+}
+
+function heatmapActivityLine(text, tone = '') {
+  const feed = el('heatmap-activity-feed');
+  const line = document.createElement('div');
+  line.className = `heatmap-activity-line${tone ? ` ${tone}` : ''}`;
+  line.textContent = text;
+  feed.prepend(line);
+  // Feed nicht unbegrenzt wachsen lassen - alte Zeilen sind fuer den
+  // Zeitdruck-Effekt ohnehin irrelevant, sobald genug neue nachgekommen sind.
+  while (feed.children.length > 12) feed.removeChild(feed.lastChild);
+}
+
+function renderHeatmapGuessResult({ countryId, distanceKm, exact }) {
+  heatmapMap?.colorCountry(countryId, getColorForDistance(distanceKm, exact));
+  const country = countryStore?.byId.get(countryId);
+  if (exact) {
+    heatmapActivityLine(`Volltreffer! ${country?.name ?? countryId} war richtig.`, 'exact');
+  } else {
+    heatmapActivityLine(`${country?.name ?? countryId}: ${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt`);
+  }
+}
+
+function renderHeatmapActivity({ peerId, distanceKm, exact }) {
+  if (peerId === state.self.id) return; // eigene Tipps kommen ueber ui:heatmap-guess-result mit Details
+  const name = heatmapPlayerName(peerId);
+  if (exact) heatmapActivityLine(`${name} hat das Zielland gefunden!`, 'exact');
+  else heatmapActivityLine(`${name} tippt … (${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt)`, 'peer');
+}
+
+function renderHeatmapRoundResult({ winnerPlayerId, target }) {
+  clearHeatmapTimer();
+  el('heatmap-search-input').disabled = true;
+  el('heatmap-suggestions').classList.add('hidden');
+  heatmapMap?.colorCountry(target.id, getColorForDistance(0, true));
+
+  const banner = el('heatmap-result-banner');
+  const title = el('heatmap-result-title');
+  const sub = el('heatmap-result-sub');
+  if (winnerPlayerId) {
+    const won = winnerPlayerId === state.self.id;
+    title.textContent = won ? 'Du hast es gefunden!' : `${heatmapPlayerName(winnerPlayerId)} war am schnellsten!`;
+  } else {
+    title.textContent = 'Die Zeit ist abgelaufen.';
+  }
+  sub.textContent = `Gesuchtes Land: ${target.name}`;
+  banner.classList.remove('hidden');
+}
+
+function renderHeatmapSuggestions(query) {
+  const box = el('heatmap-suggestions');
+  heatmapSuggestionIndex = -1;
+  if (!countryStore || !query.trim()) {
+    box.classList.add('hidden');
+    box.innerHTML = '';
+    return;
+  }
+  const matches = searchCountries(countryStore, query, 8);
+  box.classList.toggle('hidden', matches.length === 0);
+  box.innerHTML = matches
+    .map(
+      (c, i) =>
+        `<button type="button" class="heatmap-suggestion${heatmapGuessedThisRound.has(c.id) ? ' guessed' : ''}" data-country-id="${escapeHtml(c.id)}" data-index="${i}">${escapeHtml(c.name)}</button>`
+    )
+    .join('');
+}
+
+function handleHeatmapGuessPick(countryId) {
+  if (!countryId || heatmapGuessedThisRound.has(countryId)) return;
+  heatmapGuessedThisRound.add(countryId);
+  sound.playClick();
+  if (state.role === 'host') controller.submitLocalHeatmapGuess(countryId);
+  else controller.submitHeatmapGuess(countryId);
+  el('heatmap-search-input').value = '';
+  el('heatmap-suggestions').classList.add('hidden');
+}
+
+function wireHeatmapControls() {
+  const input = el('heatmap-search-input');
+  input.addEventListener('input', () => renderHeatmapSuggestions(input.value));
+  input.addEventListener('keydown', (e) => {
+    const box = el('heatmap-suggestions');
+    const items = [...box.querySelectorAll('.heatmap-suggestion')];
+    if (e.key === 'ArrowDown' && items.length) {
+      e.preventDefault();
+      heatmapSuggestionIndex = Math.min(heatmapSuggestionIndex + 1, items.length - 1);
+      items.forEach((it, i) => it.classList.toggle('active', i === heatmapSuggestionIndex));
+    } else if (e.key === 'ArrowUp' && items.length) {
+      e.preventDefault();
+      heatmapSuggestionIndex = Math.max(heatmapSuggestionIndex - 1, 0);
+      items.forEach((it, i) => it.classList.toggle('active', i === heatmapSuggestionIndex));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const target = items[heatmapSuggestionIndex] || items[0];
+      if (target) handleHeatmapGuessPick(target.dataset.countryId);
+      else {
+        // Exakter Name eingetippt, ohne aus der Vorschlagsliste zu waehlen.
+        const match = findCountryByName(countryStore, input.value);
+        if (match) handleHeatmapGuessPick(match.id);
+      }
+    } else if (e.key === 'Escape') {
+      box.classList.add('hidden');
+    }
+  });
+  el('heatmap-suggestions').addEventListener('click', (e) => {
+    const btn = e.target.closest('.heatmap-suggestion');
+    if (btn) handleHeatmapGuessPick(btn.dataset.countryId);
+  });
 }
 
 const PANO_FADE_MS = 180;
@@ -1224,7 +1433,11 @@ function renderPodium(sorted) {
 
 function renderOverviewMap() {
   const wrap = el('overview-map-wrap');
-  const rounds = state.roundHistory.filter(Boolean);
+  // Heatmap-Runden haben kein {actual:{lat,lng}} (siehe roundHistory-Eintrag
+  // in host.js _endHeatmapRound()) - die "Alle Runden im Ueberblick"-Karte
+  // erwartet Guess-Pins/Linien, die es in diesem Modus konzeptionell gar
+  // nicht gibt, und wuerde sonst nur leer angezeigt.
+  const rounds = state.settings.mode === 'heatmap' ? [] : state.roundHistory.filter(Boolean);
   if (rounds.length === 0) {
     wrap.classList.add('hidden');
     return;
@@ -1278,6 +1491,8 @@ function renderLeaderboard({ finalScores }) {
       : 'HP-Duell beendet';
   } else if (isCountryMode) {
     heading.textContent = 'Country-Streak beendet';
+  } else if (state.settings.mode === 'heatmap') {
+    heading.textContent = 'Heatmap-Duell beendet';
   } else {
     heading.textContent = 'Duell beendet';
   }
@@ -1570,8 +1785,13 @@ function wireBusEvents() {
     // DevTools-Netzwerktab fuer jeden sichtbar. Was fuers HUD noetig ist
     // (Name/Quelle/Bounding-Box, Hinweistext, Fun-Fact) kommt jetzt direkt
     // vom Host per GAME_START/ROUND_START/ROUND_RESULT (siehe net/host.js).
-    showScreen('hud');
+    // Heatmap-Modus hat kein Kartenpaket/keine Panoramen - eigener Screen.
+    if (state.settings.mode !== 'heatmap') showScreen('hud');
   });
+  bus.on('ui:heatmap-round-started', renderHeatmapRoundStart);
+  bus.on('ui:heatmap-guess-result', renderHeatmapGuessResult);
+  bus.on('ui:heatmap-activity', renderHeatmapActivity);
+  bus.on('ui:heatmap-round-result', renderHeatmapRoundResult);
   bus.on('ui:map-resolving', () => showToast('Kartenpaket wird geladen…'));
   bus.on('ui:map-resolve-failed', () => {
     showToast('Für dieses Kartenpaket wurden keine Bilder gefunden.');
@@ -1647,6 +1867,7 @@ async function boot() {
   wireMenuControls();
   wireLobbyControls();
   wireHudControls();
+  wireHeatmapControls();
   wireResultControls();
   wireLeaderboardControls();
   wireBusEvents();
