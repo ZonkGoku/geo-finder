@@ -53,6 +53,44 @@ function shuffle(arr) {
   return copy;
 }
 
+function buildLocationFromDetail(detail, regionMeta) {
+  if (!detail?.is_pano || !detail?.thumb_2048_url) return null;
+  const [lng, lat] = detail.geometry?.coordinates || [regionMeta.lng, regionMeta.lat];
+  return {
+    id: `mapillary-${detail.id}`,
+    name: regionMeta.name,
+    lat,
+    lng,
+    panoramaUrl: detail.thumb_2048_url,
+    attribution: 'Mapillary-Mitwirkende',
+    attributionUrl: 'https://www.mapillary.com/',
+    coordSource: 'mapillary-live',
+  };
+}
+
+/**
+ * Holt ein EINZELNES, bereits bekanntes Bild direkt per ID nach - ueberspringt
+ * die Listensuche komplett. Genutzt vom "Verified Image Pool"
+ * (core/pool-loader.js): eine in einer frueheren Partie erfolgreich
+ * aufgeloeste Bild-ID wird hier neu abgefragt statt die damals gecachte
+ * thumb_2048_url direkt wiederzuverwenden - Mapillary-Thumb-URLs koennen
+ * ablaufen oder das Bild kann inzwischen entfernt worden sein. Liefert null,
+ * wenn die ID nicht mehr existiert oder kein Pano (mehr) ist.
+ */
+export async function fetchPanoramaById(id, regionMeta) {
+  const detailParams = new URLSearchParams({
+    access_token: MAPILLARY_ACCESS_TOKEN,
+    fields: 'id,is_pano,geometry,thumb_2048_url',
+  });
+  try {
+    const detail = await fetchJson(`${API_BASE}/${id}?${detailParams.toString()}`, regionMeta.name);
+    return buildLocationFromDetail(detail, regionMeta);
+  } catch (err) {
+    console.error('Verified-Image-Cache: Bild nicht mehr abrufbar:', err);
+    return null;
+  }
+}
+
 /**
  * Fragt echte Mapillary-Aufnahmen nahe einer Region ab und liefert ein
  * einzelnes, zufällig gewähltes 360°-Bild (is_pano=true) zurück - oder null,
@@ -98,20 +136,8 @@ export async function fetchPanoramaForRegion(region) {
 
   for (const result of details) {
     if (result.status !== 'fulfilled') continue;
-    const detail = result.value;
-    if (!detail?.is_pano || !detail?.thumb_2048_url) continue;
-
-    const [lng, lat] = detail.geometry?.coordinates || [region.lng, region.lat];
-    return {
-      id: `mapillary-${detail.id}`,
-      name: region.name,
-      lat,
-      lng,
-      panoramaUrl: detail.thumb_2048_url,
-      attribution: 'Mapillary-Mitwirkende',
-      attributionUrl: 'https://www.mapillary.com/',
-      coordSource: 'mapillary-live',
-    };
+    const location = buildLocationFromDetail(result.value, region);
+    if (location) return location;
   }
 
   return null;
