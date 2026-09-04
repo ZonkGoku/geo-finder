@@ -11,7 +11,7 @@
 // weil GitHub Pages dieses Projekt unter einem Unterpfad
 // (https://<user>.github.io/geo-finder/) ausliefert, nicht unter der
 // Domain-Wurzel.
-const CACHE_VERSION = 'geofinder-v1';
+const CACHE_VERSION = 'geofinder-v2';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -62,6 +62,13 @@ const CACHE_FIRST_HOSTS = ['server.arcgisonline.com', 'fonts.googleapis.com', 'f
 const NEVER_CACHE_HOSTS = ['graph.mapillary.com'];
 
 self.addEventListener('install', (event) => {
+  // Ohne skipWaiting() bleibt eine neu installierte SW-Version im "waiting"-
+  // Zustand haengen, bis ALLE Tabs der Seite geschlossen wurden - ein
+  // einfaches Reload reicht dann nicht, um Fixes/neue Assets zu bekommen
+  // (live erlebt: CACHE_VERSION-Bump allein aktualisierte die offene Seite
+  // nicht). skipWaiting() + das bereits vorhandene clients.claim() unten
+  // sorgen zusammen dafuer, dass ein Reload immer die neueste Version laedt.
+  self.skipWaiting();
   event.waitUntil(
     (async () => {
       const cache = await caches.open(APP_SHELL_CACHE);
