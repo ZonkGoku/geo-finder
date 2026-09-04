@@ -131,7 +131,12 @@ async function cacheFirst(request, cacheName) {
 async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   try {
-    const response = await fetch(request);
+    // cache:'no-store' umgeht zusaetzlich den GEWOEHNLICHEN Browser-HTTP-
+    // Cache (eine ganz andere Schicht als die Cache-Storage-API oben) - ohne
+    // das koennte fetch() selbst bei "network first" still eine laengst
+    // veraltete, lokal zwischengespeicherte HTTP-Antwort zurueckgeben, ohne
+    // ueberhaupt beim Server nachzufragen.
+    const response = await fetch(request, { cache: 'no-store' });
     if (response.ok) cache.put(request, response.clone());
     return response;
   } catch {
