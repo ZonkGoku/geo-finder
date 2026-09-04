@@ -24,3 +24,15 @@ export function pickUniqueLocations(pool, count, seed) {
   }
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
+
+// Wandelt einen beliebigen String (z. B. ein Datum) deterministisch in einen
+// 32-Bit-Seed um (FNV-1a) - fuer die Tages-Challenge, deren Seed sich aus
+// dem aktuellen Datum ergeben soll statt ueber makeSeed() zufaellig zu sein.
+export function hashStringToSeed(str) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}

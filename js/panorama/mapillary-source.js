@@ -44,10 +44,16 @@ async function fetchJson(url, label) {
   return json;
 }
 
-function shuffle(arr) {
+// rand ist optional (Default Math.random) - resolveRoundLocations() in
+// pool-loader.js reicht bei einem seed-gebundenen Spiel (Tages-Challenge/
+// Challenge-Link) einen mulberry32-Strom durch, sonst waere die Wahl UNTER
+// mehreren Bildkandidaten am selben Punkt weiterhin zufaellig und ein
+// gegebener Seed koennte trotz identischer Suchkoordinaten ein anderes Foto
+// liefern.
+function shuffle(arr, rand = Math.random) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
@@ -105,7 +111,7 @@ export async function fetchPanoramaById(id, regionMeta) {
  * `is_pano` kann laut Doku nicht zusammen mit lat/lng gefiltert werden,
  * daher wird das pro Bild einzeln in der Detailabfrage geprüft.
  */
-export async function fetchPanoramaForRegion(region) {
+export async function fetchPanoramaForRegion(region, rand = Math.random) {
   const listParams = new URLSearchParams({
     access_token: MAPILLARY_ACCESS_TOKEN,
     fields: 'id',
@@ -116,7 +122,7 @@ export async function fetchPanoramaForRegion(region) {
   });
 
   const listJson = await fetchJson(`${API_BASE}/images?${listParams.toString()}`, region.name);
-  const ids = shuffle((listJson?.data || []).map((img) => img.id));
+  const ids = shuffle((listJson?.data || []).map((img) => img.id), rand);
   if (ids.length === 0) return null;
 
   const detailParams = new URLSearchParams({

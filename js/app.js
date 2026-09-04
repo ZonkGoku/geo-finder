@@ -9,6 +9,16 @@ import { showScreen } from './ui/router.js';
 import { showToast } from './ui/toast.js';
 import { loadMapSetIndex, loadMapSetDetail } from './core/pool-loader.js';
 import { getHighScore, recordScoreIfBest } from './core/high-scores.js';
+import { getPlayerStats, averageScore, recordGamePlayed } from './core/player-stats.js';
+import {
+  DAILY_CHALLENGE_MAPSET_ID,
+  DAILY_CHALLENGE_SETTINGS,
+  dailySeed,
+  getDailyResult,
+  recordDailyResult,
+  encodeChallengeLink,
+  decodeChallengeLink,
+} from './core/challenge.js';
 import * as sound from './audio/sound.js';
 
 const PROFILE_KEY = 'geofinder.profile';
@@ -209,7 +219,13 @@ async function getMapSetDetail(id) {
   if (mapSetDetailCache.has(id)) return mapSetDetailCache.get(id);
   const entry = mapSetIndex.find((s) => s.id === id);
   if (!entry) throw new Error(`Unbekanntes Kartenpaket: ${id}`);
-  const detail = await loadMapSetDetail(entry);
+  const rawDetail = await loadMapSetDetail(entry);
+  // data/map-sets/weltweit.json traegt intern noch "id":"starter-pool" (ein
+  // Altlast-Name aus einer frueheren Version der Datei) statt "weltweit" wie
+  // im Index - ohne diese Korrektur wuerde state.pool.id nicht mit der ID
+  // uebereinstimmen, unter der Highscores/Challenge-Links das Paket kennen,
+  // und beide Features wuerden fuer "Weltweit (Standard)" leise ins Leere laufen.
+  const detail = rawDetail.id === entry.id ? rawDetail : { ...rawDetail, id: entry.id };
   mapSetDetailCache.set(id, detail);
   return detail;
 }
@@ -634,7 +650,11 @@ function canStartGame() {
   return others.length > 0 && others.every((p) => p.ready && p.connected);
 }
 
-async function startGameFromLobby() {
+// seed ist optional - ohne wird (wie bisher) ein frischer Zufalls-Seed im
+// HostController erzeugt. Tages-Challenge/Challenge-Links reichen hier
+// stattdessen einen aus Datum bzw. Link abgeleiteten Seed durch, damit
+// dieselbe Funktion fuer alle drei Startarten wiederverwendet werden kann.
+async function startGameFromLobby(seed) {
   sound.playClick();
   const startBtn = el('btn-start-game');
   startBtn.disabled = true;
@@ -644,7 +664,7 @@ async function startGameFromLobby() {
     hint.textContent = 'Lade Kartenpaket…';
     const detail = await getMapSetDetail(state.settings.mapSetId);
     activeMapSetDetail = detail;
-    await controller.startGame(detail);
+    await controller.startGame(detail, seed);
   } catch (err) {
     console.error(err);
     hint.textContent = previousHint;
@@ -1224,8 +1244,17 @@ function renderLeaderboard({ finalScores }) {
 
   if (state.pool?.id) {
     const ownEntry = finalScores.find((e) => e.playerId === state.self.id);
-    if (ownEntry) recordScoreIfBest(state.pool.id, state.settings.mode, ownEntry.total);
+    if (ownEntry) {
+      recordScoreIfBest(state.pool.id, state.settings.mode, ownEntry.total);
+      recordGamePlayed(ownEntry.total, state.round.total);
+      if (state.challenge?.type === 'daily') recordDailyResult(ownEntry.total);
+    }
   }
+
+  // Challenge-Link teilen ist bewusst nur fuer Solo-Partien: der geteilte
+  // Link startet direkt eine neue Solo-Session beim Empfaenger, ein
+  // laufender Mehrspieler-Raum passt da konzeptionell nicht rein.
+  el('btn-share-challenge').hidden = !!state.roomCode || !state.pool?.id;
 
   const isHpMode = state.settings.mode === 'hp';
   const isCountryMode = state.settings.mode === 'country-streak';
@@ -1237,7 +1266,11 @@ function renderLeaderboard({ finalScores }) {
   renderPodium(sorted);
 
   const heading = document.querySelector('#screen-leaderboard h2');
-  if (isHpMode) {
+  if (state.challenge?.type === 'daily') {
+    heading.textContent = 'Tages-Challenge abgeschlossen!';
+  } else if (state.challenge?.type === 'link') {
+    heading.textContent = 'Challenge abgeschlossen!';
+  } else if (isHpMode) {
     const survivor = sorted.find((e) => (e.hp ?? 0) > 0);
     const survivorName = state.players.get(survivor?.playerId)?.name;
     heading.textContent = survivor && sorted.some((e) => (e.hp ?? 0) <= 0)
@@ -1294,6 +1327,11 @@ function wireLeaderboardControls() {
     sound.playClick();
     const isSolo = !state.roomCode;
     if (isSolo) {
+      // Ohne dieses Zuruecksetzen wuerde "Nochmal spielen" nach einer
+      // Tages-Challenge/einem Challenge-Link die neue, frei-zufaellige
+      // Partie faelschlich als denselben Challenge-Typ werten und versuchen,
+      // den Tages-Rekord mit einem nicht vergleichbaren Ergebnis zu ueberschreiben.
+      state.challenge = null;
       await startGameFromLobby();
       return;
     }
@@ -1330,6 +1368,32 @@ function wireMenuControls() {
   el('join-code-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') joinFlow(el('join-code-input').value);
   });
+
+  attachRipple(el('btn-daily-challenge'));
+  el('btn-daily-challenge').addEventListener('click', () => {
+    sound.unlockAudio();
+    sound.playClick();
+    startDailyChallenge();
+  });
+
+  el('btn-share-challenge').addEventListener('click', async () => {
+    sound.playClick();
+    const encoded = encodeChallengeLink({
+      seed: state.pool.seed,
+      mapSetId: state.pool.id,
+      roundCount: state.round.total,
+      timeLimitMs: state.settings.timeLimitMs,
+      mode: state.settings.mode,
+      modifier: state.settings.modifier,
+    });
+    const link = `${location.origin}${location.pathname}#challenge=${encoded}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      showToast('Challenge-Link kopiert — dein Freund bekommt exakt dieselben Orte.');
+    } catch {
+      showToast('Kopieren nicht möglich — bitte manuell markieren: ' + link);
+    }
+  });
 }
 
 function resetToMenu() {
@@ -1355,9 +1419,12 @@ function resetToMenu() {
   state.roundHistory = [];
   state.hp = new Map();
   state.pool = null;
+  state.challenge = null;
   history.replaceState(null, '', location.pathname + location.search);
   updateChrome('Nicht verbunden', null);
   showScreen('menu');
+  renderDailyChallengeCard();
+  renderMenuStats();
 }
 
 // Klick-Impact-Ripple fuer die neuen Neo-Brutalism-CTAs (.cta-mega,
@@ -1389,11 +1456,106 @@ function escapeHtml(str) {
 // ---------------------------------------------------------------- boot
 
 function handleDeepLink() {
+  const challengeMatch = location.hash.match(/challenge=([^&]+)/);
+  if (challengeMatch) {
+    startChallengeFromLink(challengeMatch[1]);
+    return;
+  }
   const match = location.hash.match(/room=([A-Za-z0-9]+)/);
   if (!match) return;
   el('join-panel').classList.remove('hidden');
   el('join-code-input').value = match[1].toUpperCase();
   if (!state.self.name) el('player-name-input').focus();
+}
+
+// Startet direkt eine Solo-Session mit den im Link kodierten Einstellungen
+// (siehe core/challenge.js) statt der normalen Menue->Lobby->Klick-Kette -
+// derselbe Seed liefert ueber resolveRoundLocations() garantiert dieselben
+// Runden wie beim urspruenglichen Ersteller des Links.
+async function startChallengeFromLink(raw) {
+  const decoded = decodeChallengeLink(raw);
+  // Hash sofort entfernen, damit ein Reload/erneuter Aufruf derselben Seite
+  // nicht denselben Link ungewollt ein zweites Mal automatisch startet.
+  history.replaceState(null, '', location.pathname + location.search);
+  if (!decoded) {
+    showToast('Dieser Challenge-Link ist ungültig oder beschädigt.');
+    return;
+  }
+  await ensureMapSetIndex();
+  const entry = mapSetIndex.find((e) => e.id === decoded.mapSetId);
+  if (!entry || !entry.available) {
+    showToast(
+      entry
+        ? `„${entry.name}“ braucht einen eigenen Mapillary-Zugangstoken, um diese Challenge zu spielen.`
+        : 'Dieses Kartenpaket ist nicht mehr verfügbar.'
+    );
+    return;
+  }
+  await soloFlow();
+  controller.updateSettings({
+    mapSetId: decoded.mapSetId,
+    roundCount: decoded.roundCount,
+    timeLimitMs: decoded.timeLimitMs,
+    mode: decoded.mode,
+    modifier: decoded.modifier,
+    mutators: { fogOfWar: false, brokenCompass: false, noPan: false },
+  });
+  state.challenge = { type: 'link', seed: decoded.seed };
+  renderLobby();
+  await startGameFromLobby(decoded.seed);
+}
+
+// Tages-Challenge: fester Kartenpaket + feste Einstellungen (siehe
+// DAILY_CHALLENGE_SETTINGS) mit einem aus dem aktuellen UTC-Datum
+// abgeleiteten Seed, damit weltweit alle Spieler an einem Tag exakt
+// dieselben Orte bekommen. Zaehlt pro Tag nur einmal (siehe getDailyResult).
+async function startDailyChallenge() {
+  const already = getDailyResult();
+  if (already) {
+    showToast(`Du hast die heutige Challenge schon gespielt: ${already.score.toLocaleString('de-DE')} Punkte. Morgen gibt's neue Orte.`);
+    return;
+  }
+  await ensureMapSetIndex();
+  const entry = mapSetIndex.find((e) => e.id === DAILY_CHALLENGE_MAPSET_ID);
+  if (!entry || !entry.available) {
+    showToast('Die Tages-Challenge ist gerade nicht verfügbar.');
+    return;
+  }
+  await soloFlow();
+  const seed = dailySeed();
+  controller.updateSettings({ mapSetId: DAILY_CHALLENGE_MAPSET_ID, ...DAILY_CHALLENGE_SETTINGS });
+  state.challenge = { type: 'daily', seed };
+  renderLobby();
+  await startGameFromLobby(seed);
+}
+
+// Aktualisiert die Tages-Challenge-Kachel im Hauptmenue (Status: noch nicht
+// gespielt / heutiges Ergebnis) - aufgerufen beim Boot und jedes Mal, wenn
+// resetToMenu() zurueck zum Menue fuehrt, damit ein gerade gespieltes
+// Ergebnis sofort sichtbar ist.
+function renderDailyChallengeCard() {
+  const card = el('btn-daily-challenge');
+  const sub = el('daily-challenge-sub');
+  const result = getDailyResult();
+  if (result) {
+    card.classList.add('done');
+    sub.textContent = `Heute gespielt: ${result.score.toLocaleString('de-DE')} Punkte · morgen neue Orte`;
+  } else {
+    card.classList.remove('done');
+    sub.textContent = 'Jeden Tag dieselben Orte für alle';
+  }
+}
+
+// Fuellt das kleine Statistik-Panel im Hauptmenue aus core/player-stats.js -
+// bleibt ausgeblendet, solange noch keine einzige Partie gespielt wurde.
+function renderMenuStats() {
+  const stats = getPlayerStats();
+  const panel = el('menu-stats-panel');
+  panel.classList.toggle('hidden', stats.gamesPlayed === 0);
+  if (stats.gamesPlayed === 0) return;
+  el('stat-games-played').textContent = String(stats.gamesPlayed);
+  el('stat-avg-score').textContent = averageScore(stats).toLocaleString('de-DE');
+  el('stat-best-score').textContent = stats.bestGameScore.toLocaleString('de-DE');
 }
 
 function wireBusEvents() {
@@ -1488,6 +1650,8 @@ async function boot() {
   wireResultControls();
   wireLeaderboardControls();
   wireBusEvents();
+  renderDailyChallengeCard();
+  renderMenuStats();
   handleDeepLink();
   ensureMapSetIndex().catch((err) => console.error('Kartenpaket-Index konnte nicht geladen werden', err));
 }

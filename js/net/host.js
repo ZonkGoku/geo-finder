@@ -231,14 +231,21 @@ export class HostController {
     this._broadcastLobbyState();
   }
 
-  async startGame(mapSet) {
+  // seed ist optional ueberschreibbar (Tages-Challenge/Challenge-Links geben
+  // einen aus Datum bzw. Link abgeleiteten Seed vor, statt einen frischen
+  // zufaelligen zu erzeugen) - resolveRoundLocations() ist damit fuer JEDES
+  // Spiel schon deterministisch, normale Spiele nutzen einfach weiterhin
+  // einen frischen Zufalls-Seed als Default.
+  async startGame(mapSet, seed = makeSeed()) {
     // focusBounds hier schon mit anhaengen, damit Host und Mitspieler den
     // gleichen state.pool.focusBounds-Pfad fuer die Minimap nutzen koennen
     // (der Host darf die volle Standortliste ohnehin sehen, sie bleibt
     // trotzdem auf state.pool - nur GAME_START an die Mitspieler laesst sie weg).
-    state.pool = { ...mapSet, focusBounds: computeMapSetBounds(mapSet) };
+    // seed wird mit abgelegt, damit ein Solo-Spieler seine gerade gespielte
+    // Partie hinterher per Challenge-Link exakt teilen kann (siehe
+    // core/challenge.js + "Challenge teilen" auf dem Leaderboard).
+    state.pool = { ...mapSet, focusBounds: computeMapSetBounds(mapSet), seed };
     resetForNewGame();
-    const seed = makeSeed();
 
     if (state.settings.mode === 'country-streak') {
       this.countryFeatures = await ensureCountryData();

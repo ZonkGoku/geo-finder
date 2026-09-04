@@ -1,4 +1,4 @@
-import { pickUniqueLocations } from './rng.js';
+import { pickUniqueLocations, mulberry32 } from './rng.js';
 import { fetchPanoramaForRegion, fetchPanoramaById } from '../panorama/mapillary-source.js';
 import { isMapillaryConfigured } from '../config.js';
 import { ensureCountryData, findCountryAtPointSync } from './country-lookup.js';
@@ -74,9 +74,15 @@ function resolveAttemptBudget(regionCount) {
 const JITTER_RADIUS_M = 180;
 const METERS_PER_DEGREE_LAT = 111320;
 
-function jitterRegion(region) {
-  const r = JITTER_RADIUS_M * Math.sqrt(Math.random());
-  const theta = Math.random() * 2 * Math.PI;
+// rand ist optional (Default Math.random) und wird von resolveRoundLocations()
+// mit einem seed-gebundenen mulberry32-Strom belegt - dadurch liefert ein
+// gegebener seed nicht nur dieselbe Regionen-Reihenfolge, sondern auch
+// dieselben gejitterten Koordinaten. Das ist Voraussetzung dafuer, dass
+// Tages-Challenge/Challenge-Links bei Mapillary-Paketen wirklich reproduzierbar
+// sind statt nur "meistens aehnlich".
+function jitterRegion(region, rand = Math.random) {
+  const r = JITTER_RADIUS_M * Math.sqrt(rand());
+  const theta = rand() * 2 * Math.PI;
   const dLat = (r * Math.cos(theta)) / METERS_PER_DEGREE_LAT;
   const metersPerDegreeLng = METERS_PER_DEGREE_LAT * Math.cos((region.lat * Math.PI) / 180);
   const dLng = metersPerDegreeLng > 1 ? (r * Math.sin(theta)) / metersPerDegreeLng : 0;
@@ -92,11 +98,11 @@ function jitterRegion(region) {
  * fehlenden Laenderdaten (z. B. Netzwerkproblem) wird der Punkt statt
  * eines harten Fehlers einfach durchgelassen.
  */
-async function ensureOnLand(candidate, region, countryFeatures) {
+async function ensureOnLand(candidate, region, countryFeatures, rand = Math.random) {
   if (!countryFeatures) return candidate;
   if (findCountryAtPointSync(candidate.lat, candidate.lng, countryFeatures)) return candidate;
   for (let attempt = 0; attempt < 3; attempt++) {
-    const retry = jitterRegion(region);
+    const retry = jitterRegion(region, rand);
     if (findCountryAtPointSync(retry.lat, retry.lng, countryFeatures)) return retry;
   }
   return region; // dreimal im Wasser gelandet - lieber der exakte Originalpunkt als gar keiner
@@ -123,6 +129,12 @@ async function ensureOnLand(candidate, region, countryFeatures) {
  * Aufrufer (host.js) faengt das weiterhin ab.
  */
 export async function resolveRoundLocations(mapSet, roundCount, seed) {
+  // Eigener, seed-gebundener Zufallsstrom fuer Jitter/Fallback-Mischung -
+  // getrennt von pickUniqueLocations() (das seinen eigenen mulberry32(seed)
+  // fuer die Regionen-Reihenfolge nutzt), aber aus demselben seed abgeleitet,
+  // damit ein gegebener seed IMMER exakt dasselbe Ergebnis liefert.
+  const rand = mulberry32(seed);
+
   if (mapSet.source === 'static') {
     return pickUniqueLocations(mapSet.locations, roundCount, seed);
   }
@@ -157,8 +169,8 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
       }
       attempts += wave.length;
 
-      const jittered = await Promise.all(wave.map((region) => ensureOnLand(jitterRegion(region), region, countryFeatures)));
-      const settled = await Promise.allSettled(jittered.map((region, i) => fetchPanoramaForRegion(region).then((loc) => ({ loc, region: wave[i] }))));
+      const jittered = await Promise.all(wave.map((region) => ensureOnLand(jitterRegion(region, rand), region, countryFeatures, rand)));
+      const settled = await Promise.allSettled(jittered.map((region, i) => fetchPanoramaForRegion(region, rand).then((loc) => ({ loc, region: wave[i] }))));
       for (const result of settled) {
         if (result.status === 'fulfilled' && result.value.loc) {
           resolved.push(result.value.loc);
@@ -177,7 +189,7 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
     // moeglicherweise abgelaufene alte thumb_2048_url zu recyceln.
     if (resolved.length < roundCount) {
       const usedIds = new Set(resolved.map((l) => l.id));
-      const cached = shuffleCopy(loadVerifiedEntries(mapSet.id)).filter((e) => !usedIds.has(`mapillary-${e.imageId}`));
+      const cached = shuffleCopy(loadVerifiedEntries(mapSet.id), rand).filter((e) => !usedIds.has(`mapillary-${e.imageId}`));
       for (const entry of cached) {
         if (resolved.length >= roundCount) break;
         const location = await fetchPanoramaById(entry.imageId, entry);
@@ -191,10 +203,10 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
   throw new Error(`Unbekannte Kartenpaket-Quelle: ${mapSet.source}`);
 }
 
-function shuffleCopy(arr) {
+function shuffleCopy(arr, rand = Math.random) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;

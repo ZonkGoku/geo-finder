@@ -259,6 +259,26 @@ button{ font-family:inherit; color:inherit; }
 .action-card.secondary .action-icon{ background:rgba(23,236,255,0.14); color:var(--accent-2); }
 .action-title{ font-weight:700; font-size:1rem; color:var(--text); letter-spacing:0.01em; }
 .action-sub{ font-size:0.8rem; color:var(--text-dim); margin-top:2px; }
+
+/* Tages-Challenge-Kachel nach dem heutigen Spiel: dezent abgesetzt statt
+   ausgegraut, damit klar bleibt "schon erledigt", ohne wie deaktiviert
+   auszusehen (der Button bleibt klickbar - startDailyChallenge() faengt den
+   Re-Klick selbst per Toast ab). */
+.action-card#btn-daily-challenge .action-icon{ background:rgba(255,209,102,0.16); color:#ffd166; }
+.action-card#btn-daily-challenge.done .action-icon{ background:rgba(47,230,214,0.16); color:var(--accent-2); }
+.action-card#btn-daily-challenge.done .action-sub{ color:var(--accent-2); }
+
+/* Kleines Lebenszeit-Statistik-Panel im Hauptmenue (core/player-stats.js) -
+   bleibt versteckt, bis die erste Partie gespielt wurde. */
+.menu-stats-panel{ display:flex; gap:10px; margin-top:18px; width:100%; max-width:440px; }
+.menu-stats-panel.hidden{ display:none; }
+.menu-stat{
+  flex:1; text-align:center; display:flex; flex-direction:column; gap:2px;
+  background:color-mix(in srgb, var(--surface-raised) 60%, transparent);
+  border:1px solid var(--line); border-radius:11px; padding:10px 8px;
+}
+.menu-stat-num{ font-family:var(--font-display); font-weight:700; font-size:1.15rem; color:var(--accent-2); }
+.menu-stat-lbl{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); }
 .join-panel{ display:flex; gap:8px; padding:0 4px; }
 .join-panel.hidden{ display:none; }
 .menu-error{ color:var(--danger); font-size:0.85rem; margin-top:14px; }

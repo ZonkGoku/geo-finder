@@ -34,6 +34,7 @@ export const state = {
     mutators: { fogOfWar: false, brokenCompass: false, noPan: false },
   },
   pool: null, // aufgeloestes Kartenpaket (nur Host braucht Koordinaten)
+  challenge: null, // { type: 'daily' | 'link', seed } - siehe core/challenge.js, sonst null fuer normale Spiele
   hp: new Map(), // peerId -> number (nur im HP-Duell-Modus genutzt)
   round: {
     index: 0,
