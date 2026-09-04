@@ -785,7 +785,16 @@ function wireLobbyControls() {
   });
 
   attachRipple(el('btn-start-game'));
-  el('btn-start-game').addEventListener('click', startGameFromLobby);
+  // NICHT direkt startGameFromLobby als Listener registrieren: addEventListener
+  // ruft Handler mit dem Klick-Event als erstem Argument auf, das landete sonst
+  // ungewollt im optionalen seed-Parameter. mulberry32(seed) macht "seed >>> 0"
+  // (ToUint32) - fuer ein Objekt ist das immer NaN >>> 0 = 0, jedes normal
+  // gestartete Spiel (Tages-Challenge/Challenge-Link reichen ihren Seed separat
+  // an anderer Stelle durch) landete also bei genau demselben Seed 0 statt bei
+  // einem echten Zufalls-Seed - der gemeldete Bug "Heatmap startet jedes Mal mit
+  // demselben Land": mulberry32(0) ist deterministisch, jede Partie zog dieselbe
+  // "zufaellige" Sequenz.
+  el('btn-start-game').addEventListener('click', () => startGameFromLobby());
 
   const wireChoiceRow = (rowId, settingKey, parse) => {
     el(rowId).querySelectorAll('button').forEach((btn) => {
