@@ -25,9 +25,14 @@
 /* Hellmodus: nur die Menue-/Lobby-/Leaderboard-Oberflaeche (die "App-Chrome").
    Das In-Game-HUD (#screen-hud) liegt ueber echten Panorama-Fotos und bleibt
    bewusst immer dunkel - siehe die hartkodierten rgba(10,15,26,...)-Werte
-   dort, die von diesem Block unberuehrt bleiben. Akzentfarben (--accent,
-   --accent-2, --danger) sind Markenfarben und aendern sich nicht mit dem
-   Theme. */
+   dort, die von diesem Block unberuehrt bleiben.
+   Die Dark-Mode-Neon-Werte fuer --accent/--accent-2/--neon-magenta/--danger
+   waren bis hierher explizit "themeneutral" - genau DAS war der gemeldete
+   Kontrastfehler (Neon-Cyan/-Orange auf Weiss faellt praktisch durch jeden
+   Text-Kontrast-Test, das Logo verschwand komplett). Im Hellmodus werden sie
+   deshalb jetzt durch deutlich dunklere, saettigere Varianten derselben
+   Markenfarben ersetzt (Terrakotta statt Neon-Orange, sattes Blau statt
+   Neon-Cyan) - dieselbe Markenidentitaet, aber auf Weiss tatsaechlich lesbar. */
 :root[data-theme="light"]{
   --ink: #f6f7f5;
   --surface: #ffffff;
@@ -35,8 +40,13 @@
   --surface-hi: #e7e9ed;
   --line: #dde1e7;
   --text: #14181f;
-  --text-dim: #5c6472;
-  --text-faint: #8891a0;
+  --text-dim: #495166;
+  --text-faint: #6b7386;
+  --accent: #b1490f;
+  --accent-ink: #ffffff;
+  --accent-2: #0b6a94;
+  --neon-magenta: #a3116f;
+  --danger: #c53a30;
 }
 
 *{ box-sizing:border-box; }
@@ -122,6 +132,13 @@ button{ font-family:inherit; color:inherit; }
 .brand-word-finder{ color:var(--accent-2); }
 @keyframes brandShimmer{ 0%{ background-position:220% 0; } 100%{ background-position:-220% 0; } }
 @media (prefers-reduced-motion: reduce){ .brand-word-geo{ animation:none; background-position:0 0; } }
+/* Hellmodus: die weisse Shimmer-Gradient-Textur von .brand-word-geo ist auf
+   weissem Hintergrund unsichtbar (der gemeldete "verschwindet komplett"-Bug) -
+   dunkle Variante derselben Shimmer-Technik statt eines platten Vollfarbtons. */
+:root[data-theme="light"] .brand-word-geo{
+  background:linear-gradient(100deg, #14181f 35%, rgba(20,24,31,0.55) 50%, #14181f 65%);
+  background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+}
 
 .kicker{ margin:0; font-size:0.78rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-dim); }
 
@@ -254,6 +271,9 @@ button{ font-family:inherit; color:inherit; }
 .action-card:hover{
   border-color:var(--accent-2); background:var(--surface-hi); transform:translateX(4px);
   box-shadow:0 0 0 1px rgba(23,236,255,0.35), 0 14px 30px -14px rgba(23,236,255,0.5);
+}
+:root[data-theme="light"] .action-card:hover{
+  box-shadow:3px 3px 0 0 var(--accent-2);
 }
 .action-icon{ width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex:none; background:rgba(255,122,51,0.14); color:var(--accent); }
 .action-card.secondary .action-icon{ background:rgba(23,236,255,0.14); color:var(--accent-2); }
@@ -427,6 +447,15 @@ button{ font-family:inherit; color:inherit; }
   50%{ box-shadow:0 0 0 1px rgba(255,122,51,0.8), 0 18px 42px -8px rgba(255,122,51,0.9), 0 0 55px -10px rgba(23,236,255,0.7); transform:scale(1.018); }
 }
 @media (prefers-reduced-motion: reduce){ .cta-mega{ animation:none; } }
+/* Hellmodus: der pulsierende Farb-Glow wird auf Weiss zu einem matschigen
+   Fleck statt einer klaren Leucht-Kante. Ersetzt durch einen knackigen
+   dunklen Rand + einen harten, flachen Versatz-Schatten (Neo-Brutalismus
+   statt Glow) - "Tiefe" kommt hier vom Versatz, nicht vom Leuchten. */
+:root[data-theme="light"] .cta-mega{
+  border:2px solid var(--text); box-shadow:4px 4px 0 0 var(--text);
+  animation:none;
+}
+:root[data-theme="light"] .cta-mega:active:not(:disabled){ transform:translate(2px, 2px); box-shadow:2px 2px 0 0 var(--text); }
 
 /* Klick-Impact: JS (spawnRipple in app.js) haengt bei jedem Klick einen
    .btn-ripple-Span an die Klickposition; clip-path des Buttons maskiert ihn
@@ -828,6 +857,9 @@ button{ font-family:inherit; color:inherit; }
   opacity:0; pointer-events:none;
 }
 @media (prefers-reduced-motion: reduce){ .choice-thumb{ transition:none; } }
+/* Hellmodus: flacher dunkler Rand statt Farb-Glow-Schatten unter dem
+   gleitenden Segmented-Control-Thumb. */
+:root[data-theme="light"] .choice-thumb{ box-shadow:0 0 0 1.5px var(--text); }
 .choice-row button{
   position:relative; z-index:1; flex:1; min-width:52px; padding:8px 10px; border-radius:8px; border:1px solid transparent;
   background:transparent; color:var(--text-dim); font-size:0.82rem; font-weight:600; cursor:pointer;
@@ -880,6 +912,8 @@ button{ font-family:inherit; color:inherit; }
   box-shadow:0 20px 40px -16px rgba(23,236,255,0.5), 0 0 0 1px rgba(23,236,255,0.4);
 }
 .mapset-card.selected{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 16px 34px -14px rgba(255,122,51,0.55); }
+:root[data-theme="light"] .mapset-card:hover:not(:disabled){ box-shadow:3px 3px 0 0 var(--accent-2); }
+:root[data-theme="light"] .mapset-card.selected{ box-shadow:3px 3px 0 0 var(--accent); }
 .mapset-card:disabled{ opacity:0.5; cursor:not-allowed; }
 .mapset-card:disabled:hover{ transform:none; box-shadow:none; }
 
