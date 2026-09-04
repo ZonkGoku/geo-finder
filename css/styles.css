@@ -599,6 +599,15 @@ button{ font-family:inherit; color:inherit; }
    Theme wie der Rest der App-Chrome. */
 .minimap .leaflet-host{ background:#141925; }
 .minimap:not(.expanded) .leaflet-host{ pointer-events:none; }
+/* Leaflets eigenes CSS setzt .leaflet-control{pointer-events:auto} - das
+   durchbricht obiges pointer-events:none gezielt fuer Controls (u.a. das
+   Attributions-Feld). Im eingeklappten 140px-Minimap kann der Attributions-
+   Text (variiert je nach Kachel-Stil / Auto-Fallback) so hoch umbrechen,
+   dass er den "Karte oeffnen"-Button ueberlagert und dessen Klicks
+   schluckt - live als dauerhaft deaktivierter Tipp-Button ab Runde 2
+   aufgefallen. Attribution bleibt im Mini-Format ohnehin unlesbar, daher
+   hier bewusst zusaetzlich per Klick deaktiviert statt nur ausgeblendet. */
+.minimap:not(.expanded) .leaflet-control-attribution{ pointer-events:none; }
 
 /* Leaflet pin markers (shared HUD/result look) */
 .map-pin{
