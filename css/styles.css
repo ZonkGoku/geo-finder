@@ -397,6 +397,20 @@ button{ font-family:inherit; color:inherit; }
 .lobby-cta{ margin-top:20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
 .cta-hint{ font-size:0.78rem; color:var(--text-dim); }
 
+/* Live-Fortschritt waehrend HostController.startGame() streamt (siehe
+   renderLoadProgress() in app.js) - ersetzt den frueheren statischen
+   "Kartenpaket wird geladen…"-Text. */
+.load-progress{ display:flex; flex-direction:column; gap:6px; width:100%; max-width:320px; }
+.load-progress.hidden{ display:none; }
+.load-progress-track{ height:6px; border-radius:999px; background:var(--surface-hi); overflow:hidden; }
+.load-progress-fill{
+  height:100%; width:0%; border-radius:999px;
+  background:linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition:width .35s cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-reduced-motion: reduce){ .load-progress-fill{ transition:none; } }
+.load-progress-label{ font-size:0.74rem; color:var(--text-dim); font-family:var(--font-mono); }
+
 .cta-mega{
   position:relative; overflow:hidden;
   padding:18px 36px; font-size:1.05rem; font-family:var(--font-hero); font-weight:700; letter-spacing:0.03em;
@@ -651,6 +665,10 @@ button{ font-family:inherit; color:inherit; }
 }
 .result-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:24px; padding-top:18px; border-top:1px solid var(--line); }
 .next-hint{ font-size:0.82rem; color:var(--text-dim); font-family:var(--font-mono); }
+/* Buffer Underrun (siehe ui:round-buffering in app.js): naechste Runde laedt
+   im Hintergrund noch, statt einfach eine feste Wartezeit runterzuzaehlen. */
+.next-hint.buffering{ color:var(--accent-2); }
+.next-hint.buffering::before{ content:"⏳ "; }
 
 /* ===================== LEADERBOARD ===================== */
 .board-list{ display:flex; flex-direction:column; gap:12px; margin-top:24px; }

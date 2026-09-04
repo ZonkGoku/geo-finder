@@ -690,6 +690,30 @@ function canStartGame() {
 // HostController erzeugt. Tages-Challenge/Challenge-Links reichen hier
 // stattdessen einen aus Datum bzw. Link abgeleiteten Seed durch, damit
 // dieselbe Funktion fuer alle drei Startarten wiederverwendet werden kann.
+// Live-Fortschritt waehrend HostController.startGame() die ersten Runden
+// streamt (siehe net/host.js) - ersetzt den frueheren statischen "Kartenpaket
+// wird geladen…"-Text durch eine echte Fortschrittsanzeige, die sich fuellt,
+// sobald neue Runden eintreffen, und verschwindet, sobald das Spiel startet
+// (der Rest laedt dann unsichtbar im Hintergrund weiter).
+function renderLoadProgress({ found, target } = {}) {
+  if (found == null || target == null) return;
+  // Der Host laedt nach dem Spielstart im Hintergrund weiter (siehe
+  // _continueStreamingRounds() in host.js) und feuert dabei WEITER
+  // ui:map-resolving - das soll die Lobby-UI, die der Spieler laengst
+  // verlassen hat, nicht mehr wieder einblenden.
+  if (!document.getElementById('screen-lobby').classList.contains('active')) return;
+  el('lobby-hint').textContent = '';
+  const bar = el('lobby-load-progress');
+  bar.classList.remove('hidden');
+  const pct = target > 0 ? Math.min(100, Math.round((found / target) * 100)) : 0;
+  el('lobby-load-progress-fill').style.width = `${pct}%`;
+  el('lobby-load-progress-label').textContent = `Suche 360°-Panoramen… (${found}/${target} gefunden)`;
+}
+
+function hideLoadProgress() {
+  el('lobby-load-progress').classList.add('hidden');
+}
+
 async function startGameFromLobby(seed) {
   sound.playClick();
   const startBtn = el('btn-start-game');
@@ -709,6 +733,7 @@ async function startGameFromLobby(seed) {
   } catch (err) {
     console.error(err);
     hint.textContent = previousHint;
+    hideLoadProgress();
     startBtn.disabled = false;
     showToast('Kartenpaket konnte nicht geladen werden.');
   }
@@ -1053,7 +1078,12 @@ function renderRoundStart() {
     : 'Foto: Matthew Petroff · CC BY-SA 4.0';
 
   const scopeEl = el('minimap-scope');
-  const isDefaultPool = !state.pool || state.pool.id === 'starter-pool';
+  // 'weltweit' ist die feste ID des Standardpakets (siehe getMapSetDetail()
+  // in app.js, das die intern abweichende "starter-pool"-ID aus
+  // weltweit.json auf die Index-ID normalisiert) - fuer dieses eine Paket
+  // bleibt das "Modus: ..."-Label bewusst ausgeblendet, es ist schliesslich
+  // der Normalfall und keine besondere Auswahl.
+  const isDefaultPool = !state.pool || state.pool.id === 'weltweit';
   scopeEl.textContent = isDefaultPool ? '' : `Modus: ${state.pool.name}`;
   scopeEl.classList.toggle('hidden', isDefaultPool);
 
@@ -1280,6 +1310,7 @@ function animateCounter(elEl, from, to, duration = 700) {
 function renderRoundResult({ results, actual, actualMeta }) {
   clearInterval(hudTimerInterval);
   showScreen('result');
+  el('result-next-hint').classList.remove('buffering');
 
   el('result-round-index').textContent = String(state.round.index + 1);
   el('result-round-total').textContent = String(state.round.total);
@@ -1787,15 +1818,29 @@ function wireBusEvents() {
     // vom Host per GAME_START/ROUND_START/ROUND_RESULT (siehe net/host.js).
     // Heatmap-Modus hat kein Kartenpaket/keine Panoramen - eigener Screen.
     if (state.settings.mode !== 'heatmap') showScreen('hud');
+    hideLoadProgress();
   });
   bus.on('ui:heatmap-round-started', renderHeatmapRoundStart);
   bus.on('ui:heatmap-guess-result', renderHeatmapGuessResult);
   bus.on('ui:heatmap-activity', renderHeatmapActivity);
   bus.on('ui:heatmap-round-result', renderHeatmapRoundResult);
-  bus.on('ui:map-resolving', () => showToast('Kartenpaket wird geladen…'));
+  bus.on('ui:map-resolving', renderLoadProgress);
   bus.on('ui:map-resolve-failed', () => {
+    hideLoadProgress();
     showToast('Für dieses Kartenpaket wurden keine Bilder gefunden.');
     renderLobby();
+  });
+  bus.on('ui:round-buffering', () => {
+    clearInterval(resultCountdownInterval);
+    const hint = el('result-next-hint');
+    hint.textContent = 'Generiere nächste Location…';
+    hint.classList.add('buffering');
+    el('btn-advance-round').hidden = true;
+  });
+  bus.on('ui:round-cap-adjusted', ({ roundCount }) => {
+    showToast('Kartenpaket erschöpft. Spiel endet nach dieser Runde.');
+    el('hud-round-total').textContent = String(roundCount).padStart(2, '0');
+    renderRoundProgress();
   });
   bus.on('ui:round-started', renderRoundStart);
   bus.on('ui:player-guessed', ({ peerId }) => {

@@ -10,11 +10,17 @@ import {
   haversineDistanceKm,
 } from '../core/scoring.js';
 import { makeSeed, mulberry32 } from '../core/rng.js';
-import { resolveRoundLocations, computeMapSetBounds } from '../core/pool-loader.js';
+import { streamRoundLocations, computeMapSetBounds } from '../core/pool-loader.js';
 import { ensureCountryData, findCountryAtPointSync } from '../core/country-lookup.js';
 import { ensureCountryStore, randomCountry } from '../core/country-store.js';
 
 const HEATMAP_WIN_POINTS = 1000;
+// Nach diesen ersten paar fertig geladenen Runden startet das Spiel schon,
+// waehrend der Rest im Hintergrund weiterlaedt (siehe startGame()/
+// _continueStreamingRounds() unten) - "Runde 1 und idealerweise Runde 2
+// als direkter Puffer", damit ein schneller Spieler nicht sofort in eine
+// Wartesituation laeuft.
+const MIN_STREAM_BUFFER = 2;
 
 const ROUND_RESULT_DISPLAY_MS = 8000;
 const LEAVE_GRACE_MS = 15000;
@@ -266,14 +272,41 @@ export class HostController {
       this.countryFeatures = await ensureCountryData();
     }
 
-    bus.emit('ui:map-resolving');
-    const resolved = await resolveRoundLocations(mapSet, state.settings.roundCount, seed);
-    if (resolved.length === 0) {
+    this.roundLocations = [];
+    this._targetRoundCount = state.settings.roundCount;
+    this._waitingForRoundIndex = null;
+
+    // Asynchrones Runden-Streaming statt auf ALLE roundCount Runden zu
+    // warten, bevor das Spiel ueberhaupt beginnt: bei lueckenhafter
+    // Mapillary-Abdeckung (viele Regionen ohne Treffer im 50m-Radius)
+    // konnte das bisher lange dauern, obwohl fuer den Spielstart nur die
+    // ERSTE Runde wirklich noetig ist. Die ersten MIN_STREAM_BUFFER Runden
+    // werden hier abgewartet, der Rest laedt in _continueStreamingRounds()
+    // im Hintergrund weiter, waehrend bereits gespielt wird.
+    const generator = streamRoundLocations(mapSet, this._targetRoundCount, seed);
+    const minBuffer = Math.min(MIN_STREAM_BUFFER, this._targetRoundCount);
+
+    bus.emit('ui:map-resolving', { found: 0, target: this._targetRoundCount });
+    let exhausted = false;
+    while (this.roundLocations.length < minBuffer) {
+      const { value, done } = await generator.next();
+      if (done) {
+        exhausted = true;
+        break;
+      }
+      this.roundLocations.push(value);
+      bus.emit('ui:map-resolving', { found: this.roundLocations.length, target: this._targetRoundCount });
+    }
+
+    if (this.roundLocations.length === 0) {
       bus.emit('ui:map-resolve-failed');
       return;
     }
-    this.roundLocations = resolved;
-    state.round.total = this.roundLocations.length;
+    // Kartenpaket konnte nicht mal den Mindestpuffer liefern - die
+    // urspruenglich gewuenschte Rundenzahl war von Anfang an zu hoch fuer
+    // dieses Paket, kein Hintergrund-Nachladen mehr noetig.
+    if (exhausted) this._targetRoundCount = this.roundLocations.length;
+    state.round.total = this._targetRoundCount;
 
     // Nur Name/Quelle/grobe Bounding-Box gehen an die Mitspieler - NICHT die
     // vollstaendige Standortliste mit echten Koordinaten. Die haelt nur der
@@ -283,7 +316,7 @@ export class HostController {
       makeMessage(
         MSG.GAME_START,
         {
-          roundCount: this.roundLocations.length,
+          roundCount: this._targetRoundCount,
           timeLimitMs: state.settings.timeLimitMs,
           mode: state.settings.mode,
           modifier: state.settings.modifier,
@@ -298,13 +331,68 @@ export class HostController {
     );
     bus.emit('ui:game-started');
     this._startRound(0);
+
+    if (!exhausted) this._continueStreamingRounds(generator);
+  }
+
+  /**
+   * Laedt im Hintergrund weiter, waehrend das Spiel schon laeuft, bis
+   * this._targetRoundCount erreicht ist. Wartet ein Spieler gerade auf
+   * genau die Runde, die soeben eintrifft (Buffer Underrun, siehe
+   * _startRound()), wird sie sofort nachgestartet.
+   */
+  async _continueStreamingRounds(generator) {
+    while (this.roundLocations.length < this._targetRoundCount) {
+      const { value, done } = await generator.next();
+      if (done) {
+        this._finalizeRoundCap(this.roundLocations.length);
+        // Wartet der Spieler ausgerechnet auf eine Runde, die es wegen des
+        // erschoepften Kartenpakets nie geben wird, kommt _startRound() fuer
+        // sie nie erneut - dann muss diese Hintergrund-Schleife selbst das
+        // Spielende anstossen, statt den Spieler auf ewig warten zu lassen.
+        if (this._waitingForRoundIndex != null) {
+          this._waitingForRoundIndex = null;
+          this._endGame();
+        }
+        return;
+      }
+      this.roundLocations.push(value);
+      bus.emit('ui:map-resolving', { found: this.roundLocations.length, target: this._targetRoundCount });
+
+      const justArrivedIndex = this.roundLocations.length - 1;
+      if (this._waitingForRoundIndex === justArrivedIndex) {
+        this._waitingForRoundIndex = null;
+        this._startRound(justArrivedIndex);
+      }
+    }
+  }
+
+  /** Kartenpaket konnte die urspruenglich gewuenschte Rundenzahl am Ende doch
+   * nicht liefern - senkt sie nachtraeglich und informiert alle Mitspieler. */
+  _finalizeRoundCap(actualCount) {
+    if (actualCount >= this._targetRoundCount) return;
+    this._targetRoundCount = actualCount;
+    state.round.total = actualCount;
+    this.pm.broadcast(makeMessage(MSG.ROUND_CAP_ADJUSTED, { roundCount: actualCount }, state.self.id));
+    bus.emit('ui:round-cap-adjusted', { roundCount: actualCount });
   }
 
   _startRound(index) {
     const location = this.roundLocations[index];
+    if (!location) {
+      // Buffer Underrun: die naechste Runde ist noch nicht fertig geladen -
+      // _continueStreamingRounds() ruft _startRound(index) automatisch
+      // erneut auf, sobald sie eintrifft. Auch an Mitspieler broadcasten,
+      // nicht nur lokal emittieren - sonst saehe nur der Host selbst die
+      // Wartemeldung, waehrend Mitspieler auf einer stehengebliebenen Runde haengen.
+      this._waitingForRoundIndex = index;
+      this.pm.broadcast(makeMessage(MSG.ROUND_BUFFERING, { roundIndex: index }, state.self.id));
+      bus.emit('ui:round-buffering');
+      return;
+    }
     state.round = {
       index,
-      total: this.roundLocations.length,
+      total: this._targetRoundCount,
       panoramaUrl: location.panoramaUrl,
       startTimestamp: Date.now(),
       timeLimitMs: state.settings.timeLimitMs,
@@ -440,7 +528,7 @@ export class HostController {
     );
     bus.emit('ui:round-result', { results, actual, actualMeta });
 
-    const isLastRound = state.round.index >= this.roundLocations.length - 1;
+    const isLastRound = state.round.index >= this._targetRoundCount - 1;
     clearTimeout(this.nextRoundTimer);
     this.nextRoundTimer = setTimeout(() => {
       if (isLastRound || eliminatedPlayerId) this._endGame();
@@ -702,7 +790,7 @@ export class HostController {
       else this._startHeatmapRound(state.round.index + 1);
       return;
     }
-    const isLastRound = state.round.index >= this.roundLocations.length - 1;
+    const isLastRound = state.round.index >= this._targetRoundCount - 1;
     const eliminated = state.settings.mode === 'hp' && [...state.hp.values()].some((hp) => hp <= 0);
     if (isLastRound || eliminated) this._endGame();
     else this._startRound(state.round.index + 1);

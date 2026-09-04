@@ -203,6 +203,89 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
   throw new Error(`Unbekannte Kartenpaket-Quelle: ${mapSet.source}`);
 }
 
+// Groesse der ALLERERSTEN Welle in streamRoundLocations() - bewusst klein
+// (statt sofort alle roundCount Regionen auf einmal anzufragen), damit
+// Runde 1 (und ein kleiner Puffer als Runde 2) fertig sind, ohne auf den
+// Rest einer z.B. 10-Runden-Partie zu warten. Alle Wellen DANACH laufen wie
+// bisher in voller Groesse im Hintergrund weiter (siehe HostController in
+// net/host.js, der das Spiel schon nach dieser ersten kleinen Welle startet).
+const STREAM_FIRST_WAVE = 2;
+
+/**
+ * Wie resolveRoundLocations(), liefert die Ergebnisse aber EINZELN, sobald
+ * sie fertig sind, statt erst am Ende alle auf einmal zurueckzugeben - damit
+ * der Host ein Spiel starten kann, sobald die ersten paar Runden stehen,
+ * waehrend der Rest im Hintergrund weiterlaedt (siehe net/host.js
+ * startGame()/_continueStreamingRounds()). resolveRoundLocations() selbst
+ * bleibt unveraendert (u. a. von bestehenden Tests direkt genutzt) - diese
+ * Funktion dupliziert bewusst dieselbe Wellen-/Fallback-Logik statt sie
+ * gemeinsam zu nutzen, um das Risiko fuer den bestehenden, gut getesteten
+ * Pfad bei Null zu halten.
+ */
+export async function* streamRoundLocations(mapSet, roundCount, seed) {
+  if (mapSet.source === 'static') {
+    for (const loc of pickUniqueLocations(mapSet.locations, roundCount, seed)) yield loc;
+    return;
+  }
+
+  if (mapSet.source !== 'mapillary') {
+    throw new Error(`Unbekannte Kartenpaket-Quelle: ${mapSet.source}`);
+  }
+
+  const countryFeatures = await ensureCountryData().catch(() => null);
+  const rand = mulberry32(seed);
+  const pool = pickUniqueLocations(mapSet.regions, mapSet.regions.length, seed);
+  const resolveAttempts = resolveAttemptBudget(pool.length);
+
+  let resolved = 0;
+  let attempts = 0;
+  let cursor = 0;
+  const usedIds = new Set();
+
+  while (resolved < roundCount && attempts < resolveAttempts) {
+    const stillNeeded = roundCount - resolved;
+    const attemptsLeft = resolveAttempts - attempts;
+    const waveCap = resolved === 0 ? Math.min(STREAM_FIRST_WAVE, stillNeeded) : stillNeeded;
+    const waveSize = Math.min(waveCap, attemptsLeft, pool.length);
+    if (waveSize <= 0) break;
+
+    const wave = [];
+    for (let i = 0; i < waveSize; i++) {
+      wave.push(pool[cursor % pool.length]);
+      cursor++;
+    }
+    attempts += wave.length;
+
+    const jittered = await Promise.all(wave.map((region) => ensureOnLand(jitterRegion(region, rand), region, countryFeatures, rand)));
+    const settled = await Promise.allSettled(
+      jittered.map((region, i) => fetchPanoramaForRegion(region, rand).then((loc) => ({ loc, region: wave[i] })))
+    );
+    for (const result of settled) {
+      if (result.status === 'fulfilled' && result.value.loc) {
+        recordVerifiedEntry(mapSet.id, result.value.loc, result.value.region.id);
+        usedIds.add(result.value.loc.id);
+        resolved++;
+        yield result.value.loc;
+      } else if (result.status === 'rejected') {
+        console.error('Mapillary-Abruf fehlgeschlagen, versuche Ersatz-Region:', result.reason);
+      }
+    }
+  }
+
+  // Gleicher Verified-Image-Pool-Rueckfallschritt wie in resolveRoundLocations().
+  if (resolved < roundCount) {
+    const cached = shuffleCopy(loadVerifiedEntries(mapSet.id), rand).filter((e) => !usedIds.has(`mapillary-${e.imageId}`));
+    for (const entry of cached) {
+      if (resolved >= roundCount) break;
+      const location = await fetchPanoramaById(entry.imageId, entry);
+      if (location) {
+        resolved++;
+        yield location;
+      }
+    }
+  }
+}
+
 function shuffleCopy(arr, rand = Math.random) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
