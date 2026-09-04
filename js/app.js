@@ -2150,7 +2150,32 @@ function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   // file:// oder ein Dev-Server ohne HTTPS/localhost wuerden hier ohnehin
   // ablehnen - der catch() faengt das ab, statt den Boot zu stoeren.
-  navigator.serviceWorker.register('./sw.js').catch((err) => console.warn('Service Worker nicht registriert:', err.message));
+  navigator.serviceWorker
+    .register('./sw.js')
+    .then((reg) => {
+      // Browser pruefen von sich aus nur passiv/gedrosselt auf ein neues
+      // sw.js (je nach Browser bis zu 24h) - live erlebt: ein bereits
+      // deployter Fix blieb dadurch fuer wiederkehrende Spieler unsichtbar,
+      // bis sie zufaellig/durch manuelles Cache-Leeren einen frischen
+      // Registrierungs-Zyklus ausloesten. update() stoesst die Pruefung
+      // jetzt bei JEDEM Seitenaufruf sofort selbst an, statt auf den
+      // Browser-Timer zu warten.
+      reg.update().catch(() => {});
+      // skipWaiting()/clients.claim() im SW sorgen zwar dafuer, dass ein neu
+      // gefundener Service Worker sofort uebernimmt - der bereits im Browser
+      // ausgefuehrte JS-Code DIESER Seite laeuft davon unberuehrt weiter, bis
+      // tatsaechlich neu geladen wird (das kann kein Code nachtraeglich
+      // "hot-patchen"). controllerchange feuert genau in diesem Moment - ein
+      // sichtbarer Hinweis statt eines stillen Zustands, in dem man
+      // unbemerkt mit veraltetem Code weiterspielt.
+      let announced = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (announced) return;
+        announced = true;
+        showToast('Neue Version verfügbar — bitte einmal neu laden.', 8000);
+      });
+    })
+    .catch((err) => console.warn('Service Worker nicht registriert:', err.message));
 }
 
 async function boot() {
