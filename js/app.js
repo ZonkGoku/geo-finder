@@ -637,6 +637,34 @@ function renderHpBars() {
   }
 }
 
+const PANO_FADE_MS = 180;
+const GUESS_BTN_DEFAULT_LABEL = 'Tipp best&auml;tigen';
+
+// PanoViewer.load() destroys and recreates the whole Pannellum/WebGL
+// instance every round (the library has no "swap image in place" API for a
+// single-scene viewer) - that abrupt teardown was the visible "flackern"
+// between rounds. Cant avoid the destroy/recreate itself, but a short fade-
+// to-black-and-back around it turns the flash into a deliberate transition.
+// Combined with PRELOAD_ROUND (net/host.js + net/client.js), the actual
+// pannellum.viewer() call below almost always resolves from an already-
+// cached image, so onLoad fires near-instantly and the fade is the only
+// perceptible delay left.
+function transitionPanorama() {
+  const container = el('pano-container');
+  container.classList.add('pano-fade-out');
+  setTimeout(() => {
+    el('pano-loading').classList.remove('hidden');
+    panoViewer.load(state.round.panoramaUrl, {
+      vaov: state.round.vaov,
+      modifier: state.settings.modifier,
+      onLoad: () => {
+        el('pano-loading').classList.add('hidden');
+        container.classList.remove('pano-fade-out');
+      },
+    });
+  }, PANO_FADE_MS);
+}
+
 function renderRoundStart() {
   showScreen('hud');
   ensureHudWidgets();
@@ -674,12 +702,7 @@ function renderRoundStart() {
   el('btn-zoom-in').classList.toggle('hidden', zoomLocked);
   el('btn-zoom-out').classList.toggle('hidden', zoomLocked);
 
-  el('pano-loading').classList.remove('hidden');
-  panoViewer.load(state.round.panoramaUrl, {
-    vaov: state.round.vaov,
-    modifier: state.settings.modifier,
-    onLoad: () => el('pano-loading').classList.add('hidden'),
-  });
+  transitionPanorama();
 
   guessMap.reset();
   if (state.round.index === 0) {
@@ -688,7 +711,8 @@ function renderRoundStart() {
   el('minimap').classList.remove('expanded');
   const confirmBtn = el('btn-confirm-guess');
   confirmBtn.disabled = true;
-  confirmBtn.classList.remove('ready');
+  confirmBtn.classList.remove('ready', 'locked');
+  confirmBtn.innerHTML = GUESS_BTN_DEFAULT_LABEL;
 
   renderPeerStatus();
   updateConnectionBanner();
@@ -764,6 +788,11 @@ function wireHudControls() {
     const btn = el('btn-confirm-guess');
     btn.disabled = true;
     btn.classList.remove('ready');
+    // Sofortiges "Locked"-Feedback statt nur grau/inaktiv zu werden - das
+    // Ergebnis kommt erst, wenn alle getippt haben oder der Timer ablaeuft,
+    // bis dahin soll sichtbar sein, dass der Tipp WIRKLICH raus ist.
+    btn.classList.add('locked');
+    btn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span> Tipp abgegeben';
     showToast('Tipp abgegeben');
   });
 

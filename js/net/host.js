@@ -264,6 +264,20 @@ export class HostController {
     bus.emit('ui:round-started');
     preloadImage(this.roundLocations[index + 1]?.panoramaUrl);
 
+    // Mitspielern denselben Vorsprung geben wie dem Host selbst: nur die
+    // rohe Foto-URL der NAECHSTEN Runde, keine Koordinaten/Hinweise/Namen -
+    // wer das Bild sieht, kennt (wie bei der aktuellen Runde auch) noch
+    // nicht dessen tatsaechliche Position. Laedt der Browser das Bild schon
+    // waehrend der laufenden Runde vor, steht es bei ROUND_START fuer
+    // Runde N+1 sofort aus dem Cache bereit statt neu geladen werden zu
+    // muessen (das war der spuerbare Ruckler beim Rundenwechsel).
+    const nextLocation = this.roundLocations[index + 1];
+    if (nextLocation) {
+      this.pm.broadcast(
+        makeMessage(MSG.PRELOAD_ROUND, { roundIndex: index + 1, panoramaUrl: nextLocation.panoramaUrl }, state.self.id)
+      );
+    }
+
     clearTimeout(this.roundTimer);
     // timeLimitMs === null bedeutet "unbegrenzt" - dann beendet nur
     // "alle haben getippt" die Runde, kein Timeout.

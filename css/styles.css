@@ -142,9 +142,20 @@ button{ font-family:inherit; color:inherit; }
 
 .device-screen{ position:relative; min-height:600px; }
 .screen{ display:none; padding:36px; min-height:600px; }
-.screen.active{ display:block; animation: fade .25s ease; }
-@media (prefers-reduced-motion: reduce){ .screen.active{ animation:none; } }
+.screen.active{ display:block; animation: fade 260ms cubic-bezier(.2,.8,.2,1); }
+/* router.js legt den bisherigen Screen waehrend des Uebergangs kurz absolut
+   ueber den neuen (statt ihn abrupt auf display:none zu setzen), damit
+   beide sich per Crossfade ueberlappen statt sich hart abzuloesen. */
+.screen.leaving{
+  display:block; position:absolute; inset:0; z-index:5; pointer-events:none;
+  animation: screenLeave 220ms ease forwards;
+}
+@media (prefers-reduced-motion: reduce){
+  .screen.active{ animation:none; }
+  .screen.leaving{ animation:none; opacity:0; }
+}
 @keyframes fade{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:none; } }
+@keyframes screenLeave{ from{ opacity:1; transform:none; } to{ opacity:0; transform:translateY(-8px) scale(0.99); } }
 
 .eyebrow{ font-size:0.72rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent-2); font-weight:600; margin:0 0 8px; }
 .lede{ color:var(--text-dim); font-size:0.95rem; max-width:46ch; margin:8px 0 0; }
@@ -320,7 +331,9 @@ button{ font-family:inherit; color:inherit; }
 /* ===================== HUD ===================== */
 #screen-hud{ padding:0; min-height:600px; position:relative; overflow:hidden; }
 .pano{ position:absolute; inset:0; overflow:hidden; background:#0d1420; }
-.pano-container{ position:absolute; inset:0; }
+.pano-container{ position:absolute; inset:0; opacity:1; transition:opacity 220ms ease; }
+.pano-container.pano-fade-out{ opacity:0; }
+@media (prefers-reduced-motion: reduce){ .pano-container{ transition:none; } }
 .pano-credit{ position:absolute; left:0; right:0; bottom:7px; z-index:1; text-align:center; font-size:0.6rem; letter-spacing:0.02em; color:rgba(237,239,244,0.55); margin:0; pointer-events:none; }
 .hud-top{ position:relative; z-index:2; display:flex; justify-content:space-between; align-items:flex-start; padding:22px 26px; pointer-events:none; }
 /* Frosted-Glass-Pills fuers HUD: dunkles Halbtransparent + Blur + duenner
@@ -363,6 +376,25 @@ button{ font-family:inherit; color:inherit; }
 }
 .guess-btn:hover:not(:disabled){ transform:translateY(-2px) scale(1.03); filter:brightness(1.06); }
 .guess-btn:disabled{ background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.28); box-shadow:none; }
+/* "Locked"-Zustand nach dem Absenden: bleibt sichtbar/farbig statt flach
+   grau zu werden ("inaktiv" wirkt wie ein Fehler, nicht wie ein Erfolg) -
+   sanftes Pulsieren + Spinner, bis das Rundenergebnis eintrifft. */
+.guess-btn.locked{
+  background:linear-gradient(135deg, var(--accent), #ff9a52); color:#fff; opacity:0.92;
+  box-shadow:0 12px 26px -10px rgba(255,122,51,0.5); cursor:default;
+  display:inline-flex; align-items:center; gap:10px;
+  animation:guessLockedPulse 1.6s ease-in-out infinite;
+}
+@keyframes guessLockedPulse{ 0%,100%{ opacity:0.92; } 50%{ opacity:0.7; } }
+.btn-spinner{
+  width:15px; height:15px; border-radius:50%; flex:none;
+  border:2px solid rgba(255,255,255,0.35); border-top-color:#fff;
+  animation:spin .7s linear infinite;
+}
+@media (prefers-reduced-motion: reduce){
+  .guess-btn.locked{ animation:none; }
+  .btn-spinner{ animation:spin 1.4s linear infinite; }
+}
 
 .minimap-wrap{ position:absolute; right:24px; bottom:24px; z-index:3; display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
 .minimap-scope{

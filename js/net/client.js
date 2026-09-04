@@ -17,6 +17,15 @@ import { MSG, makeMessage } from './protocol.js';
 const GUESS_RETRY_MS = 1500;
 const MAX_GUESS_RETRIES = 6;
 
+// Selbes Prinzip wie preloadImage() in host.js: den Browser die naechste
+// Runden-URL schon herunterladen lassen, bevor sie offiziell gebraucht
+// wird, damit der Rundenwechsel nicht mehr am Bild-Download haengt.
+function preloadImage(url) {
+  if (!url || typeof Image === 'undefined') return;
+  const img = new Image();
+  img.src = url;
+}
+
 export class ClientController {
   constructor(peerManager) {
     this.pm = peerManager;
@@ -142,6 +151,12 @@ export class ClientController {
         };
         this._clearPendingGuess(); // eine neue Runde macht einen Retry fuer die alte sinnlos
         bus.emit('ui:round-started');
+        break;
+      case MSG.PRELOAD_ROUND:
+        // Nur die Foto-URL der naechsten Runde, keine Koordinaten/Hinweise -
+        // sobald ROUND_START fuer diese Runde tatsaechlich eintrifft, liegt
+        // das Bild schon im Browser-Cache statt neu geladen werden zu muessen.
+        preloadImage(message.payload.panoramaUrl);
         break;
       case MSG.PLAYER_GUESSED:
         state.round.guessedPlayerIds.add(message.payload.playerId);
