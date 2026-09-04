@@ -25,6 +25,13 @@ export const MSG = {
   HEATMAP_GUESS_RESULT: 'HEATMAP_GUESS_RESULT', // Host -> NUR der ratende Spieler: eigene Distanz/Farbe
   HEATMAP_ACTIVITY: 'HEATMAP_ACTIVITY', // Host -> alle ANDEREN: nur Distanz, NIE welches Land geraten wurde
   HEATMAP_WIN: 'HEATMAP_WIN', // Host -> alle: Runde vorbei, Zielland + Gewinner werden aufgedeckt
+  // Asynchrones Runden-Streaming (siehe net/host.js startGame()): das Spiel
+  // startet schon, sobald die ersten Runden fertig sind, waehrend der Rest
+  // im Hintergrund weiterlaedt. Reicht das Kartenpaket am Ende trotzdem
+  // nicht fuer die urspruenglich gewuenschte Rundenzahl, senkt der Host sie
+  // nachtraeglich und informiert alle Mitspieler darueber.
+  ROUND_CAP_ADJUSTED: 'ROUND_CAP_ADJUSTED',
+  ROUND_BUFFERING: 'ROUND_BUFFERING', // Host -> alle: naechste Runde ist noch nicht fertig geladen, bitte kurz warten
 };
 
 export function makeMessage(type, payload, senderId) {

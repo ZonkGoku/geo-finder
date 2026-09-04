@@ -151,6 +151,26 @@ export class ClientController {
         bus.emit('ui:game-started');
         break;
       case MSG.ROUND_START:
+        // Heatmap-Runden broadcasten denselben ROUND_START wie die Panorama-
+        // Modi (gleicher Rundenzaehler/Timer-Mechanismus), aber OHNE
+        // panoramaUrl/hint/vaov - das generische ui:round-started wuerde
+        // hier renderRoundStart() ausloesen, das unbedingt auf den HUD-
+        // Screen wechselt und versucht, ein nicht existierendes Panorama zu
+        // laden (genau der live gemeldete Bug: Mitspieler haengt auf
+        // "Panorama lädt…" fest). Fuer Heatmap-Runden also das dedizierte
+        // ui:heatmap-round-started emittieren, das den eigenen Screen zeigt.
+        if (state.settings.mode === 'heatmap') {
+          state.round = {
+            index: message.payload.roundIndex,
+            total: state.round.total,
+            startTimestamp: message.payload.startTimestamp,
+            timeLimitMs: message.payload.timeLimitMs,
+            actual: null,
+            guessedPlayerIds: new Set(),
+          };
+          bus.emit('ui:heatmap-round-started', { roundIndex: message.payload.roundIndex });
+          break;
+        }
         state.round = {
           index: message.payload.roundIndex,
           total: state.round.total,
@@ -216,6 +236,13 @@ export class ClientController {
       }
       case MSG.GAME_OVER:
         bus.emit('ui:game-over', { finalScores: message.payload.finalScores });
+        break;
+      case MSG.ROUND_BUFFERING:
+        bus.emit('ui:round-buffering');
+        break;
+      case MSG.ROUND_CAP_ADJUSTED:
+        state.round.total = message.payload.roundCount;
+        bus.emit('ui:round-cap-adjusted', { roundCount: message.payload.roundCount });
         break;
       case MSG.PLAYER_LEFT:
         state.players.delete(message.payload.playerId);
