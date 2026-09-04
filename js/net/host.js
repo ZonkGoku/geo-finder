@@ -280,7 +280,15 @@ export class HostController {
     }
 
     this.roundLocations = [];
-    this._targetRoundCount = state.settings.roundCount;
+    // Battle Royale hat keine feste Rundenzahl aus der Lobby - genau eine
+    // Elimination pro Runde bedeutet, dass exakt (Spielerzahl - 1) Runden
+    // noetig sind, bis ein Champion uebrig bleibt (siehe
+    // _applyBattleRoyaleElimination() unten). Die Lobby blendet #choice-rounds
+    // fuer diesen Modus deshalb aus (app.js renderLobby()).
+    this._targetRoundCount =
+      state.settings.mode === 'battle-royale'
+        ? Math.max(1, [...state.players.values()].filter((p) => p.connected).length - 1)
+        : state.settings.roundCount;
     this._waitingForRoundIndex = null;
 
     // Asynchrones Runden-Streaming statt auf ALLE roundCount Runden zu
@@ -460,6 +468,10 @@ export class HostController {
   _handleGuess(peerId, payload) {
     if (payload.roundIndex !== state.round.index) return;
     if (state.round.guessedPlayerIds.has(peerId)) return;
+    // Battle Royale: wer schon ausgeschieden ist, ist Zuschauer - der Client
+    // laesst ihn gar nicht erst tippen, der Host bleibt trotzdem autoritativ
+    // und ignoriert einen Tipp ausserhalb der eigenen UI konsequent mit.
+    if (state.eliminatedAtRound.has(peerId)) return;
 
     // Heuristik: wer wenige Sekunden nach dem letzten registrierten
     // Tab-Wechsel dieser Runde tippt, hat vermutlich gerade extern (zweiter
@@ -481,7 +493,9 @@ export class HostController {
     this.pm.broadcast(makeMessage(MSG.PLAYER_GUESSED, { playerId: peerId }, state.self.id));
     bus.emit('ui:player-guessed', { peerId });
 
-    const connectedIds = [...state.players.values()].filter((p) => p.connected).map((p) => p.id);
+    const connectedIds = [...state.players.values()]
+      .filter((p) => p.connected && !state.eliminatedAtRound.has(p.id))
+      .map((p) => p.id);
     const allGuessed = connectedIds.every((id) => state.round.guessedPlayerIds.has(id));
     if (allGuessed) this._endRound();
   }
@@ -509,6 +523,8 @@ export class HostController {
       }
     }
 
+    const royaleEliminatedIds = mode === 'battle-royale' ? this._applyBattleRoyaleElimination(results) : [];
+
     const resolvedLocation = this.roundLocations[state.round.index] || {};
     const actualMeta = {
       name: resolvedLocation.name ?? null,
@@ -529,18 +545,46 @@ export class HostController {
           actualHint: actualMeta.hint,
           actualFunFact: actualMeta.funFact,
           results,
+          eliminatedPlayerIds: royaleEliminatedIds,
         },
         state.self.id
       )
     );
-    bus.emit('ui:round-result', { results, actual, actualMeta });
+    bus.emit('ui:round-result', { results, actual, actualMeta, eliminatedPlayerIds: royaleEliminatedIds });
 
     const isLastRound = state.round.index >= this._targetRoundCount - 1;
+    const royaleDone =
+      mode === 'battle-royale' &&
+      [...state.players.values()].filter((p) => !state.eliminatedAtRound.has(p.id)).length <= 1;
     clearTimeout(this.nextRoundTimer);
     this.nextRoundTimer = setTimeout(() => {
-      if (isLastRound || eliminatedPlayerId) this._endGame();
+      if (isLastRound || eliminatedPlayerId || royaleDone) this._endGame();
       else this._startRound(state.round.index + 1);
     }, ROUND_RESULT_DISPLAY_MS);
+  }
+
+  /**
+   * Battle Royale: der/die Spieler mit der schlechtesten Leistung dieser
+   * Runde scheiden aus (kein Tipp zaehlt als schlechter als jede reale
+   * Distanz). Bei Gleichstand scheiden ALLE Gleichstand-Spieler gemeinsam
+   * aus - ausser das waere die gesamte noch aktive Runde auf einmal, dann
+   * bleibt niemand ohne Champion zurueck und die Elimination faellt fuer
+   * diese Runde aus. Aendert state.eliminatedAtRound direkt (Host bleibt
+   * Autoritaet), gibt die neu ausgeschiedenen IDs fuers Broadcast zurueck.
+   */
+  _applyBattleRoyaleElimination(results) {
+    const active = results.filter((r) => !state.eliminatedAtRound.has(r.playerId));
+    if (active.length <= 1) return [];
+
+    const worstValue = (r) => (r.noGuess ? Infinity : r.distanceKm);
+    const worst = Math.max(...active.map(worstValue));
+    const losers = active.filter((r) => worstValue(r) === worst);
+    if (losers.length >= active.length) return [];
+
+    for (const loser of losers) {
+      state.eliminatedAtRound.set(loser.playerId, state.round.index);
+    }
+    return losers.map((l) => l.playerId);
   }
 
   _scorePointsRound(actual, guesses) {
@@ -548,6 +592,10 @@ export class HostController {
     const results = [];
 
     for (const player of state.players.values()) {
+      // Battle Royale: wer bereits ausgeschieden ist, taucht in KEINEM
+      // weiteren Rundenergebnis mehr auf - kein Tipp, kein Punktezuwachs,
+      // reine Zuschauerrolle (siehe _applyBattleRoyaleElimination()).
+      if (state.eliminatedAtRound.has(player.id)) continue;
       const guess = guesses.get(player.id) || null;
       const flagged = Boolean(guess?.suspicious);
       let { distanceKm, score: baseScore, noGuess } = scoreGuess(guess, actual, state.pool.scaleKm);
@@ -875,7 +923,10 @@ export class HostController {
     }
     const isLastRound = state.round.index >= this._targetRoundCount - 1;
     const eliminated = state.settings.mode === 'hp' && [...state.hp.values()].some((hp) => hp <= 0);
-    if (isLastRound || eliminated) this._endGame();
+    const royaleDone =
+      state.settings.mode === 'battle-royale' &&
+      [...state.players.values()].filter((p) => !state.eliminatedAtRound.has(p.id)).length <= 1;
+    if (isLastRound || eliminated || royaleDone) this._endGame();
     else this._startRound(state.round.index + 1);
   }
 
@@ -886,6 +937,7 @@ export class HostController {
       perRound: s.perRound,
       bestStreak: s.bestStreak,
       hp: state.hp.get(playerId) ?? null,
+      eliminatedAtRound: state.eliminatedAtRound.get(playerId) ?? null,
     }));
     this.pm.broadcast(makeMessage(MSG.GAME_OVER, { finalScores }, state.self.id));
     bus.emit('ui:game-over', { finalScores });

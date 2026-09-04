@@ -698,10 +698,23 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 
 /* ===================== RESULT ===================== */
 .result-head{ display:flex; justify-content:space-between; align-items:baseline; gap:16px; flex-wrap:wrap; }
+.royale-remaining{
+  font-family:var(--font-mono); font-size:0.78rem; font-weight:600; letter-spacing:0.04em; color:var(--text-dim);
+  background:var(--surface-raised); border:1px solid var(--line); padding:6px 14px; border-radius:999px;
+}
+.royale-remaining.hidden{ display:none; }
 .result-grid{ display:grid; grid-template-columns:1.15fr 0.85fr; gap:26px; margin-top:22px; }
 .radar-big{ position:relative; aspect-ratio:1/0.72; background:var(--surface-raised); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
 .score-list{ display:flex; flex-direction:column; gap:12px; }
 .score-card{ background:var(--surface-raised); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+/* Battle Royale: die Karte des/der gerade Ausgeschiedenen bleibt in der
+   Ergebnisliste sichtbar (letzte gewertete Runde), aber sichtbar "vorbei". */
+.score-card.eliminated{ opacity:0.6; border-color:var(--danger); }
+.score-card-eliminated-tag{
+  font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;
+  color:var(--danger); background:color-mix(in srgb, var(--danger) 16%, transparent);
+  padding:2px 8px; border-radius:999px; flex:none;
+}
 .score-card-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
 .score-name{ font-weight:600; font-size:0.92rem; display:flex; align-items:center; gap:8px; }
 .score-points{ font-family:var(--font-mono); font-size:1.15rem; font-weight:600; font-variant-numeric:tabular-nums; opacity:0; animation:scoreFadeIn .3s ease 1.6s forwards; }
@@ -798,6 +811,23 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 
 .peer-dot.offline i{ background:var(--danger) !important; }
 .peer-dot.offline{ border-color:rgba(242,85,74,0.5); }
+/* Battle Royale: ausgeschiedene Spieler bleiben als abgeblendeter Punkt mit
+   durchgestrichenem Kreis sichtbar (statt komplett zu verschwinden) - man
+   sieht auf einen Blick, wer noch im Rennen ist. */
+.peer-dot.eliminated{ opacity:0.4; }
+.peer-dot.eliminated i{ background:var(--text-faint) !important; position:relative; }
+.peer-dot.eliminated i::after{
+  content:""; position:absolute; inset:-1px; border-radius:50%;
+  background:linear-gradient(45deg, transparent 46%, var(--danger) 46% 54%, transparent 54%);
+}
+
+.spectator-banner{
+  position:relative; z-index:2; margin:8px 26px 0; padding:10px 14px; border-radius:12px;
+  background:rgba(0,0,0,0.42); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.1);
+  color:#fff; font-size:0.82rem; max-width:480px;
+}
+.spectator-banner.hidden{ display:none; }
 
 /* ===================== RESULT extras ===================== */
 .fun-fact{ margin-top:14px; padding:14px 16px; background:var(--surface-raised); border:1px solid var(--line); border-radius:14px; }
@@ -1107,6 +1137,11 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 }
 .heatmap-mode-note.hidden{ display:none; }
 .heatmap-only.hidden{ display:none; }
+.battle-royale-mode-note{
+  margin-top:14px; padding:12px 16px; border-radius:10px; font-size:0.82rem; color:var(--text-dim);
+  background:color-mix(in srgb, var(--surface-raised) 60%, transparent); border:1px solid var(--line);
+}
+.battle-royale-mode-note.hidden{ display:none; }
 
 /* "Deine Top 3 Tipps" - kompaktes Panel am linken Rand, damit man bei vielen
    Tipps nicht nur auf die (bei dichten Laendergrenzen schwer lesbaren)

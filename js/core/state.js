@@ -29,7 +29,7 @@ export const state = {
     roundCount: 5,
     timeLimitMs: 90000, // null = unbegrenzt
     mapSetId: 'weltweit',
-    mode: 'points', // 'points' | 'hp'
+    mode: 'points', // 'points' | 'hp' | 'country-streak' | 'heatmap' | 'battle-royale'
     modifier: 'free', // 'free' | 'no-zoom'
     mutators: { fogOfWar: false, brokenCompass: false, noPan: false },
     // Nur im Heatmap-Modus genutzt (siehe net/host.js _startHeatmapGame()):
@@ -40,6 +40,12 @@ export const state = {
   pool: null, // aufgeloestes Kartenpaket (nur Host braucht Koordinaten)
   challenge: null, // { type: 'daily' | 'link', seed } - siehe core/challenge.js, sonst null fuer normale Spiele
   hp: new Map(), // peerId -> number (nur im HP-Duell-Modus genutzt)
+  // peerId -> Rundenindex, in der dieser Spieler in der Battle Royale
+  // ausgeschieden ist (nur in diesem Modus genutzt). Eine fehlende Eintragung
+  // bedeutet "noch aktiv" - der letzte verbliebene Spieler ohne Eintrag ist
+  // der Champion. Doppelt als Zustands- UND Rangierungs-Info genutzt (siehe
+  // net/host.js _applyBattleRoyaleElimination() und app.js renderLeaderboard()).
+  eliminatedAtRound: new Map(),
   round: {
     index: 0,
     total: 0,
@@ -75,6 +81,7 @@ export function resetForNewGame() {
   state.scores = new Map();
   state.roundHistory = [];
   state.hp = new Map();
+  state.eliminatedAtRound = new Map();
   for (const id of state.players.keys()) {
     state.scores.set(id, freshScoreEntry());
     if (state.settings.mode === 'hp') state.hp.set(id, HP_START);

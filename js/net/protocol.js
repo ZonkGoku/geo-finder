@@ -9,6 +9,9 @@ export const MSG = {
   PRELOAD_ROUND: 'PRELOAD_ROUND',
   SUBMIT_GUESS: 'SUBMIT_GUESS',
   PLAYER_GUESSED: 'PLAYER_GUESSED',
+  // results traegt fuer Battle Royale zusaetzlich eliminatedPlayerIds
+  // (leeres Array in jedem anderen Modus) - wer diese Runde ausgeschieden
+  // ist, siehe net/host.js _applyBattleRoyaleElimination().
   ROUND_RESULT: 'ROUND_RESULT',
   GAME_OVER: 'GAME_OVER',
   PLAYER_LEFT: 'PLAYER_LEFT',

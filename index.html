@@ -269,11 +269,16 @@
                   <button type="button" data-value="hp">HP-Duell (6000 HP)</button>
                   <button type="button" data-value="country-streak">Country-Streak</button>
                   <button type="button" data-value="heatmap">Heatmap</button>
+                  <button type="button" data-value="battle-royale">Battle Royale</button>
                 </div>
               </div>
 
               <p class="heatmap-mode-note hidden" id="heatmap-mode-note">
                 Kein Kartenpaket n&ouml;tig: tippe im Spiel Landesnamen, die Weltkarte f&auml;rbt sich nach Entfernung zum Zielland ein.
+              </p>
+
+              <p class="battle-royale-mode-note hidden" id="battle-royale-mode-note">
+                Nach jeder Runde scheidet der schlechteste Tipp aus - die Rundenzahl ergibt sich automatisch aus der Spielerzahl (immer einer weniger), bis nur noch ein Champion übrig bleibt. Braucht mindestens 2 Spieler.
               </p>
 
               <div class="setting-group heatmap-only hidden" id="heatmap-settings-group">
@@ -412,6 +417,7 @@
         </div>
 
         <p class="hint-banner hidden" id="hint-banner"></p>
+        <p class="spectator-banner hidden" id="spectator-banner">&#128064; Du bist ausgeschieden &mdash; schau dir die restliche Partie an</p>
 
         <div class="pano-controls" id="pano-controls">
           <button class="pano-ctrl-btn" id="btn-compass" title="Nach Norden ausrichten" aria-label="Nach Norden ausrichten">
@@ -472,6 +478,7 @@
             <p class="eyebrow">Rundenergebnis</p>
             <h2 style="font-size:1.5rem;">Runde <span id="result-round-index">1</span> von <span id="result-round-total">5</span></h2>
           </div>
+          <span class="royale-remaining hidden" id="royale-remaining"></span>
         </div>
 
         <div class="result-grid">

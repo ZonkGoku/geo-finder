@@ -141,6 +141,7 @@ export class ClientController {
         state.scores = new Map();
         state.roundHistory = [];
         state.hp = new Map();
+        state.eliminatedAtRound = new Map();
         // Nur die leichten Metadaten - NICHT die volle Standortliste mit
         // echten Koordinaten. Die haelt nur der Host, damit hier niemand
         // per DevTools-Netzwerktab die Antworten im Voraus nachschlagen kann.
@@ -237,7 +238,19 @@ export class ClientController {
           actualMeta,
           results: message.payload.results,
         };
-        bus.emit('ui:round-result', { results: message.payload.results, actual: state.round.actual, actualMeta });
+        // Battle Royale: neu ausgeschiedene Spieler ins lokale Zustandsbild
+        // uebernehmen - der Host haelt die Autoritaet (state.eliminatedAtRound
+        // wird ausschliesslich aus diesem vom Host bestimmten Feld befuellt,
+        // nie durch eigene Client-Logik).
+        for (const playerId of message.payload.eliminatedPlayerIds || []) {
+          state.eliminatedAtRound.set(playerId, message.payload.roundIndex);
+        }
+        bus.emit('ui:round-result', {
+          results: message.payload.results,
+          actual: state.round.actual,
+          actualMeta,
+          eliminatedPlayerIds: message.payload.eliminatedPlayerIds || [],
+        });
         break;
       }
       case MSG.GAME_OVER:

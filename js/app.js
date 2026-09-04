@@ -604,6 +604,14 @@ function renderLobby() {
   const isSolo = !state.roomCode;
   const players = [...state.players.values()];
 
+  // Battle Royale eliminiert Spieler - solo (nur man selbst) gibt es
+  // niemanden zum Ausscheiden. Direkt zurueck auf Punkte-Duell statt eine
+  // ungueltige Auswahl anzuzeigen; solo ist der Host immer sich selbst, die
+  // Aenderung ist also rein lokal (kein controller.updateSettings() noetig).
+  if (isSolo && state.settings.mode === 'battle-royale') {
+    state.settings.mode = 'points';
+  }
+
   el('lobby-heading').textContent = isSolo ? 'Solo-Einstellungen' : 'Warten auf Mitspieler';
   el('lobby-share-row').classList.toggle('hidden', isSolo);
   el('lobby-room-code-row').classList.toggle('hidden', isSolo);
@@ -638,14 +646,23 @@ function renderLobby() {
   renderChoiceRow('choice-modifier', state.settings.modifier);
   renderMutators();
 
+  // Battle Royale nur anbieten, wenn ueberhaupt jemand ausscheiden koennte.
+  document.querySelector('#choice-mode button[data-value="battle-royale"]')?.classList.toggle('hidden', isSolo);
+
   // Heatmap-Modus braucht kein Kartenpaket (keine Panoramen) und keine
   // Panorama-Steuerung - stattdessen eigene Regeln (Labels/Gegner-Info/
   // Spielablauf) und ein kurzer Hinweistext statt der Kartenpaket-Auswahl.
   const isHeatmap = state.settings.mode === 'heatmap';
+  const isBattleRoyale = state.settings.mode === 'battle-royale';
   el('lobby-mapset-panel').classList.toggle('hidden', isHeatmap);
   el('heatmap-mode-note').classList.toggle('hidden', !isHeatmap);
   el('heatmap-settings-group').classList.toggle('hidden', !isHeatmap);
   el('panorama-controls-group').classList.toggle('hidden', isHeatmap);
+  el('battle-royale-mode-note').classList.toggle('hidden', !isBattleRoyale);
+  // Die Rundenzahl ergibt sich in diesem Modus automatisch aus der
+  // Spielerzahl (siehe net/host.js startGame()) - der Runden-Wahlschalter
+  // waere hier nur irrefuehrend.
+  el('choice-rounds').closest('.setting-group').classList.toggle('hidden', isBattleRoyale);
   if (isHeatmap) {
     renderChoiceRow('choice-heatmap-labels', state.settings.heatmapLabels);
     renderChoiceRow('choice-heatmap-opponent-info', state.settings.heatmapOpponentInfo);
@@ -825,10 +842,18 @@ function updateMapStyleLabel(labelId, currentStyle) {
   el(labelId).textContent = currentStyle === 'satellite' ? 'Karte' : 'Satellit';
 }
 
+// Battle Royale: ausgeschiedene Spieler sind reine Zuschauer - der Host
+// ignoriert ihre Tipps ohnehin (siehe net/host.js _handleGuess()), das UI
+// laesst sie erst gar nicht tippen.
+function isSelfEliminated() {
+  return state.settings.mode === 'battle-royale' && state.eliminatedAtRound.has(state.self.id);
+}
+
 function ensureHudWidgets() {
   if (!panoViewer) panoViewer = new PanoViewer('pano-container');
   if (!guessMap) {
     guessMap = new GuessMap(el('guess-map-container'), () => {
+      if (isSelfEliminated()) return;
       sound.playPinSet();
       haptics.tapLight();
       const btn = el('btn-confirm-guess');
@@ -1215,9 +1240,19 @@ function renderRoundStart() {
   }
   el('minimap').classList.remove('expanded');
   const confirmBtn = el('btn-confirm-guess');
-  confirmBtn.disabled = true;
   confirmBtn.classList.remove('ready', 'locked');
-  confirmBtn.innerHTML = GUESS_BTN_DEFAULT_LABEL;
+  const eliminated = isSelfEliminated();
+  el('spectator-banner').classList.toggle('hidden', !eliminated);
+  if (eliminated) {
+    // Bleibt fuer den Rest der Partie disabled - der Zuschauer-Zustand endet
+    // nie wieder "mitten in der Runde", anders als das normale disabled=true,
+    // das der Klick auf die Minimap gleich wieder aufhebt.
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '👀 Zuschauer-Modus';
+  } else {
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = GUESS_BTN_DEFAULT_LABEL;
+  }
 
   renderPeerStatus();
   updateConnectionBanner();
@@ -1267,9 +1302,10 @@ function renderPeerStatus() {
   container.innerHTML = '';
   for (const p of state.players.values()) {
     const dot = document.createElement('div');
+    const eliminated = state.eliminatedAtRound.has(p.id);
     const guessed = state.round.guessedPlayerIds.has(p.id);
     const offline = !p.connected;
-    dot.className = `peer-dot${guessed ? '' : ' pending'}${offline ? ' offline' : ''}`;
+    dot.className = `peer-dot${guessed ? '' : ' pending'}${offline ? ' offline' : ''}${eliminated ? ' eliminated' : ''}`;
     dot.innerHTML = `<i style="background:${guessed ? p.color : ''}"></i><span class="peer-dot-name">${escapeHtml(p.name)}</span>`;
     container.appendChild(dot);
   }
@@ -1453,7 +1489,7 @@ function animateCounter(elEl, from, to, duration = 700) {
   requestAnimationFrame(step);
 }
 
-function renderRoundResult({ results, actual, actualMeta }) {
+function renderRoundResult({ results, actual, actualMeta, eliminatedPlayerIds = [] }) {
   clearInterval(hudTimerInterval);
   sound.stopRoundAmbience();
   showScreen('result');
@@ -1461,6 +1497,16 @@ function renderRoundResult({ results, actual, actualMeta }) {
 
   el('result-round-index').textContent = String(state.round.index + 1);
   el('result-round-total').textContent = String(state.round.total);
+
+  const isBattleRoyale = state.settings.mode === 'battle-royale';
+  const remainingEl = el('royale-remaining');
+  if (isBattleRoyale) {
+    const remaining = [...state.players.values()].filter((p) => !state.eliminatedAtRound.has(p.id)).length;
+    remainingEl.textContent = `${remaining} Spieler verbleiben`;
+    remainingEl.classList.remove('hidden');
+  } else {
+    remainingEl.classList.add('hidden');
+  }
 
   if (!resultMap) resultMap = new ResultMap(el('result-map-container'));
   updateMapStyleLabel('result-map-style-label', resultMap.tiles.style);
@@ -1488,7 +1534,8 @@ function renderRoundResult({ results, actual, actualMeta }) {
     const player = state.players.get(r.playerId);
     if (r.playerId === state.self.id) myBestScore = r.score;
     const card = document.createElement('div');
-    card.className = 'score-card';
+    const justEliminated = eliminatedPlayerIds.includes(r.playerId);
+    card.className = justEliminated ? 'score-card eliminated' : 'score-card';
     let meta;
     let barWidth;
     const chips = [];
@@ -1520,7 +1567,7 @@ function renderRoundResult({ results, actual, actualMeta }) {
       .join('');
     card.innerHTML = `
       <div class="score-card-top">
-        <span class="score-name"><span class="avatar" style="width:22px;height:22px;font-size:0.7rem;background:${player?.color || '#8c99b8'};">${(player?.name || '?').charAt(0).toUpperCase()}</span>${escapeHtml(player?.name || 'Spieler')}</span>
+        <span class="score-name"><span class="avatar" style="width:22px;height:22px;font-size:0.7rem;background:${player?.color || '#8c99b8'};">${(player?.name || '?').charAt(0).toUpperCase()}</span>${escapeHtml(player?.name || 'Spieler')}${justEliminated ? '<span class="score-card-eliminated-tag">Ausgeschieden</span>' : ''}</span>
         <span class="score-points">0</span>
       </div>
       <div class="score-meta">${meta}</div>
@@ -1557,6 +1604,11 @@ function renderRoundResult({ results, actual, actualMeta }) {
     } else {
       haptics.tapMedium();
     }
+  }
+  // Battle Royale: eigenes Ausscheiden ueberschreibt das normale Feedback
+  // oben mit einem deutlich spuerbaren Impact statt eines Erfolgs-Tons.
+  if (eliminatedPlayerIds.includes(state.self.id)) {
+    haptics.tapStrong();
   }
 
   const isHost = state.role === 'host';
@@ -1611,7 +1663,11 @@ function renderPodium(sorted) {
         ? `${entry.hp ?? 0} HP`
         : state.settings.mode === 'country-streak'
           ? `${Math.round(entry.total / 1000)}/${entry.perRound.length} richtig`
-          : `${entry.total.toLocaleString('de-DE')} Pkt.`;
+          : state.settings.mode === 'battle-royale'
+            ? entry.eliminatedAtRound == null
+              ? '🏆 Champion'
+              : `Raus in Runde ${entry.eliminatedAtRound + 1}`
+            : `${entry.total.toLocaleString('de-DE')} Pkt.`;
     step.innerHTML = `
       <div class="avatar" style="background:${player?.color || '#8c99b8'};">${initial}</div>
       <div class="podium-name">${escapeHtml(player?.name || 'Spieler')}</div>
@@ -1662,9 +1718,15 @@ function renderLeaderboard({ finalScores }) {
 
   const isHpMode = state.settings.mode === 'hp';
   const isCountryMode = state.settings.mode === 'country-streak';
+  const isBattleRoyale = state.settings.mode === 'battle-royale';
   const sorted = [...finalScores].sort((a, b) => {
     if (isHpMode) return (b.hp ?? 0) - (a.hp ?? 0) || b.total - a.total;
     if (isCountryMode) return b.total - a.total || (b.bestStreak ?? 0) - (a.bestStreak ?? 0);
+    // Battle Royale: Rang kommt aus der Ueberlebensreihenfolge, nicht aus
+    // der Punktsumme (Ueberlebende sammeln zwangslaeufig mehr Runden lang
+    // Punkte als frueh Ausgeschiedene - eliminatedAtRound==null (Champion)
+    // zaehlt hier als "unendlich spaet ausgeschieden").
+    if (isBattleRoyale) return (b.eliminatedAtRound ?? Infinity) - (a.eliminatedAtRound ?? Infinity);
     return b.total - a.total;
   });
   renderPodium(sorted);
@@ -1694,6 +1756,10 @@ function renderLeaderboard({ finalScores }) {
     heading.textContent = 'Country-Streak beendet';
   } else if (state.settings.mode === 'heatmap') {
     heading.textContent = 'Heatmap-Duell beendet';
+  } else if (isBattleRoyale) {
+    const champion = sorted.find((e) => e.eliminatedAtRound == null);
+    const championName = state.players.get(champion?.playerId)?.name;
+    heading.textContent = champion ? `${championName} gewinnt die Battle Royale!` : 'Battle Royale beendet';
   } else {
     heading.textContent = 'Duell beendet';
   }
@@ -1715,6 +1781,11 @@ function renderLeaderboard({ finalScores }) {
     } else if (isCountryMode) {
       const correctCount = Math.round(entry.total / 1000);
       totalLabel = `<div class="num">${correctCount}/${entry.perRound.length}</div><div class="lbl">Bester Streak: ${entry.bestStreak ?? 0}</div>`;
+    } else if (isBattleRoyale) {
+      totalLabel =
+        entry.eliminatedAtRound == null
+          ? `<div class="num">🏆</div><div class="lbl">Champion</div>`
+          : `<div class="num">R${entry.eliminatedAtRound + 1}</div><div class="lbl">Ausgeschieden</div>`;
     } else {
       totalLabel = `<div class="num">${entry.total.toLocaleString('de-DE')}</div><div class="lbl">Punkte</div>`;
     }
