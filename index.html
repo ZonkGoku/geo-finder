@@ -29,8 +29,19 @@
 
   <div class="page-head">
     <div class="brand">
-      <svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="1" y="1" width="38" height="38" rx="11" fill="var(--surface)" stroke="var(--line)" stroke-width="1"/><path d="M20 6 L6 20 L20 34 Z" fill="var(--accent)"/><path d="M20 6 L34 20 L20 34 Z" fill="var(--accent-2)"/><circle cx="20" cy="20" r="5" fill="var(--surface)"/></svg>
-      <span class="brand-word" data-text="GEOFINDER">GEOFINDER</span>
+      <svg class="brand-globe" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="brandGlobeGradient" x1="2" y1="4" x2="38" y2="36" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#17ecff"/>
+            <stop offset="100%" stop-color="#ff1fb0"/>
+          </linearGradient>
+        </defs>
+        <circle cx="20" cy="20" r="16.5" stroke="url(#brandGlobeGradient)" stroke-width="1.1"/>
+        <ellipse cx="20" cy="20" rx="16.5" ry="6.2" stroke="url(#brandGlobeGradient)" stroke-width="1"/>
+        <ellipse cx="20" cy="20" rx="16.5" ry="6.2" stroke="url(#brandGlobeGradient)" stroke-width="1" transform="rotate(60 20 20)"/>
+        <ellipse cx="20" cy="20" rx="16.5" ry="6.2" stroke="url(#brandGlobeGradient)" stroke-width="1" transform="rotate(120 20 20)"/>
+      </svg>
+      <span class="brand-word"><span class="brand-word-geo">GEO</span><span class="brand-word-finder">FINDER</span></span>
     </div>
     <p class="kicker">360°-Multiplayer &middot; bis zu 6 Spieler &middot; P2P &uuml;ber WebRTC</p>
   </div>
