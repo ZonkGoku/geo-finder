@@ -1,0 +1,9 @@
+{
+  "name": "geo-finder",
+  "private": true,
+  "type": "module",
+  "description": "Offline-Hilfsskripte fuer data/geo/*.json (siehe scripts/) - das Spiel selbst hat keinen Build-Schritt und laeuft als statisches Vanilla-JS-Projekt.",
+  "devDependencies": {
+    "@turf/turf": "^7.4.0"
+  }
+}
