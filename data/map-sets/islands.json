@@ -125,6 +125,30 @@
       "name": "Mauritius",
       "lat": -20.3484,
       "lng": 57.5522
+    },
+    {
+      "id": "island-lofoten-2",
+      "name": "Lofoten, Norwegen",
+      "lat": 68.1495,
+      "lng": 13.6033
+    },
+    {
+      "id": "island-galapagos-2",
+      "name": "Galápagos-Inseln, Ecuador",
+      "lat": -0.7893,
+      "lng": -90.967
+    },
+    {
+      "id": "island-easter",
+      "name": "Osterinsel, Chile",
+      "lat": -27.1127,
+      "lng": -109.3497
+    },
+    {
+      "id": "island-tasmania",
+      "name": "Tasmanien, Australien",
+      "lat": -42.0,
+      "lng": 147.0
     }
   ]
 }

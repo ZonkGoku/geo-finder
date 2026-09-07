@@ -89,6 +89,30 @@
       "name": "Lange Reihe, St. Georg",
       "lat": 53.557,
       "lng": 10.0125
+    },
+    {
+      "id": "hamburg-grossneumarkt-2",
+      "name": "Neustadt / Krayenkamp",
+      "lat": 53.548,
+      "lng": 9.9807
+    },
+    {
+      "id": "hamburg-wandsbek",
+      "name": "Wandsbek Markt",
+      "lat": 53.573,
+      "lng": 10.08
+    },
+    {
+      "id": "hamburg-barmbek",
+      "name": "Barmbek",
+      "lat": 53.5892,
+      "lng": 10.045
+    },
+    {
+      "id": "hamburg-uhlenhorst-3",
+      "name": "Finkenau, Uhlenhorst",
+      "lat": 53.5695,
+      "lng": 10.023
     }
   ]
 }

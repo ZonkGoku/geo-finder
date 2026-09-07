@@ -113,6 +113,30 @@
       "name": "Forth Bridge, Schottland",
       "lat": 56.0002,
       "lng": -3.3877
+    },
+    {
+      "id": "bridge-si-o-se-pol",
+      "name": "Si-o-se-Pol, Isfahan",
+      "lat": 32.6335,
+      "lng": 51.6647
+    },
+    {
+      "id": "bridge-ponte-25-abril",
+      "name": "25.-April-Brücke, Lissabon",
+      "lat": 38.6933,
+      "lng": -9.1774
+    },
+    {
+      "id": "bridge-humber",
+      "name": "Humber Bridge, England",
+      "lat": 53.7128,
+      "lng": -0.4478
+    },
+    {
+      "id": "bridge-danyang-kunshan",
+      "name": "Danyang-Kunshan-Brücke, China",
+      "lat": 31.95,
+      "lng": 120.1833
     }
   ]
 }

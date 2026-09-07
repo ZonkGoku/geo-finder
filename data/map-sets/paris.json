@@ -137,6 +137,72 @@
       "name": "Père Lachaise",
       "lat": 48.8617,
       "lng": 2.3936
+    },
+    {
+      "id": "paris-montparnasse",
+      "name": "Tour Montparnasse",
+      "lat": 48.8421,
+      "lng": 2.3219
+    },
+    {
+      "id": "paris-place-vendome",
+      "name": "Place Vendôme",
+      "lat": 48.8677,
+      "lng": 2.3294
+    },
+    {
+      "id": "paris-butte-aux-cailles",
+      "name": "Butte-aux-Cailles",
+      "lat": 48.828,
+      "lng": 2.3502
+    },
+    {
+      "id": "paris-bercy",
+      "name": "Parc de Bercy",
+      "lat": 48.8357,
+      "lng": 2.3822
+    },
+    {
+      "id": "paris-passy",
+      "name": "Passy / Maison de Balzac",
+      "lat": 48.8551,
+      "lng": 2.2765
+    },
+    {
+      "id": "paris-quartier-latin",
+      "name": "Quartier Latin",
+      "lat": 48.8496,
+      "lng": 2.3468
+    },
+    {
+      "id": "paris-canal-de-lourcq",
+      "name": "Canal de l'Ourcq",
+      "lat": 48.889,
+      "lng": 2.3892
+    },
+    {
+      "id": "paris-buttes-chaumont",
+      "name": "Parc des Buttes-Chaumont",
+      "lat": 48.8799,
+      "lng": 2.3826
+    },
+    {
+      "id": "paris-porte-de-versailles",
+      "name": "Porte de Versailles",
+      "lat": 48.8309,
+      "lng": 2.2879
+    },
+    {
+      "id": "paris-neuilly",
+      "name": "Neuilly-sur-Seine",
+      "lat": 48.8846,
+      "lng": 2.2695
+    },
+    {
+      "id": "paris-fontainebleau",
+      "name": "Schloss Fontainebleau",
+      "lat": 48.4021,
+      "lng": 2.7003
     }
   ]
 }

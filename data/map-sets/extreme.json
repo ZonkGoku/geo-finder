@@ -113,6 +113,30 @@
       "name": "Dallol, Äthiopien",
       "lat": 14.2417,
       "lng": 40.3
+    },
+    {
+      "id": "extreme-k2-basecamp",
+      "name": "K2-Basislager, Pakistan",
+      "lat": 35.8825,
+      "lng": 76.5133
+    },
+    {
+      "id": "extreme-siwa",
+      "name": "Siwa-Oase, Ägypten",
+      "lat": 29.2032,
+      "lng": 25.5195
+    },
+    {
+      "id": "extreme-atacama-2",
+      "name": "San Pedro de Atacama, Chile",
+      "lat": -22.9098,
+      "lng": -68.1997
+    },
+    {
+      "id": "extreme-tromso",
+      "name": "Tromsø, Norwegen (Polarnacht)",
+      "lat": 69.6492,
+      "lng": 18.9553
     }
   ]
 }

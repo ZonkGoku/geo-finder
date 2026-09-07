@@ -1,7 +1,7 @@
 {
   "id": "unesco",
   "name": "UNESCO-Welterbe",
-  "description": "Live-Straßenbilder von 24 UNESCO-Weltkulturerbestätten weltweit über die Mapillary-API.",
+  "description": "Live-Straßenbilder von 32 UNESCO-Weltkulturerbestätten weltweit über die Mapillary-API.",
   "status": "needs-token",
   "source": "mapillary",
   "scaleKm": 3000,
@@ -149,6 +149,54 @@
       "name": "Osterinsel, Chile",
       "lat": -27.1127,
       "lng": -109.3497
+    },
+    {
+      "id": "unesco-persepolis-2",
+      "name": "Palast von Darius, Persepolis",
+      "lat": 29.9346,
+      "lng": 52.8895
+    },
+    {
+      "id": "unesco-tikal",
+      "name": "Tikal, Guatemala",
+      "lat": 17.222,
+      "lng": -89.6237
+    },
+    {
+      "id": "unesco-hampi",
+      "name": "Hampi, Indien",
+      "lat": 15.335,
+      "lng": 76.46
+    },
+    {
+      "id": "unesco-luang-prabang",
+      "name": "Luang Prabang, Laos",
+      "lat": 19.8845,
+      "lng": 102.1348
+    },
+    {
+      "id": "unesco-fes",
+      "name": "Medina von Fès, Marokko",
+      "lat": 34.0667,
+      "lng": -4.9833
+    },
+    {
+      "id": "unesco-timbuktu-2",
+      "name": "Timbuktu, Mali",
+      "lat": 16.7666,
+      "lng": -3.0026
+    },
+    {
+      "id": "unesco-lalibela",
+      "name": "Lalibela, Äthiopien",
+      "lat": 12.0316,
+      "lng": 39.047
+    },
+    {
+      "id": "unesco-samarkand",
+      "name": "Samarkand, Usbekistan",
+      "lat": 39.6542,
+      "lng": 66.9597
     }
   ]
 }

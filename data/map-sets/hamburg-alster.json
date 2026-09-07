@@ -101,6 +101,30 @@
       "name": "Mundsburg",
       "lat": 53.5679,
       "lng": 10.0219
+    },
+    {
+      "id": "hamburg-colonnaden",
+      "name": "Colonnaden",
+      "lat": 53.5589,
+      "lng": 9.9861
+    },
+    {
+      "id": "hamburg-uhlenhorst-2",
+      "name": "Kaiser-Friedrich-Ufer, Uhlenhorst",
+      "lat": 53.5695,
+      "lng": 10.014
+    },
+    {
+      "id": "hamburg-eimsbuettel",
+      "name": "Eimsbüttel / Osterstraße",
+      "lat": 53.575,
+      "lng": 9.9575
+    },
+    {
+      "id": "hamburg-alsterschwimmhalle",
+      "name": "Alsterschwimmhalle",
+      "lat": 53.5738,
+      "lng": 9.9986
     }
   ]
 }

@@ -137,6 +137,60 @@
       "name": "Primrose Hill",
       "lat": 51.539,
       "lng": -0.1608
+    },
+    {
+      "id": "london-clapham",
+      "name": "Clapham Common",
+      "lat": 51.4618,
+      "lng": -0.1487
+    },
+    {
+      "id": "london-brixton",
+      "name": "Brixton",
+      "lat": 51.4613,
+      "lng": -0.1156
+    },
+    {
+      "id": "london-islington",
+      "name": "Islington / Upper Street",
+      "lat": 51.5416,
+      "lng": -0.1025
+    },
+    {
+      "id": "london-tower-of-london",
+      "name": "Tower of London",
+      "lat": 51.5081,
+      "lng": -0.0759
+    },
+    {
+      "id": "london-holland-park",
+      "name": "Holland Park",
+      "lat": 51.5044,
+      "lng": -0.2047
+    },
+    {
+      "id": "london-battersea",
+      "name": "Battersea Park",
+      "lat": 51.4791,
+      "lng": -0.1587
+    },
+    {
+      "id": "london-greenwich-market",
+      "name": "Greenwich Market",
+      "lat": 51.4816,
+      "lng": -0.0093
+    },
+    {
+      "id": "london-wimbledon",
+      "name": "Wimbledon",
+      "lat": 51.434,
+      "lng": -0.214
+    },
+    {
+      "id": "london-hampton-court",
+      "name": "Hampton Court Palace",
+      "lat": 51.4034,
+      "lng": -0.3389
     }
   ]
 }

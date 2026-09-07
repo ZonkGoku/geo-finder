@@ -125,6 +125,30 @@
       "name": "Sagarmatha-Nationalpark, Nepal",
       "lat": 27.9333,
       "lng": 86.7333
+    },
+    {
+      "id": "park-torres-del-paine-2",
+      "name": "Grey-Gletscher, Torres del Paine",
+      "lat": -51.0,
+      "lng": -73.25
+    },
+    {
+      "id": "park-etosha",
+      "name": "Etosha-Nationalpark, Namibia",
+      "lat": -18.85,
+      "lng": 16.3333
+    },
+    {
+      "id": "park-manuel-antonio",
+      "name": "Manuel-Antonio-Nationalpark, Costa Rica",
+      "lat": 9.3925,
+      "lng": -84.1436
+    },
+    {
+      "id": "park-tongariro",
+      "name": "Tongariro-Nationalpark, Neuseeland",
+      "lat": -39.1333,
+      "lng": 175.6333
     }
   ]
 }

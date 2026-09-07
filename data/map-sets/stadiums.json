@@ -125,6 +125,42 @@
       "name": "La Bombonera, Buenos Aires",
       "lat": -34.6356,
       "lng": -58.3648
+    },
+    {
+      "id": "stadium-santiago-bernabeu-2",
+      "name": "Wanda Metropolitano, Madrid",
+      "lat": 40.4362,
+      "lng": -3.5995
+    },
+    {
+      "id": "stadium-tokyo-dome",
+      "name": "Tokyo Dome",
+      "lat": 35.7056,
+      "lng": 139.7519
+    },
+    {
+      "id": "stadium-lords",
+      "name": "Lord's Cricket Ground, London",
+      "lat": 51.5299,
+      "lng": -0.1723
+    },
+    {
+      "id": "stadium-fenway",
+      "name": "Fenway Park, Boston",
+      "lat": 42.3467,
+      "lng": -71.0972
+    },
+    {
+      "id": "stadium-sydney-cricket",
+      "name": "Sydney Cricket Ground",
+      "lat": -33.8916,
+      "lng": 151.2246
+    },
+    {
+      "id": "stadium-luzhniki",
+      "name": "Luschniki-Stadion, Moskau",
+      "lat": 55.7159,
+      "lng": 37.5539
     }
   ]
 }

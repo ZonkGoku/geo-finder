@@ -131,6 +131,48 @@
       "name": "CN Tower, Toronto",
       "lat": 43.6426,
       "lng": -79.3871
+    },
+    {
+      "id": "petronas-towers",
+      "name": "Petronas Towers, Kuala Lumpur",
+      "lat": 3.1579,
+      "lng": 101.7116
+    },
+    {
+      "id": "forbidden-city",
+      "name": "Verbotene Stadt, Peking",
+      "lat": 39.9163,
+      "lng": 116.3972
+    },
+    {
+      "id": "stonehenge-landmark",
+      "name": "Stonehenge, England",
+      "lat": 51.1789,
+      "lng": -1.8262
+    },
+    {
+      "id": "hagia-sophia",
+      "name": "Hagia Sophia, Istanbul",
+      "lat": 41.0086,
+      "lng": 28.9802
+    },
+    {
+      "id": "niagara-falls",
+      "name": "Niagarafälle",
+      "lat": 43.0962,
+      "lng": -79.0377
+    },
+    {
+      "id": "mount-rushmore",
+      "name": "Mount Rushmore, USA",
+      "lat": 43.8791,
+      "lng": -103.4591
+    },
+    {
+      "id": "table-mountain",
+      "name": "Tafelberg, Kapstadt",
+      "lat": -33.9628,
+      "lng": 18.4098
     }
   ]
 }

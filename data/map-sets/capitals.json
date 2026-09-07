@@ -251,6 +251,222 @@
       "name": "Bern, Schweiz",
       "lat": 46.948,
       "lng": 7.4474
+    },
+    {
+      "id": "helsinki",
+      "name": "Helsinki, Finnland",
+      "lat": 60.1699,
+      "lng": 24.9384
+    },
+    {
+      "id": "reykjavik",
+      "name": "Reykjavík, Island",
+      "lat": 64.1466,
+      "lng": -21.9426
+    },
+    {
+      "id": "ljubljana",
+      "name": "Ljubljana, Slowenien",
+      "lat": 46.0569,
+      "lng": 14.5058
+    },
+    {
+      "id": "zagreb",
+      "name": "Zagreb, Kroatien",
+      "lat": 45.815,
+      "lng": 15.9819
+    },
+    {
+      "id": "bratislava",
+      "name": "Bratislava, Slowakei",
+      "lat": 48.1486,
+      "lng": 17.1077
+    },
+    {
+      "id": "sofia",
+      "name": "Sofia, Bulgarien",
+      "lat": 42.6977,
+      "lng": 23.3219
+    },
+    {
+      "id": "bucharest",
+      "name": "Bukarest, Rumänien",
+      "lat": 44.4268,
+      "lng": 26.1025
+    },
+    {
+      "id": "belgrade",
+      "name": "Belgrad, Serbien",
+      "lat": 44.7866,
+      "lng": 20.4489
+    },
+    {
+      "id": "kyiv",
+      "name": "Kiew, Ukraine",
+      "lat": 50.4501,
+      "lng": 30.5234
+    },
+    {
+      "id": "vilnius",
+      "name": "Vilnius, Litauen",
+      "lat": 54.6872,
+      "lng": 25.2797
+    },
+    {
+      "id": "riga",
+      "name": "Riga, Lettland",
+      "lat": 56.9496,
+      "lng": 24.1052
+    },
+    {
+      "id": "tallinn",
+      "name": "Tallinn, Estland",
+      "lat": 59.437,
+      "lng": 24.7536
+    },
+    {
+      "id": "kathmandu",
+      "name": "Kathmandu, Nepal",
+      "lat": 27.7172,
+      "lng": 85.324
+    },
+    {
+      "id": "dhaka-capital",
+      "name": "Dhaka, Bangladesch",
+      "lat": 23.8103,
+      "lng": 90.4125
+    },
+    {
+      "id": "colombo-capital",
+      "name": "Colombo, Sri Lanka",
+      "lat": 6.9271,
+      "lng": 79.8612
+    },
+    {
+      "id": "manila-capital",
+      "name": "Manila, Philippinen",
+      "lat": 14.5995,
+      "lng": 120.9842
+    },
+    {
+      "id": "jakarta-capital",
+      "name": "Jakarta, Indonesien",
+      "lat": -6.2088,
+      "lng": 106.8456
+    },
+    {
+      "id": "kuala-lumpur-capital",
+      "name": "Kuala Lumpur, Malaysia",
+      "lat": 3.139,
+      "lng": 101.6869
+    },
+    {
+      "id": "singapore-capital",
+      "name": "Singapur",
+      "lat": 1.3521,
+      "lng": 103.8198
+    },
+    {
+      "id": "accra",
+      "name": "Accra, Ghana",
+      "lat": 5.6037,
+      "lng": -0.187
+    },
+    {
+      "id": "abuja",
+      "name": "Abuja, Nigeria",
+      "lat": 9.0765,
+      "lng": 7.3986
+    },
+    {
+      "id": "addis-ababa",
+      "name": "Addis Abeba, Äthiopien",
+      "lat": 9.025,
+      "lng": 38.7469
+    },
+    {
+      "id": "kampala",
+      "name": "Kampala, Uganda",
+      "lat": 0.3476,
+      "lng": 32.5825
+    },
+    {
+      "id": "kinshasa",
+      "name": "Kinshasa, DR Kongo",
+      "lat": -4.4419,
+      "lng": 15.2663
+    },
+    {
+      "id": "dakar",
+      "name": "Dakar, Senegal",
+      "lat": 14.7167,
+      "lng": -17.4677
+    },
+    {
+      "id": "rabat",
+      "name": "Rabat, Marokko",
+      "lat": 34.0209,
+      "lng": -6.8416
+    },
+    {
+      "id": "tunis",
+      "name": "Tunis, Tunesien",
+      "lat": 36.8065,
+      "lng": 10.1815
+    },
+    {
+      "id": "algiers",
+      "name": "Algier, Algerien",
+      "lat": 36.7538,
+      "lng": 3.0588
+    },
+    {
+      "id": "santiago-capital",
+      "name": "Santiago de Chile",
+      "lat": -33.4489,
+      "lng": -70.6693
+    },
+    {
+      "id": "lima",
+      "name": "Lima, Peru",
+      "lat": -12.0464,
+      "lng": -77.0428
+    },
+    {
+      "id": "bogota",
+      "name": "Bogotá, Kolumbien",
+      "lat": 4.711,
+      "lng": -74.0721
+    },
+    {
+      "id": "caracas",
+      "name": "Caracas, Venezuela",
+      "lat": 10.4806,
+      "lng": -66.9036
+    },
+    {
+      "id": "quito",
+      "name": "Quito, Ecuador",
+      "lat": -0.1807,
+      "lng": -78.4678
+    },
+    {
+      "id": "montevideo",
+      "name": "Montevideo, Uruguay",
+      "lat": -34.9011,
+      "lng": -56.1645
+    },
+    {
+      "id": "havana",
+      "name": "Havanna, Kuba",
+      "lat": 23.1136,
+      "lng": -82.3666
+    },
+    {
+      "id": "panama-city",
+      "name": "Panama-Stadt, Panama",
+      "lat": 8.9824,
+      "lng": -79.5199
     }
   ]
 }

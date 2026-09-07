@@ -137,6 +137,78 @@
       "name": "Warschauer Straße / RAW-Gelände",
       "lat": 52.5081,
       "lng": 13.4489
+    },
+    {
+      "id": "berlin-wannsee",
+      "name": "Wannsee",
+      "lat": 52.4204,
+      "lng": 13.1706
+    },
+    {
+      "id": "berlin-grunewald",
+      "name": "Grunewald",
+      "lat": 52.4886,
+      "lng": 13.2372
+    },
+    {
+      "id": "berlin-neukoelln",
+      "name": "Neukölln / Weserstraße",
+      "lat": 52.4816,
+      "lng": 13.4331
+    },
+    {
+      "id": "berlin-teufelsberg",
+      "name": "Teufelsberg",
+      "lat": 52.4967,
+      "lng": 13.2394
+    },
+    {
+      "id": "berlin-viktoriapark",
+      "name": "Viktoriapark, Kreuzberg",
+      "lat": 52.4886,
+      "lng": 13.3814
+    },
+    {
+      "id": "berlin-gedaechtniskirche",
+      "name": "Kaiser-Wilhelm-Gedächtniskirche",
+      "lat": 52.5049,
+      "lng": 13.3352
+    },
+    {
+      "id": "berlin-treptower-park",
+      "name": "Treptower Park",
+      "lat": 52.4886,
+      "lng": 13.4726
+    },
+    {
+      "id": "berlin-mauerpark",
+      "name": "Mauerpark",
+      "lat": 52.5439,
+      "lng": 13.4023
+    },
+    {
+      "id": "berlin-potsdam-sanssouci",
+      "name": "Schloss Sanssouci, Potsdam",
+      "lat": 52.4042,
+      "lng": 13.0384
+    },
+    {
+      "id": "berlin-glienicker-bruecke",
+      "name": "Glienicker Brücke",
+      "lat": 52.4172,
+      "lng": 13.0947
+    },
+    {
+      "id": "berlin-alexanderplatz-fernsehturm",
+      "name": "Fernsehturm",
+      "lat": 52.5208,
+      "lng": 13.4094
+    },
+    {
+      "id": "berlin-gleisdreieck",
+      "name": "Park am Gleisdreieck",
+      "lat": 52.4986,
+      "lng": 13.3714
     }
   ]
 }

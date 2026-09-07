@@ -101,6 +101,24 @@
       "name": "Yorkshire Dales, England",
       "lat": 54.2833,
       "lng": -2.1667
+    },
+    {
+      "id": "roads-black-forest",
+      "name": "Schwarzwald, Deutschland",
+      "lat": 48.2,
+      "lng": 8.15
+    },
+    {
+      "id": "roads-dolomites-road",
+      "name": "Grödnerjoch, Dolomiten",
+      "lat": 46.5583,
+      "lng": 11.7767
+    },
+    {
+      "id": "roads-mosel",
+      "name": "Moseltal, Deutschland",
+      "lat": 50.1,
+      "lng": 7.05
     }
   ]
 }

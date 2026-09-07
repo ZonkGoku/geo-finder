@@ -137,6 +137,66 @@
       "name": "Fifth Avenue",
       "lat": 40.7614,
       "lng": -73.9776
+    },
+    {
+      "id": "nyc-prospect-park",
+      "name": "Prospect Park, Brooklyn",
+      "lat": 40.6602,
+      "lng": -73.969
+    },
+    {
+      "id": "nyc-lower-east-side",
+      "name": "Lower East Side",
+      "lat": 40.715,
+      "lng": -73.9843
+    },
+    {
+      "id": "nyc-financial-district",
+      "name": "Financial District",
+      "lat": 40.7075,
+      "lng": -74.0113
+    },
+    {
+      "id": "nyc-upper-east-side",
+      "name": "Upper East Side",
+      "lat": 40.7736,
+      "lng": -73.9566
+    },
+    {
+      "id": "nyc-morningside-heights",
+      "name": "Morningside Heights",
+      "lat": 40.8075,
+      "lng": -73.9626
+    },
+    {
+      "id": "nyc-red-hook",
+      "name": "Red Hook, Brooklyn",
+      "lat": 40.6743,
+      "lng": -74.0107
+    },
+    {
+      "id": "nyc-long-island-city",
+      "name": "Long Island City, Queens",
+      "lat": 40.7447,
+      "lng": -73.9485
+    },
+    {
+      "id": "nyc-jersey-city",
+      "name": "Jersey City Waterfront",
+      "lat": 40.7178,
+      "lng": -74.0431
+    },
+    {
+      "id": "nyc-roosevelt-island",
+      "name": "Roosevelt Island",
+      "lat": 40.7614,
+      "lng": -73.9497
+    },
+    {
+      "id": "nyc-fort-greene",
+      "name": "Fort Greene, Brooklyn",
+      "lat": 40.6896,
+      "lng": -73.9736
     }
   ]
 }

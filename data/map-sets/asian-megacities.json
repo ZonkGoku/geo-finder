@@ -137,6 +137,84 @@
       "name": "Myeongdong, Seoul",
       "lat": 37.5636,
       "lng": 126.985
+    },
+    {
+      "id": "asia-chennai",
+      "name": "Marina Beach, Chennai",
+      "lat": 13.05,
+      "lng": 80.2824
+    },
+    {
+      "id": "asia-karachi",
+      "name": "Karachi, Pakistan",
+      "lat": 24.8607,
+      "lng": 67.0011
+    },
+    {
+      "id": "asia-dhaka",
+      "name": "Dhaka, Bangladesch",
+      "lat": 23.8103,
+      "lng": 90.4125
+    },
+    {
+      "id": "asia-yangon",
+      "name": "Yangon, Myanmar",
+      "lat": 16.8409,
+      "lng": 96.1735
+    },
+    {
+      "id": "asia-phnom-penh",
+      "name": "Phnom Penh, Kambodscha",
+      "lat": 11.5564,
+      "lng": 104.9282
+    },
+    {
+      "id": "asia-colombo",
+      "name": "Colombo, Sri Lanka",
+      "lat": 6.9271,
+      "lng": 79.8612
+    },
+    {
+      "id": "asia-ulaanbaatar",
+      "name": "Ulaanbaatar, Mongolei",
+      "lat": 47.8864,
+      "lng": 106.9057
+    },
+    {
+      "id": "asia-chengdu",
+      "name": "Chengdu, China",
+      "lat": 30.5728,
+      "lng": 104.0668
+    },
+    {
+      "id": "asia-xian",
+      "name": "Xi'an, China",
+      "lat": 34.3416,
+      "lng": 108.9398
+    },
+    {
+      "id": "asia-hangzhou",
+      "name": "Hangzhou, China",
+      "lat": 30.2741,
+      "lng": 120.1551
+    },
+    {
+      "id": "asia-nagoya",
+      "name": "Nagoya, Japan",
+      "lat": 35.1815,
+      "lng": 136.9066
+    },
+    {
+      "id": "asia-busan",
+      "name": "Busan, Südkorea",
+      "lat": 35.1796,
+      "lng": 129.0756
+    },
+    {
+      "id": "asia-surabaya",
+      "name": "Surabaya, Indonesien",
+      "lat": -7.2575,
+      "lng": 112.7521
     }
   ]
 }

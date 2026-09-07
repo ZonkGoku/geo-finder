@@ -125,6 +125,30 @@
       "name": "Santa Monica, Kalifornien",
       "lat": 34.01,
       "lng": -118.4962
+    },
+    {
+      "id": "coastal-lofoten",
+      "name": "Lofoten, Norwegen",
+      "lat": 68.1495,
+      "lng": 13.6033
+    },
+    {
+      "id": "coastal-gold-coast",
+      "name": "Gold Coast, Australien",
+      "lat": -28.0167,
+      "lng": 153.4
+    },
+    {
+      "id": "coastal-costa-smeralda",
+      "name": "Costa Smeralda, Sardinien",
+      "lat": 41.1167,
+      "lng": 9.5333
+    },
+    {
+      "id": "coastal-mykonos",
+      "name": "Mykonos, Griechenland",
+      "lat": 37.4467,
+      "lng": 25.3289
     }
   ]
 }

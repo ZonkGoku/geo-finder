@@ -125,6 +125,42 @@
       "name": "Burg Hohenzollern, Deutschland",
       "lat": 48.3238,
       "lng": 8.9668
+    },
+    {
+      "id": "castle-eltz",
+      "name": "Burg Eltz, Deutschland",
+      "lat": 50.169,
+      "lng": 7.3336
+    },
+    {
+      "id": "castle-predjama",
+      "name": "Höhlenburg Predjama, Slowenien",
+      "lat": 45.793,
+      "lng": 14.13
+    },
+    {
+      "id": "castle-himeji-2",
+      "name": "Burggarten Himeji, Japan",
+      "lat": 34.8376,
+      "lng": 134.69
+    },
+    {
+      "id": "ruins-persepolis",
+      "name": "Persepolis, Iran",
+      "lat": 29.9346,
+      "lng": 52.8895
+    },
+    {
+      "id": "ruins-ephesus",
+      "name": "Ephesos, Türkei",
+      "lat": 37.9412,
+      "lng": 27.3418
+    },
+    {
+      "id": "castle-conwy",
+      "name": "Conwy Castle, Wales",
+      "lat": 53.2805,
+      "lng": -3.828
     }
   ]
 }

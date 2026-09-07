@@ -101,6 +101,30 @@
       "name": "Cruise Center Steinwerder",
       "lat": 53.5405,
       "lng": 9.9678
+    },
+    {
+      "id": "hamburg-koehlbrandbruecke",
+      "name": "Köhlbrandbrücke",
+      "lat": 53.5286,
+      "lng": 9.9328
+    },
+    {
+      "id": "hamburg-teufelsbrueck",
+      "name": "Teufelsbrück",
+      "lat": 53.5548,
+      "lng": 9.86
+    },
+    {
+      "id": "hamburg-baakenhafen",
+      "name": "Baakenhafen",
+      "lat": 53.5343,
+      "lng": 10.0184
+    },
+    {
+      "id": "hamburg-hansahafen",
+      "name": "Hansahafen",
+      "lat": 53.5254,
+      "lng": 9.9445
     }
   ]
 }

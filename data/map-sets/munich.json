@@ -125,6 +125,54 @@
       "name": "Kunstareal / Pinakotheken",
       "lat": 48.1478,
       "lng": 11.5703
+    },
+    {
+      "id": "munich-tierpark-hellabrunn",
+      "name": "Tierpark Hellabrunn",
+      "lat": 48.0972,
+      "lng": 11.5583
+    },
+    {
+      "id": "munich-westend",
+      "name": "Westend",
+      "lat": 48.1305,
+      "lng": 11.5399
+    },
+    {
+      "id": "munich-alte-pinakothek",
+      "name": "Alte Pinakothek",
+      "lat": 48.1479,
+      "lng": 11.5703
+    },
+    {
+      "id": "munich-flaucher",
+      "name": "Flaucher, Isarauen",
+      "lat": 48.1103,
+      "lng": 11.5478
+    },
+    {
+      "id": "munich-ostbahnhof",
+      "name": "Ostbahnhof",
+      "lat": 48.1272,
+      "lng": 11.6047
+    },
+    {
+      "id": "munich-muenchner-freiheit",
+      "name": "Münchner Freiheit, Schwabing",
+      "lat": 48.1631,
+      "lng": 11.5865
+    },
+    {
+      "id": "munich-obersendling",
+      "name": "Obersendling",
+      "lat": 48.1017,
+      "lng": 11.5211
+    },
+    {
+      "id": "munich-perlacher-forst",
+      "name": "Perlacher Forst",
+      "lat": 48.0733,
+      "lng": 11.5978
     }
   ]
 }
