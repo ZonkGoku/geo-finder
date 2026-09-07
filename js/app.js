@@ -2361,11 +2361,28 @@ function resetToMenu() {
   }
   clearInterval(hudTimerInterval);
   clearInterval(resultCountdownInterval);
+  // clearHeatmapTimer() statt nur clearInterval(heatmapTimerInterval): das
+  // eigenstaendige Heatmap-Rundentimer-Intervall (renderHeatmapTimer(),
+  // 250ms-Tick fuer Countdown+Tension-Audio) wurde hier bisher NICHT
+  // aufgeraeumt - verliess man eine zeitlimitierte PulseMap-Runde vorzeitig
+  // ueber "Spiel verlassen", lief der Timer im Hintergrund weiter (bis die
+  // inzwischen stale Zeitdifferenz von selbst ablief), inklusive unnoetiger
+  // Tension-Audio-Updates auf ein verstecktes Element. Audit-Fund 1.1.
+  clearHeatmapTimer();
   sound.stopRoundAmbience();
   hideStateOverlay();
   el('connection-banner').classList.add('hidden');
   panoViewer?.destroy();
   panoViewer = null;
+  // Analog zu panoViewer: heatmapMap war bisher ein Page-Lifetime-Singleton,
+  // der beim Zurueck-zum-Menue nie zerstoert wurde - der zugrundeliegende
+  // Leaflet-Kartenkontext blieb im Hintergrund bestehen, obwohl der Screen
+  // gar nicht mehr sichtbar ist. HeatmapMap.destroy() (neu) ruft Leaflets
+  // eigenes map.remove() auf, das seine DOM-Listener/Tile-Referenzen
+  // vollstaendig freigibt - ensureHeatmapWidgets() erstellt beim naechsten
+  // Partie-Start dann einfach eine frische Instanz.
+  heatmapMap?.destroy();
+  heatmapMap = null;
   // Raeumt pendente Runden-/Leave-Timer und Bus-Listener auf - wichtig seit
   // "Spiel verlassen" auch mitten in einer laufenden Runde moeglich ist,
   // sonst wuerde z. B. ein noch laufender Rundentimer spaeter auf einen

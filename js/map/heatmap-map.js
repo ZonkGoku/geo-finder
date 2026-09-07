@@ -171,4 +171,16 @@ export class HeatmapMap {
   invalidate() {
     this.map.invalidateSize();
   }
+
+  /** Vollstaendiger Teardown - Leaflets eigenes map.remove() loest alle DOM-
+   * Event-Listener und internen Layer-/Tile-Referenzen der Karteninstanz,
+   * damit beim Zurueck-zum-Menue kein Leaflet-Kontext im Hintergrund
+   * weiterlebt (siehe resetToMenu() in app.js, Audit-Fund zum heatmapMap-
+   * Lifecycle). Nach destroy() ist diese Instanz nicht mehr nutzbar - die
+   * naechste Partie erzeugt ueber ensureHeatmapWidgets() eine neue. */
+  destroy() {
+    this.map.remove();
+    this.layerByCountryId.clear();
+    this.layer = null;
+  }
 }

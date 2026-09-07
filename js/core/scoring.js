@@ -61,7 +61,17 @@ export function scoreGuess(guess, actual, scaleKm) {
   // das NaN zieht sich dann bis in Leaflet's LatLng durch und crasht die
   // Ergebnis-/Uebersichtskarte ("Invalid LatLng object: (NaN, NaN)"). Ein
   // ungueltiger Tipp wird stattdessen wie ein fehlender behandelt.
-  if (!guess || !Number.isFinite(guess.lat) || !Number.isFinite(guess.lng)) {
+  //
+  // Zusaetzlich zum reinen Finite-Check: lat/lng auf den geografisch validen
+  // Bereich pruefen. Ein manipulierter Client koennte sonst ein endliches,
+  // aber unsinniges lat/lng (z. B. 99999) senden - haversineDistanceKm()
+  // wuerde das klaglos durchrechnen (kein NaN), das Ergebnis landet aber
+  // trotzdem als Marker-Koordinate auf der Ergebnis-/Uebersichtskarte
+  // (result-map.js), deren Leaflet-Handling fuer Werte weit ausserhalb
+  // ±90/±180 nicht geprueft ist (Audit-Fund 1.3). Host bleibt so fuer JEDEN
+  // eingehenden Tipp autoritativ, nicht nur fuer den NaN-Sonderfall.
+  const inRange = (lat, lng) => lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  if (!guess || !Number.isFinite(guess.lat) || !Number.isFinite(guess.lng) || !inRange(guess.lat, guess.lng)) {
     return { distanceKm: null, score: 0, noGuess: true };
   }
   const distanceKm = haversineDistanceKm(guess.lat, guess.lng, actual.lat, actual.lng);
