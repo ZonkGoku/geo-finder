@@ -1125,9 +1125,19 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .mapset-card-body{ padding:12px 14px 14px; display:flex; flex-direction:column; gap:6px; }
 .mapset-card-name{ font-weight:600; font-size:0.92rem; }
 .mapset-card-desc{ font-size:0.76rem; color:var(--text-dim); line-height:1.4; }
-.mapset-card-badge{ align-self:flex-start; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.06em; padding:2px 7px; border-radius:5px; }
+/* Wrapper statt align-self:flex-start direkt auf .mapset-card-badge, seit
+   der Abwechslungs-Anzeige (.mapset-card-variety) daneben - beide sollen in
+   einer Zeile sitzen, ohne dass .mapset-card-body's eigenes column-Flex sie
+   stapelt. */
+.mapset-card-badge-row{ display:flex; align-items:center; gap:6px; }
+.mapset-card-badge{ font-size:0.62rem; text-transform:uppercase; letter-spacing:0.06em; padding:2px 7px; border-radius:5px; }
 .mapset-card-badge.ready{ background:rgba(23,236,255,0.16); color:var(--accent-2); }
 .mapset-card-badge.needs-token{ background:rgba(242,85,74,0.16); color:var(--danger); }
+/* Abwechslungsgrad-Indikator (Audit "Operation Infinite Panoramas", Punkt 3:
+   "Indikator fuer den Abwechslungsgrad") - zeigt entry.locationCount, das es
+   vorher schon in den Kartenpaket-Daten gab, aber nirgends im UI genutzt
+   wurde. */
+.mapset-card-variety{ font-size:0.62rem; color:var(--text-dim); font-family:var(--font-mono); }
 
 /* Skeleton-Platzhalter waehrend der Kartenpaket-Index laedt - die Lobby
    zeigt sich sofort statt auf den fetch zu warten (siehe enterLobby() in

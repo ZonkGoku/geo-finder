@@ -4,10 +4,21 @@
       "id": "weltweit",
       "file": "weltweit.json",
       "name": "Weltweit (Standard)",
-      "description": "11 handverlesene, echte 360°-Fotos aus Chile und den USA.",
+      "description": "139 echte Orte auf allen bewohnten Kontinenten, live über die Mapillary-API geladen - bei jeder Partie eine andere, zufällige Auswahl.",
+      "status": "ready",
+      "source": "mapillary",
+      "tag": null,
+      "locationCount": 139
+    },
+    {
+      "id": "daily-classic",
+      "file": "daily-classic.json",
+      "name": "Tages-Challenge (Fixpool)",
+      "description": "Fester, statischer Pool von elf handverlesenen 360°-Panoramen — wird ausschließlich von der täglichen Challenge genutzt, damit jeder Spieler garantiert dieselben Orte bekommt, unabhängig von Netzwerk oder API-Token.",
       "status": "ready",
       "source": "static",
       "tag": null,
+      "hidden": true,
       "locationCount": 11
     },
     {
@@ -18,7 +29,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": null
+      "locationCount": 48
     },
     {
       "id": "hamburg-hafen",
@@ -28,7 +39,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": null
+      "locationCount": 10
     },
     {
       "id": "hamburg-alster",
@@ -38,7 +49,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": null
+      "locationCount": 10
     },
     {
       "id": "hamburg-szene",
@@ -48,7 +59,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "landmarks",
@@ -58,7 +69,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "kultur",
-      "locationCount": null
+      "locationCount": 7
     },
     {
       "id": "capitals",
@@ -68,7 +79,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": null
+      "locationCount": 16
     },
     {
       "id": "berlin",
@@ -78,7 +89,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "paris",
@@ -88,7 +99,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "munich",
@@ -98,7 +109,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "london",
@@ -108,7 +119,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "new-york",
@@ -118,7 +129,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "asian-megacities",
@@ -128,7 +139,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "unesco",
@@ -138,7 +149,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "kultur",
-      "locationCount": null
+      "locationCount": 10
     },
     {
       "id": "stadiums",
@@ -148,7 +159,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "kultur",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "ruins-castles",
@@ -158,7 +169,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "kultur",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "bridges",
@@ -168,7 +179,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "kultur",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "extreme",
@@ -178,7 +189,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "natur",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "coastal",
@@ -188,7 +199,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "natur",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "country-roads",
@@ -198,7 +209,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "natur",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "national-parks",
@@ -208,7 +219,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "natur",
-      "locationCount": null
+      "locationCount": 8
     },
     {
       "id": "islands",
@@ -218,7 +229,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "natur",
-      "locationCount": null
+      "locationCount": 8
     }
   ]
 }

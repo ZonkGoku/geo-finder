@@ -6,13 +6,16 @@ import { hashStringToSeed } from './rng.js';
 // einem Link uebernommen statt zufaellig ueber makeSeed()), damit alle
 // Spieler exakt dieselben Runden bekommen.
 
-// "weltweit" ist bewusst das einzige Kartenpaket mit source:"static" (siehe
-// data/map-sets/index.json) - alle anderen Pakete brauchen einen live
-// Mapillary-Abruf und damit Netzwerk + einen eigenen Zugangstoken, was
-// pixel-identische Ergebnisse fuer jeden Spieler nicht hart garantieren
-// kann. Die Tages-Challenge braucht diese Garantie, deshalb ein fester Pool
-// statt der zuletzt in der Lobby gewaehlten Einstellung.
-export const DAILY_CHALLENGE_MAPSET_ID = 'weltweit';
+// "daily-classic" ist ein eigenes, bewusst verstecktes Kartenpaket mit
+// source:"static" (siehe data/map-sets/index.json, hidden:true - taucht
+// deshalb nicht im normalen Kartenpaket-Browser auf). Alle live per Mapillary
+// geladenen Pakete - inklusive "weltweit", das seit dem Infinite-Panoramas-
+// Umbau selbst dynamisch aus hunderten Mapillary-Orten zieht - brauchen
+// Netzwerk + einen eigenen Zugangstoken und koennen deshalb pixel-identische
+// Ergebnisse fuer jeden Spieler nicht hart garantieren. Die Tages-Challenge
+// braucht diese Garantie, deshalb ein fester, separater Pool statt der
+// zuletzt in der Lobby gewaehlten Einstellung.
+export const DAILY_CHALLENGE_MAPSET_ID = 'daily-classic';
 
 // Feste Einstellungen fuer die Tages-Challenge, unabhaengig von den zuletzt
 // gewaehlten Lobby-Werten - sonst waeren die taeglichen Ergebnisse zwischen

@@ -1,198 +1,844 @@
 {
-  "id": "starter-pool",
+  "id": "weltweit",
   "name": "Weltweit (Standard)",
-  "description": "Elf echte, dokumentierte 360°-Panoramen aus der Atacama-Wüste (Chile), New York und Baltimore (USA) — als Startpunkt gedacht, um weitere Kartenpakete zu ergänzen.",
+  "description": "139 echte Orte auf allen bewohnten Kontinenten, live über die Mapillary-API geladen - bei jeder Partie eine andere, zufällige Auswahl.",
   "status": "ready",
-  "source": "static",
-  "scaleKm": 1400,
-  "locations": [
+  "source": "mapillary",
+  "scaleKm": 3500,
+  "regions": [
     {
-      "id": "cerro-toco",
-      "name": "Cerro Toco, Atacama-Wüste, Chile",
-      "lat": -22.9592,
-      "lng": -67.8108,
-      "country": "Chile",
-      "continent": "Südamerika",
-      "category": "Natur",
-      "coordSource": "exif-gps",
-      "panoramaUrl": "./assets/panoramas/cerro-toco.jpg",
-      "attribution": "Matthew Petroff, CC BY-SA 4.0",
-      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
-      "difficulty": "hard",
-      "tags": ["mountain", "desert", "south-america"],
-      "hint": "Über 5000 Meter Höhe, extrem trockene Luft, kaum Vegetation.",
-      "funFact": "Cerro Toco liegt nahe dem ALMA-Observatorium – die trockene, dünne Luft der Atacama-Wüste macht die Region zu einem der besten Orte der Welt für Radioastronomie."
+      "id": "cairo-giza",
+      "name": "Gizeh-Pyramiden, Kairo",
+      "lat": 29.9792,
+      "lng": 31.1342
     },
     {
-      "id": "cerro-toco-east",
-      "name": "Cerro Toco – Ostgrat, Atacama-Wüste, Chile",
-      "lat": -22.9445,
-      "lng": -67.8266,
-      "country": "Chile",
-      "continent": "Südamerika",
-      "category": "Natur",
-      "coordSource": "exif-gps",
-      "panoramaUrl": "./assets/panoramas/cerro-toco-east.jpg",
-      "attribution": "Matthew Petroff, CC BY-SA 4.0",
-      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
-      "difficulty": "hard",
-      "tags": ["mountain", "desert", "south-america"],
-      "hint": "Nur wenige hundert Höhenmeter vom ersten Cerro-Toco-Blick entfernt, aber ein anderer Blickwinkel.",
-      "funFact": "Die GPS-Koordinaten dieses Panoramas stammen direkt aus den EXIF-Metadaten des Originalfotos – eine der wenigen exakt verifizierten Aufnahmen in diesem Kartenpaket."
+      "id": "cairo-tahrir",
+      "name": "Tahrir-Platz, Kairo",
+      "lat": 30.0444,
+      "lng": 31.2357
     },
     {
-      "id": "alma-observatory",
-      "name": "ALMA-Observatorium, Atacama-Wüste, Chile",
-      "lat": -23.0294,
-      "lng": -67.7549,
-      "country": "Chile",
-      "continent": "Südamerika",
-      "category": "Wahrzeichen",
-      "coordSource": "approx-known-site",
-      "panoramaUrl": "./assets/panoramas/alma-observatory.jpg",
-      "attribution": "Matthew Petroff, CC BY-SA 4.0",
-      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
-      "difficulty": "hard",
-      "tags": ["landmark", "desert", "south-america"],
-      "hint": "Kein Baum, kein Strauch – nur Wüste, Himmel und Technik.",
-      "funFact": "ALMA (Atacama Large Millimeter Array) besteht aus 66 Radioteleskopen, die gemeinsam wie ein einziges riesiges Teleskop arbeiten."
+      "id": "marrakech-medina",
+      "name": "Medina, Marrakesch",
+      "lat": 31.6295,
+      "lng": -7.9811
     },
     {
-      "id": "alma-correlator",
-      "name": "ALMA Korrelator-Gebäude, Atacama-Wüste, Chile",
-      "lat": -23.0290,
-      "lng": -67.7540,
-      "country": "Chile",
-      "continent": "Südamerika",
-      "category": "Wahrzeichen",
-      "coordSource": "approx-known-site",
-      "panoramaUrl": "./assets/panoramas/alma-correlator.jpg",
-      "attribution": "Matthew Petroff, CC BY-SA 4.0",
-      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
-      "difficulty": "hard",
-      "tags": ["landmark", "desert", "south-america"],
-      "hint": "Ein unscheinbares Gebäude direkt neben den großen Antennen.",
-      "funFact": "Im Korrelator-Gebäude von ALMA kombiniert ein Spezialcomputer die Signale aller Antennen in Echtzeit zu einem gemeinsamen Bild."
+      "id": "casablanca-hassan",
+      "name": "Hassan-II-Moschee, Casablanca",
+      "lat": 33.6084,
+      "lng": -7.6325
     },
     {
-      "id": "lascar-volcano",
-      "name": "Vulkan Láscar, Chile",
-      "lat": -23.3700,
-      "lng": -67.7290,
-      "country": "Chile",
-      "continent": "Südamerika",
-      "category": "Natur",
-      "coordSource": "approx-known-site",
-      "panoramaUrl": "./assets/panoramas/lascar-volcano.jpg",
-      "attribution": "Matthew Petroff, CC BY-SA 4.0",
-      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
-      "difficulty": "medium",
-      "tags": ["mountain", "volcano", "south-america"],
-      "hint": "Der aktivste Vulkan Nordchiles.",
-      "funFact": "Der Láscar ist rund 5.600 Meter hoch und stieß zuletzt in den 1990er-Jahren große Aschewolken aus."
+      "id": "capetown-table",
+      "name": "Tafelberg, Kapstadt",
+      "lat": -33.9628,
+      "lng": 18.4098
     },
     {
-      "id": "tocopilla",
-      "name": "Tocopilla, Chile",
-      "lat": -22.0920,
-      "lng": -70.1980,
-      "country": "Chile",
-      "continent": "Südamerika",
-      "category": "Stadt",
-      "coordSource": "approx-known-site",
-      "panoramaUrl": "./assets/panoramas/tocopilla.jpg",
-      "attribution": "Matthew Petroff, CC BY-SA 4.0",
-      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
-      "difficulty": "medium",
-      "tags": ["coast", "urban", "south-america"],
-      "hint": "Eine Küstenstadt, eingeklemmt zwischen Anden-Ausläufern und Pazifik.",
-      "funFact": "Tocopilla lebt traditionell vom Kupferbergbau und von Kraftwerken, die die Minen im Landesinneren mit Strom versorgen."
+      "id": "capetown-waterfront",
+      "name": "V&A Waterfront, Kapstadt",
+      "lat": -33.9036,
+      "lng": 18.4201
     },
     {
-      "id": "jfk-airport",
-      "name": "JFK International Airport, New York, USA",
-      "lat": 40.6413,
-      "lng": -73.7781,
-      "country": "USA",
-      "continent": "Nordamerika",
-      "category": "Stadt",
-      "coordSource": "approx-known-site",
-      "panoramaUrl": "./assets/panoramas/jfk-airport.jpg",
-      "attribution": "Matthew Petroff, CC BY-SA 4.0",
-      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
-      "difficulty": "easy",
-      "tags": ["indoor", "urban", "north-america"],
-      "hint": "Einer der verkehrsreichsten internationalen Flughäfen der Welt.",
-      "funFact": "Der John F. Kennedy International Airport wurde nach dem 1963 ermordeten US-Präsidenten benannt und ist ein zentrales Drehkreuz für internationale Flüge in die USA."
+      "id": "johannesburg",
+      "name": "Johannesburg Innenstadt",
+      "lat": -26.2041,
+      "lng": 28.0473
     },
     {
-      "id": "johns-hopkins",
-      "name": "Johns Hopkins University, Baltimore, USA",
-      "lat": 39.3299,
-      "lng": -76.6205,
-      "country": "USA",
-      "continent": "Nordamerika",
-      "category": "Wahrzeichen",
-      "coordSource": "approx-known-site",
-      "panoramaUrl": "./assets/panoramas/johns-hopkins.jpg",
-      "attribution": "Matthew Petroff, CC BY-SA 4.0",
-      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
-      "difficulty": "medium",
-      "tags": ["campus", "urban", "north-america"],
-      "hint": "Backsteinbauten um einen weiten grünen Rasen – klassischer US-Campus.",
-      "funFact": "Die Johns Hopkins University in Baltimore gilt als eine der ältesten Forschungsuniversitäten der USA, gegründet 1876."
+      "id": "nairobi",
+      "name": "Nairobi Innenstadt",
+      "lat": -1.2921,
+      "lng": 36.8219
     },
     {
-      "id": "charles-street",
-      "name": "Charles Street, Baltimore, USA",
-      "lat": 39.3020,
-      "lng": -76.6150,
-      "country": "USA",
-      "continent": "Nordamerika",
-      "category": "Stadt",
-      "coordSource": "approx-known-site",
-      "panoramaUrl": "./assets/panoramas/charles-street.jpg",
-      "attribution": "Matthew Petroff, CC BY-SA 4.0",
-      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
-      "difficulty": "medium",
-      "tags": ["street", "urban", "north-america"],
-      "vaov": 65,
-      "hint": "Eine der Hauptachsen einer historischen Ostküsten-Stadt.",
-      "funFact": "Die Charles Street durchquert Baltimore von Süd nach Nord und gilt als eine der ältesten durchgehenden Straßen der Stadt."
+      "id": "lagos",
+      "name": "Lagos Island",
+      "lat": 6.4541,
+      "lng": 3.3947
     },
     {
-      "id": "baltimore-museum-of-art",
-      "name": "Baltimore Museum of Art, USA",
-      "lat": 39.3299,
-      "lng": -76.6203,
-      "country": "USA",
-      "continent": "Nordamerika",
-      "category": "Wahrzeichen",
-      "coordSource": "approx-known-site",
-      "panoramaUrl": "./assets/panoramas/baltimore-museum-of-art.jpg",
-      "attribution": "Matthew Petroff, CC BY-SA 4.0",
-      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
-      "difficulty": "medium",
-      "tags": ["landmark", "urban", "north-america"],
-      "hint": "Ein Säulenportikus im neoklassizistischen Stil empfängt die Besucher.",
-      "funFact": "Das Baltimore Museum of Art besitzt eine der größten Matisse-Sammlungen der Welt, gestiftet von den Kunstsammlerinnen Claribel und Etta Cone."
+      "id": "accra",
+      "name": "Accra Innenstadt",
+      "lat": 5.6037,
+      "lng": -0.187
     },
     {
-      "id": "wyman-park-dell",
-      "name": "Wyman Park Dell, Baltimore, USA",
-      "lat": 39.3288,
-      "lng": -76.6216,
-      "country": "USA",
-      "continent": "Nordamerika",
-      "category": "Natur",
-      "coordSource": "approx-known-site",
-      "panoramaUrl": "./assets/panoramas/wyman-park-dell.jpg",
-      "attribution": "Matthew Petroff, CC BY-SA 4.0",
-      "attributionUrl": "https://github.com/mpetroff/pannellum.org",
-      "difficulty": "medium",
-      "tags": ["park", "urban", "north-america"],
-      "hint": "Eine gepflegte Parkanlage mitten in der Stadt.",
-      "funFact": "Wyman Park Dell liegt zwischen dem Baltimore Museum of Art und dem Johns Hopkins Campus und ist ein beliebter Grünraum der Stadt."
+      "id": "dakar",
+      "name": "Dakar Innenstadt",
+      "lat": 14.7167,
+      "lng": -17.4677
+    },
+    {
+      "id": "addis-ababa",
+      "name": "Addis Abeba Zentrum",
+      "lat": 9.025,
+      "lng": 38.7469
+    },
+    {
+      "id": "tunis-medina",
+      "name": "Medina von Tunis",
+      "lat": 36.7989,
+      "lng": 10.1706
+    },
+    {
+      "id": "zanzibar-stonetown",
+      "name": "Stone Town, Sansibar",
+      "lat": -6.1659,
+      "lng": 39.1996
+    },
+    {
+      "id": "victoria-falls",
+      "name": "Victoria-Fälle",
+      "lat": -17.9243,
+      "lng": 25.8572
+    },
+    {
+      "id": "luxor-temple",
+      "name": "Luxor-Tempel",
+      "lat": 25.6995,
+      "lng": 32.6421
+    },
+    {
+      "id": "kigali",
+      "name": "Kigali Zentrum",
+      "lat": -1.9441,
+      "lng": 30.0619
+    },
+    {
+      "id": "tokyo-shibuya",
+      "name": "Shibuya-Kreuzung, Tokio",
+      "lat": 35.6595,
+      "lng": 139.7005
+    },
+    {
+      "id": "tokyo-asakusa",
+      "name": "Asakusa, Tokio",
+      "lat": 35.7148,
+      "lng": 139.7967
+    },
+    {
+      "id": "kyoto-fushimi",
+      "name": "Fushimi Inari, Kyoto",
+      "lat": 34.9671,
+      "lng": 135.7727
+    },
+    {
+      "id": "osaka-dotonbori",
+      "name": "Dotonbori, Osaka",
+      "lat": 34.6687,
+      "lng": 135.5031
+    },
+    {
+      "id": "seoul-gyeongbok",
+      "name": "Gyeongbokgung, Seoul",
+      "lat": 37.5796,
+      "lng": 126.977
+    },
+    {
+      "id": "busan",
+      "name": "Busan Haeundae",
+      "lat": 35.1587,
+      "lng": 129.1604
+    },
+    {
+      "id": "beijing-forbidden",
+      "name": "Verbotene Stadt, Peking",
+      "lat": 39.9163,
+      "lng": 116.3972
+    },
+    {
+      "id": "shanghai-bund",
+      "name": "The Bund, Shanghai",
+      "lat": 31.2397,
+      "lng": 121.49
+    },
+    {
+      "id": "hongkong-victoria",
+      "name": "Victoria Harbour, Hongkong",
+      "lat": 22.2908,
+      "lng": 114.1725
+    },
+    {
+      "id": "taipei-101",
+      "name": "Taipei 101",
+      "lat": 25.033,
+      "lng": 121.5654
+    },
+    {
+      "id": "singapore-marina",
+      "name": "Marina Bay, Singapur",
+      "lat": 1.2834,
+      "lng": 103.8607
+    },
+    {
+      "id": "bangkok-grandpalace",
+      "name": "Grand Palace, Bangkok",
+      "lat": 13.75,
+      "lng": 100.4913
+    },
+    {
+      "id": "chiangmai",
+      "name": "Altstadt Chiang Mai",
+      "lat": 18.7883,
+      "lng": 98.9853
+    },
+    {
+      "id": "hanoi-oldquarter",
+      "name": "Altstadt, Hanoi",
+      "lat": 21.0333,
+      "lng": 105.85
+    },
+    {
+      "id": "hochiminh",
+      "name": "Ho-Chi-Minh-Stadt Zentrum",
+      "lat": 10.7769,
+      "lng": 106.7009
+    },
+    {
+      "id": "siemreap-angkor",
+      "name": "Angkor Wat, Siem Reap",
+      "lat": 13.4125,
+      "lng": 103.867
+    },
+    {
+      "id": "kualalumpur-petronas",
+      "name": "Petronas Towers, Kuala Lumpur",
+      "lat": 3.1579,
+      "lng": 101.7116
+    },
+    {
+      "id": "jakarta",
+      "name": "Jakarta Zentrum",
+      "lat": -6.2088,
+      "lng": 106.8456
+    },
+    {
+      "id": "bali-ubud",
+      "name": "Ubud, Bali",
+      "lat": -8.5069,
+      "lng": 115.2625
+    },
+    {
+      "id": "manila",
+      "name": "Manila Intramuros",
+      "lat": 14.5906,
+      "lng": 120.975
+    },
+    {
+      "id": "mumbai-gateway",
+      "name": "Gateway of India, Mumbai",
+      "lat": 18.922,
+      "lng": 72.8347
+    },
+    {
+      "id": "delhi-redfort",
+      "name": "Rotes Fort, Delhi",
+      "lat": 28.6562,
+      "lng": 77.241
+    },
+    {
+      "id": "jaipur",
+      "name": "Amber Fort, Jaipur",
+      "lat": 26.9855,
+      "lng": 75.8513
+    },
+    {
+      "id": "agra-tajmahal",
+      "name": "Taj Mahal, Agra",
+      "lat": 27.1751,
+      "lng": 78.0421
+    },
+    {
+      "id": "varanasi-ghats",
+      "name": "Ghats von Varanasi",
+      "lat": 25.3176,
+      "lng": 83.0064
+    },
+    {
+      "id": "kathmandu-durbar",
+      "name": "Durbar Square, Kathmandu",
+      "lat": 27.7045,
+      "lng": 85.3075
+    },
+    {
+      "id": "colombo",
+      "name": "Colombo Zentrum",
+      "lat": 6.9271,
+      "lng": 79.8612
+    },
+    {
+      "id": "dubai-burjkhalifa",
+      "name": "Burj Khalifa, Dubai",
+      "lat": 25.1972,
+      "lng": 55.2744
+    },
+    {
+      "id": "abudhabi",
+      "name": "Abu Dhabi Corniche",
+      "lat": 24.4667,
+      "lng": 54.3667
+    },
+    {
+      "id": "istanbul-hagiasophia",
+      "name": "Hagia Sophia, Istanbul",
+      "lat": 41.0086,
+      "lng": 28.9802
+    },
+    {
+      "id": "jerusalem-oldcity",
+      "name": "Altstadt Jerusalem",
+      "lat": 31.7767,
+      "lng": 35.2345
+    },
+    {
+      "id": "telaviv",
+      "name": "Tel Aviv Strandpromenade",
+      "lat": 32.0853,
+      "lng": 34.7818
+    },
+    {
+      "id": "petra",
+      "name": "Petra, Jordanien",
+      "lat": 30.3285,
+      "lng": 35.4444
+    },
+    {
+      "id": "doha",
+      "name": "Doha Corniche",
+      "lat": 25.2854,
+      "lng": 51.531
+    },
+    {
+      "id": "almaty",
+      "name": "Almaty Zentrum",
+      "lat": 43.222,
+      "lng": 76.8512
+    },
+    {
+      "id": "ulaanbaatar",
+      "name": "Ulaanbaatar Zentrum",
+      "lat": 47.8864,
+      "lng": 106.9057
+    },
+    {
+      "id": "london-eye",
+      "name": "London Eye",
+      "lat": 51.5033,
+      "lng": -0.1195
+    },
+    {
+      "id": "london-westminster",
+      "name": "Westminster, London",
+      "lat": 51.5007,
+      "lng": -0.1246
+    },
+    {
+      "id": "edinburgh-castle",
+      "name": "Edinburgh Castle",
+      "lat": 55.9486,
+      "lng": -3.1999
+    },
+    {
+      "id": "dublin-temple",
+      "name": "Temple Bar, Dublin",
+      "lat": 53.3454,
+      "lng": -6.2674
+    },
+    {
+      "id": "paris-eiffel",
+      "name": "Eiffelturm, Paris",
+      "lat": 48.8584,
+      "lng": 2.2945
+    },
+    {
+      "id": "paris-montmartre",
+      "name": "Montmartre, Paris",
+      "lat": 48.8867,
+      "lng": 2.3431
+    },
+    {
+      "id": "nice-promenade",
+      "name": "Promenade des Anglais, Nizza",
+      "lat": 43.6959,
+      "lng": 7.265
+    },
+    {
+      "id": "amsterdam-canals",
+      "name": "Grachtengürtel, Amsterdam",
+      "lat": 52.3676,
+      "lng": 4.8952
+    },
+    {
+      "id": "brussels-grandplace",
+      "name": "Grand Place, Brüssel",
+      "lat": 50.8467,
+      "lng": 4.3525
+    },
+    {
+      "id": "berlin-brandenburg",
+      "name": "Brandenburger Tor, Berlin",
+      "lat": 52.5163,
+      "lng": 13.3777
+    },
+    {
+      "id": "munich-marienplatz",
+      "name": "Marienplatz, München",
+      "lat": 48.1374,
+      "lng": 11.5755
+    },
+    {
+      "id": "vienna-stephansdom",
+      "name": "Stephansdom, Wien",
+      "lat": 48.2085,
+      "lng": 16.3731
+    },
+    {
+      "id": "zurich-oldtown",
+      "name": "Altstadt Zürich",
+      "lat": 47.3702,
+      "lng": 8.5417
+    },
+    {
+      "id": "geneva-jetdeau",
+      "name": "Jet d'Eau, Genf",
+      "lat": 46.2072,
+      "lng": 6.1555
+    },
+    {
+      "id": "rome-colosseum",
+      "name": "Kolosseum, Rom",
+      "lat": 41.8902,
+      "lng": 12.4922
+    },
+    {
+      "id": "venice-sanmarco",
+      "name": "Markusplatz, Venedig",
+      "lat": 45.4342,
+      "lng": 12.3388
+    },
+    {
+      "id": "florence-duomo",
+      "name": "Dom von Florenz",
+      "lat": 43.7731,
+      "lng": 11.256
+    },
+    {
+      "id": "milan-duomo",
+      "name": "Mailänder Dom",
+      "lat": 45.4642,
+      "lng": 9.19
+    },
+    {
+      "id": "naples-bay",
+      "name": "Golf von Neapel",
+      "lat": 40.8518,
+      "lng": 14.2681
+    },
+    {
+      "id": "barcelona-sagrada",
+      "name": "Sagrada Família, Barcelona",
+      "lat": 41.4036,
+      "lng": 2.1744
+    },
+    {
+      "id": "madrid-plazamayor",
+      "name": "Plaza Mayor, Madrid",
+      "lat": 40.4155,
+      "lng": -3.7074
+    },
+    {
+      "id": "lisbon-alfama",
+      "name": "Alfama, Lissabon",
+      "lat": 38.7139,
+      "lng": -9.1305
+    },
+    {
+      "id": "porto-riverside",
+      "name": "Ribeira, Porto",
+      "lat": 41.1409,
+      "lng": -8.6118
+    },
+    {
+      "id": "athens-acropolis",
+      "name": "Akropolis, Athen",
+      "lat": 37.9715,
+      "lng": 23.7267
+    },
+    {
+      "id": "santorini-oia",
+      "name": "Oia, Santorin",
+      "lat": 36.4614,
+      "lng": 25.3753
+    },
+    {
+      "id": "prague-oldtown",
+      "name": "Altstädter Ring, Prag",
+      "lat": 50.087,
+      "lng": 14.4208
+    },
+    {
+      "id": "budapest-parliament",
+      "name": "Parlament, Budapest",
+      "lat": 47.507,
+      "lng": 19.0458
+    },
+    {
+      "id": "warsaw-oldtown",
+      "name": "Altstadt Warschau",
+      "lat": 52.2497,
+      "lng": 21.0122
+    },
+    {
+      "id": "krakow-mainsquare",
+      "name": "Marktplatz, Krakau",
+      "lat": 50.0617,
+      "lng": 19.9373
+    },
+    {
+      "id": "stockholm-gamlastan",
+      "name": "Gamla Stan, Stockholm",
+      "lat": 59.3251,
+      "lng": 18.0711
+    },
+    {
+      "id": "oslo-opera",
+      "name": "Opernhaus, Oslo",
+      "lat": 59.9075,
+      "lng": 10.753
+    },
+    {
+      "id": "copenhagen-nyhavn",
+      "name": "Nyhavn, Kopenhagen",
+      "lat": 55.68,
+      "lng": 12.588
+    },
+    {
+      "id": "helsinki-cathedral",
+      "name": "Dom zu Helsinki",
+      "lat": 60.1699,
+      "lng": 24.9525
+    },
+    {
+      "id": "reykjavik",
+      "name": "Reykjavik Zentrum",
+      "lat": 64.1466,
+      "lng": -21.9426
+    },
+    {
+      "id": "moscow-redsquare",
+      "name": "Roter Platz, Moskau",
+      "lat": 55.7539,
+      "lng": 37.6208
+    },
+    {
+      "id": "stpetersburg",
+      "name": "Newski-Prospekt, St. Petersburg",
+      "lat": 59.9343,
+      "lng": 30.3351
+    },
+    {
+      "id": "dubrovnik-oldtown",
+      "name": "Altstadt Dubrovnik",
+      "lat": 42.6407,
+      "lng": 18.1077
+    },
+    {
+      "id": "ljubljana",
+      "name": "Ljubljana Zentrum",
+      "lat": 46.0569,
+      "lng": 14.5058
+    },
+    {
+      "id": "bucharest",
+      "name": "Bukarest Zentrum",
+      "lat": 44.4268,
+      "lng": 26.1025
+    },
+    {
+      "id": "sofia",
+      "name": "Sofia Zentrum",
+      "lat": 42.6977,
+      "lng": 23.3219
+    },
+    {
+      "id": "tallinn-oldtown",
+      "name": "Altstadt Tallinn",
+      "lat": 59.437,
+      "lng": 24.7454
+    },
+    {
+      "id": "riga-oldtown",
+      "name": "Altstadt Riga",
+      "lat": 56.9496,
+      "lng": 24.1052
+    },
+    {
+      "id": "vilnius-oldtown",
+      "name": "Altstadt Vilnius",
+      "lat": 54.6872,
+      "lng": 25.2797
+    },
+    {
+      "id": "bratislava",
+      "name": "Bratislava Zentrum",
+      "lat": 48.1486,
+      "lng": 17.1077
+    },
+    {
+      "id": "bern-oldtown",
+      "name": "Altstadt Bern",
+      "lat": 46.948,
+      "lng": 7.4474
+    },
+    {
+      "id": "luxembourg-city",
+      "name": "Luxemburg Stadt",
+      "lat": 49.6116,
+      "lng": 6.1319
+    },
+    {
+      "id": "newyork-timessquare",
+      "name": "Times Square, New York",
+      "lat": 40.758,
+      "lng": -73.9855
+    },
+    {
+      "id": "newyork-centralpark",
+      "name": "Central Park, New York",
+      "lat": 40.7829,
+      "lng": -73.9654
+    },
+    {
+      "id": "losangeles-hollywood",
+      "name": "Hollywood, Los Angeles",
+      "lat": 34.1016,
+      "lng": -118.3269
+    },
+    {
+      "id": "sanfrancisco-goldengate",
+      "name": "Golden Gate Bridge, San Francisco",
+      "lat": 37.8199,
+      "lng": -122.4783
+    },
+    {
+      "id": "chicago-loop",
+      "name": "The Loop, Chicago",
+      "lat": 41.8786,
+      "lng": -87.6298
+    },
+    {
+      "id": "seattle-spaceneedle",
+      "name": "Space Needle, Seattle",
+      "lat": 47.6205,
+      "lng": -122.3493
+    },
+    {
+      "id": "miami-southbeach",
+      "name": "South Beach, Miami",
+      "lat": 25.7826,
+      "lng": -80.134
+    },
+    {
+      "id": "neworleans-frenchquarter",
+      "name": "French Quarter, New Orleans",
+      "lat": 29.9584,
+      "lng": -90.0644
+    },
+    {
+      "id": "lasvegas-strip",
+      "name": "Las Vegas Strip",
+      "lat": 36.1147,
+      "lng": -115.1728
+    },
+    {
+      "id": "washingtondc-mall",
+      "name": "National Mall, Washington D.C.",
+      "lat": 38.8895,
+      "lng": -77.0353
+    },
+    {
+      "id": "boston-freedomtrail",
+      "name": "Freedom Trail, Boston",
+      "lat": 42.3601,
+      "lng": -71.0589
+    },
+    {
+      "id": "toronto-cntower",
+      "name": "CN Tower, Toronto",
+      "lat": 43.6426,
+      "lng": -79.3871
+    },
+    {
+      "id": "vancouver-stanleypark",
+      "name": "Stanley Park, Vancouver",
+      "lat": 49.3017,
+      "lng": -123.1417
+    },
+    {
+      "id": "montreal-oldtown",
+      "name": "Altstadt Montreal",
+      "lat": 45.5075,
+      "lng": -73.5541
+    },
+    {
+      "id": "mexicocity-zocalo",
+      "name": "Zócalo, Mexiko-Stadt",
+      "lat": 19.4326,
+      "lng": -99.1332
+    },
+    {
+      "id": "cancun",
+      "name": "Cancún Hotelzone",
+      "lat": 21.1619,
+      "lng": -86.8515
+    },
+    {
+      "id": "havana-oldtown",
+      "name": "Altstadt Havanna",
+      "lat": 23.1136,
+      "lng": -82.3666
+    },
+    {
+      "id": "panamacity",
+      "name": "Panama-Stadt Altstadt",
+      "lat": 8.9519,
+      "lng": -79.533
+    },
+    {
+      "id": "riodejaneiro-corcovado",
+      "name": "Christusstatue, Rio de Janeiro",
+      "lat": -22.9519,
+      "lng": -43.2105
+    },
+    {
+      "id": "riodejaneiro-copacabana",
+      "name": "Copacabana, Rio de Janeiro",
+      "lat": -22.9711,
+      "lng": -43.1822
+    },
+    {
+      "id": "saopaulo",
+      "name": "São Paulo Zentrum",
+      "lat": -23.5505,
+      "lng": -46.6333
+    },
+    {
+      "id": "buenosaires-caminito",
+      "name": "Caminito, Buenos Aires",
+      "lat": -34.6345,
+      "lng": -58.3629
+    },
+    {
+      "id": "santiago-plazadearmas",
+      "name": "Plaza de Armas, Santiago",
+      "lat": -33.4372,
+      "lng": -70.6506
+    },
+    {
+      "id": "lima-plazamayor",
+      "name": "Plaza Mayor, Lima",
+      "lat": -12.0464,
+      "lng": -77.03
+    },
+    {
+      "id": "cusco-plazadearmas",
+      "name": "Plaza de Armas, Cusco",
+      "lat": -13.517,
+      "lng": -71.9785
+    },
+    {
+      "id": "machupicchu",
+      "name": "Machu Picchu",
+      "lat": -13.1631,
+      "lng": -72.545
+    },
+    {
+      "id": "bogota-candelaria",
+      "name": "La Candelaria, Bogotá",
+      "lat": 4.5981,
+      "lng": -74.0758
+    },
+    {
+      "id": "cartagena-oldtown",
+      "name": "Altstadt Cartagena",
+      "lat": 10.4236,
+      "lng": -75.5518
+    },
+    {
+      "id": "quito-oldtown",
+      "name": "Altstadt Quito",
+      "lat": -0.2201,
+      "lng": -78.5123
+    },
+    {
+      "id": "montevideo",
+      "name": "Montevideo Zentrum",
+      "lat": -34.9011,
+      "lng": -56.1645
+    },
+    {
+      "id": "lapaz",
+      "name": "La Paz Zentrum",
+      "lat": -16.5,
+      "lng": -68.15
+    },
+    {
+      "id": "sydney-operahouse",
+      "name": "Opernhaus, Sydney",
+      "lat": -33.8568,
+      "lng": 151.2153
+    },
+    {
+      "id": "melbourne-fedsquare",
+      "name": "Federation Square, Melbourne",
+      "lat": -37.818,
+      "lng": 144.9691
+    },
+    {
+      "id": "brisbane",
+      "name": "Brisbane Zentrum",
+      "lat": -27.4698,
+      "lng": 153.0251
+    },
+    {
+      "id": "perth",
+      "name": "Perth Zentrum",
+      "lat": -31.9505,
+      "lng": 115.8605
+    },
+    {
+      "id": "auckland-skytower",
+      "name": "Sky Tower, Auckland",
+      "lat": -36.8485,
+      "lng": 174.7633
+    },
+    {
+      "id": "wellington",
+      "name": "Wellington Zentrum",
+      "lat": -41.2865,
+      "lng": 174.7762
+    },
+    {
+      "id": "queenstown",
+      "name": "Queenstown, Neuseeland",
+      "lat": -45.0312,
+      "lng": 168.6626
+    },
+    {
+      "id": "fiji-suva",
+      "name": "Suva, Fidschi",
+      "lat": -18.1416,
+      "lng": 178.4419
+    },
+    {
+      "id": "honolulu-waikiki",
+      "name": "Waikiki, Honolulu",
+      "lat": 21.2793,
+      "lng": -157.8292
     }
   ]
 }

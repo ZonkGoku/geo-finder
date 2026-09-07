@@ -277,11 +277,10 @@ async function getMapSetDetail(id) {
   const entry = mapSetIndex.find((s) => s.id === id);
   if (!entry) throw new Error(`Unbekanntes Kartenpaket: ${id}`);
   const rawDetail = await loadMapSetDetail(entry);
-  // data/map-sets/weltweit.json traegt intern noch "id":"starter-pool" (ein
-  // Altlast-Name aus einer frueheren Version der Datei) statt "weltweit" wie
-  // im Index - ohne diese Korrektur wuerde state.pool.id nicht mit der ID
+  // Absicherung falls die interne "id" einer Kartenpaket-Datei mal vom
+  // Index abweicht - sonst wuerde state.pool.id nicht mit der ID
   // uebereinstimmen, unter der Highscores/Challenge-Links das Paket kennen,
-  // und beide Features wuerden fuer "Weltweit (Standard)" leise ins Leere laufen.
+  // und beide Features wuerden fuer dieses Paket leise ins Leere laufen.
   const detail = rawDetail.id === entry.id ? rawDetail : { ...rawDetail, id: entry.id };
   mapSetDetailCache.set(id, detail);
   return detail;
@@ -560,6 +559,7 @@ const MAPSET_PLAY_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="
 function getFilteredMapSets() {
   const term = mapSetSearchTerm.trim().toLowerCase();
   return mapSetIndex.filter((entry) => {
+    if (entry.hidden) return false;
     const matchesTag = mapSetFilterTag === 'alle' || entry.tag === mapSetFilterTag;
     const matchesTerm = !term || entry.name.toLowerCase().includes(term) || entry.description.toLowerCase().includes(term);
     return matchesTag && matchesTerm;
@@ -607,7 +607,10 @@ function renderMapSetGrid() {
         <div class="mapset-card-play">${MAPSET_PLAY_ICON}</div>
       </div>
       <div class="mapset-card-body">
-        <span class="mapset-card-badge ${badgeClass}">${badgeText}</span>
+        <div class="mapset-card-badge-row">
+          <span class="mapset-card-badge ${badgeClass}">${badgeText}</span>
+          ${entry.locationCount ? `<span class="mapset-card-variety">${escapeHtml(t('mapsetLocationCount', { count: entry.locationCount }))}</span>` : ''}
+        </div>
         <span class="mapset-card-name">${escapeHtml(entry.name)}</span>
         <span class="mapset-card-desc">${escapeHtml(entry.description)}</span>
       </div>
@@ -656,6 +659,7 @@ function renderLobbyStage() {
     el('lobby-stage-icon').innerHTML = HEATMAP_STAGE_ICON;
     el('lobby-stage-badge').className = 'mapset-card-badge ready';
     el('lobby-stage-badge').textContent = 'Bereit';
+    el('lobby-stage-variety').classList.add('hidden');
     el('lobby-stage-name').textContent = 'PulseMap-Modus';
     el('lobby-stage-desc').textContent = 'Tippe Landesnamen, statt auf der Karte zu klicken - die Welt färbt sich nach Entfernung zum gesuchten Land ein. Wer zuerst richtig liegt, gewinnt die Runde.';
     el('lobby-stage-best').classList.add('hidden');
@@ -679,6 +683,9 @@ function renderLobbyStage() {
   const badge = el('lobby-stage-badge');
   badge.className = `mapset-card-badge ${entry.available ? 'ready' : 'needs-token'}`;
   badge.textContent = entry.available ? 'Bereit' : 'Token nötig';
+  const variety = el('lobby-stage-variety');
+  variety.classList.toggle('hidden', !entry.locationCount);
+  if (entry.locationCount) variety.textContent = t('mapsetLocationCount', { count: entry.locationCount });
   el('lobby-stage-name').textContent = entry.name;
   el('lobby-stage-desc').textContent = entry.description;
 
