@@ -6,12 +6,131 @@
   "source": "mapillary",
   "scaleKm": 2000,
   "regions": [
-    { "id": "eiffel-tower", "name": "Eiffelturm, Paris", "lat": 48.8584, "lng": 2.2945 },
-    { "id": "colosseum", "name": "Kolosseum, Rom", "lat": 41.8902, "lng": 12.4922 },
-    { "id": "taj-mahal", "name": "Taj Mahal, Agra", "lat": 27.1751, "lng": 78.0421 },
-    { "id": "brandenburg-gate", "name": "Brandenburger Tor, Berlin", "lat": 52.5163, "lng": 13.3777 },
-    { "id": "big-ben", "name": "Big Ben, London", "lat": 51.5007, "lng": -0.1246 },
-    { "id": "sagrada-familia", "name": "Sagrada Família, Barcelona", "lat": 41.4036, "lng": 2.1744 },
-    { "id": "times-square", "name": "Times Square, New York", "lat": 40.7580, "lng": -73.9855 }
+    {
+      "id": "eiffel-tower",
+      "name": "Eiffelturm, Paris",
+      "lat": 48.8584,
+      "lng": 2.2945
+    },
+    {
+      "id": "colosseum",
+      "name": "Kolosseum, Rom",
+      "lat": 41.8902,
+      "lng": 12.4922
+    },
+    {
+      "id": "taj-mahal",
+      "name": "Taj Mahal, Agra",
+      "lat": 27.1751,
+      "lng": 78.0421
+    },
+    {
+      "id": "brandenburg-gate",
+      "name": "Brandenburger Tor, Berlin",
+      "lat": 52.5163,
+      "lng": 13.3777
+    },
+    {
+      "id": "big-ben",
+      "name": "Big Ben, London",
+      "lat": 51.5007,
+      "lng": -0.1246
+    },
+    {
+      "id": "sagrada-familia",
+      "name": "Sagrada Família, Barcelona",
+      "lat": 41.4036,
+      "lng": 2.1744
+    },
+    {
+      "id": "times-square",
+      "name": "Times Square, New York",
+      "lat": 40.758,
+      "lng": -73.9855
+    },
+    {
+      "id": "christ-the-redeemer",
+      "name": "Christus-Statue, Rio de Janeiro",
+      "lat": -22.9519,
+      "lng": -43.2105
+    },
+    {
+      "id": "sydney-opera-house",
+      "name": "Sydney Opera House",
+      "lat": -33.8568,
+      "lng": 151.2153
+    },
+    {
+      "id": "great-wall",
+      "name": "Chinesische Mauer, Badaling",
+      "lat": 40.3584,
+      "lng": 116.023
+    },
+    {
+      "id": "petra",
+      "name": "Petra, Jordanien",
+      "lat": 30.3285,
+      "lng": 35.4444
+    },
+    {
+      "id": "machu-picchu",
+      "name": "Machu Picchu, Peru",
+      "lat": -13.1631,
+      "lng": -72.545
+    },
+    {
+      "id": "neuschwanstein",
+      "name": "Schloss Neuschwanstein, Deutschland",
+      "lat": 47.5576,
+      "lng": 10.7498
+    },
+    {
+      "id": "golden-gate-bridge",
+      "name": "Golden Gate Bridge, San Francisco",
+      "lat": 37.8199,
+      "lng": -122.4783
+    },
+    {
+      "id": "leaning-tower-pisa",
+      "name": "Schiefer Turm von Pisa",
+      "lat": 43.723,
+      "lng": 10.3966
+    },
+    {
+      "id": "mount-fuji",
+      "name": "Fuji, Japan",
+      "lat": 35.3606,
+      "lng": 138.7274
+    },
+    {
+      "id": "burj-khalifa",
+      "name": "Burj Khalifa, Dubai",
+      "lat": 25.1972,
+      "lng": 55.2744
+    },
+    {
+      "id": "angkor-wat",
+      "name": "Angkor Wat, Kambodscha",
+      "lat": 13.4125,
+      "lng": 103.867
+    },
+    {
+      "id": "acropolis",
+      "name": "Akropolis, Athen",
+      "lat": 37.9715,
+      "lng": 23.7267
+    },
+    {
+      "id": "st-basils-cathedral",
+      "name": "Basilius-Kathedrale, Moskau",
+      "lat": 55.7525,
+      "lng": 37.6231
+    },
+    {
+      "id": "cn-tower",
+      "name": "CN Tower, Toronto",
+      "lat": 43.6426,
+      "lng": -79.3871
+    }
   ]
 }

@@ -6,13 +6,137 @@
   "source": "mapillary",
   "scaleKm": 8,
   "regions": [
-    { "id": "berlin-reichstag", "name": "Reichstagsgebäude", "lat": 52.5186, "lng": 13.3762 },
-    { "id": "berlin-alexanderplatz", "name": "Alexanderplatz", "lat": 52.5219, "lng": 13.4132 },
-    { "id": "berlin-east-side-gallery", "name": "East Side Gallery", "lat": 52.5051, "lng": 13.4396 },
-    { "id": "berlin-potsdamer-platz", "name": "Potsdamer Platz", "lat": 52.5096, "lng": 13.3759 },
-    { "id": "berlin-checkpoint-charlie", "name": "Checkpoint Charlie", "lat": 52.5075, "lng": 13.3906 },
-    { "id": "berlin-berliner-dom", "name": "Berliner Dom", "lat": 52.5192, "lng": 13.4010 },
-    { "id": "berlin-siegessaeule", "name": "Siegessäule, Tiergarten", "lat": 52.5145, "lng": 13.3501 },
-    { "id": "berlin-kurfuerstendamm", "name": "Kurfürstendamm", "lat": 52.5033, "lng": 13.3290 }
+    {
+      "id": "berlin-reichstag",
+      "name": "Reichstagsgebäude",
+      "lat": 52.5186,
+      "lng": 13.3762
+    },
+    {
+      "id": "berlin-alexanderplatz",
+      "name": "Alexanderplatz",
+      "lat": 52.5219,
+      "lng": 13.4132
+    },
+    {
+      "id": "berlin-east-side-gallery",
+      "name": "East Side Gallery",
+      "lat": 52.5051,
+      "lng": 13.4396
+    },
+    {
+      "id": "berlin-potsdamer-platz",
+      "name": "Potsdamer Platz",
+      "lat": 52.5096,
+      "lng": 13.3759
+    },
+    {
+      "id": "berlin-checkpoint-charlie",
+      "name": "Checkpoint Charlie",
+      "lat": 52.5075,
+      "lng": 13.3906
+    },
+    {
+      "id": "berlin-berliner-dom",
+      "name": "Berliner Dom",
+      "lat": 52.5192,
+      "lng": 13.401
+    },
+    {
+      "id": "berlin-siegessaeule",
+      "name": "Siegessäule, Tiergarten",
+      "lat": 52.5145,
+      "lng": 13.3501
+    },
+    {
+      "id": "berlin-kurfuerstendamm",
+      "name": "Kurfürstendamm",
+      "lat": 52.5033,
+      "lng": 13.329
+    },
+    {
+      "id": "berlin-gendarmenmarkt",
+      "name": "Gendarmenmarkt",
+      "lat": 52.5138,
+      "lng": 13.3925
+    },
+    {
+      "id": "berlin-museumsinsel",
+      "name": "Museumsinsel",
+      "lat": 52.5169,
+      "lng": 13.401
+    },
+    {
+      "id": "berlin-tiergarten",
+      "name": "Tiergarten / Brandenburger Tor",
+      "lat": 52.5163,
+      "lng": 13.3777
+    },
+    {
+      "id": "berlin-hackescher-markt",
+      "name": "Hackescher Markt",
+      "lat": 52.5244,
+      "lng": 13.4022
+    },
+    {
+      "id": "berlin-kreuzberg",
+      "name": "Kreuzberg / Oranienstraße",
+      "lat": 52.4996,
+      "lng": 13.418
+    },
+    {
+      "id": "berlin-prenzlauer-berg",
+      "name": "Prenzlauer Berg / Kollwitzplatz",
+      "lat": 52.5384,
+      "lng": 13.4193
+    },
+    {
+      "id": "berlin-charlottenburg",
+      "name": "Schloss Charlottenburg",
+      "lat": 52.5211,
+      "lng": 13.2955
+    },
+    {
+      "id": "berlin-friedrichstrasse",
+      "name": "Friedrichstraße",
+      "lat": 52.517,
+      "lng": 13.3889
+    },
+    {
+      "id": "berlin-nikolaiviertel",
+      "name": "Nikolaiviertel",
+      "lat": 52.5169,
+      "lng": 13.4079
+    },
+    {
+      "id": "berlin-tempelhof",
+      "name": "Tempelhofer Feld",
+      "lat": 52.4732,
+      "lng": 13.4033
+    },
+    {
+      "id": "berlin-olympiastadion",
+      "name": "Olympiastadion",
+      "lat": 52.5147,
+      "lng": 13.2395
+    },
+    {
+      "id": "berlin-spandau",
+      "name": "Zitadelle Spandau",
+      "lat": 52.5361,
+      "lng": 13.2078
+    },
+    {
+      "id": "berlin-koepenick",
+      "name": "Schloss Köpenick",
+      "lat": 52.4436,
+      "lng": 13.5757
+    },
+    {
+      "id": "berlin-warschauer-strasse",
+      "name": "Warschauer Straße / RAW-Gelände",
+      "lat": 52.5081,
+      "lng": 13.4489
+    }
   ]
 }

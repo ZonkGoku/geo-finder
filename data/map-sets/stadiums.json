@@ -6,13 +6,125 @@
   "source": "mapillary",
   "scaleKm": 3000,
   "regions": [
-    { "id": "stadium-wembley", "name": "Wembley Stadium, London", "lat": 51.5560, "lng": -0.2795 },
-    { "id": "stadium-camp-nou", "name": "Camp Nou, Barcelona", "lat": 41.3809, "lng": 2.1228 },
-    { "id": "stadium-maracana", "name": "Maracanã, Rio de Janeiro", "lat": -22.9121, "lng": -43.2302 },
-    { "id": "stadium-allianz-arena", "name": "Allianz Arena, München", "lat": 48.2188, "lng": 11.6247 },
-    { "id": "stadium-yankee", "name": "Yankee Stadium, New York", "lat": 40.8296, "lng": -73.9262 },
-    { "id": "stadium-mcg", "name": "Melbourne Cricket Ground", "lat": -37.8199, "lng": 144.9834 },
-    { "id": "stadium-san-siro", "name": "San Siro, Mailand", "lat": 45.4781, "lng": 9.1240 },
-    { "id": "stadium-old-trafford", "name": "Old Trafford, Manchester", "lat": 53.4631, "lng": -2.2913 }
+    {
+      "id": "stadium-wembley",
+      "name": "Wembley Stadium, London",
+      "lat": 51.556,
+      "lng": -0.2795
+    },
+    {
+      "id": "stadium-camp-nou",
+      "name": "Camp Nou, Barcelona",
+      "lat": 41.3809,
+      "lng": 2.1228
+    },
+    {
+      "id": "stadium-maracana",
+      "name": "Maracanã, Rio de Janeiro",
+      "lat": -22.9121,
+      "lng": -43.2302
+    },
+    {
+      "id": "stadium-allianz-arena",
+      "name": "Allianz Arena, München",
+      "lat": 48.2188,
+      "lng": 11.6247
+    },
+    {
+      "id": "stadium-yankee",
+      "name": "Yankee Stadium, New York",
+      "lat": 40.8296,
+      "lng": -73.9262
+    },
+    {
+      "id": "stadium-mcg",
+      "name": "Melbourne Cricket Ground",
+      "lat": -37.8199,
+      "lng": 144.9834
+    },
+    {
+      "id": "stadium-san-siro",
+      "name": "San Siro, Mailand",
+      "lat": 45.4781,
+      "lng": 9.124
+    },
+    {
+      "id": "stadium-old-trafford",
+      "name": "Old Trafford, Manchester",
+      "lat": 53.4631,
+      "lng": -2.2913
+    },
+    {
+      "id": "stadium-signal-iduna",
+      "name": "Signal Iduna Park, Dortmund",
+      "lat": 51.4926,
+      "lng": 7.4519
+    },
+    {
+      "id": "stadium-azteca",
+      "name": "Estadio Azteca, Mexiko-Stadt",
+      "lat": 19.3029,
+      "lng": -99.1505
+    },
+    {
+      "id": "stadium-bernabeu",
+      "name": "Santiago Bernabéu, Madrid",
+      "lat": 40.4531,
+      "lng": -3.6883
+    },
+    {
+      "id": "stadium-anfield",
+      "name": "Anfield, Liverpool",
+      "lat": 53.4308,
+      "lng": -2.9608
+    },
+    {
+      "id": "stadium-emirates",
+      "name": "Emirates Stadium, London",
+      "lat": 51.5549,
+      "lng": -0.1084
+    },
+    {
+      "id": "stadium-juventus",
+      "name": "Juventus Stadium, Turin",
+      "lat": 45.1096,
+      "lng": 7.6412
+    },
+    {
+      "id": "stadium-soccer-city",
+      "name": "FNB Stadium, Johannesburg",
+      "lat": -26.2349,
+      "lng": 27.982
+    },
+    {
+      "id": "stadium-birds-nest",
+      "name": "Nationalstadion (Vogelnest), Peking",
+      "lat": 39.9928,
+      "lng": 116.3969
+    },
+    {
+      "id": "stadium-rose-bowl",
+      "name": "Rose Bowl, Pasadena",
+      "lat": 34.1613,
+      "lng": -118.1676
+    },
+    {
+      "id": "stadium-twickenham",
+      "name": "Twickenham Stadium, London",
+      "lat": 51.456,
+      "lng": -0.341
+    },
+    {
+      "id": "stadium-parc-des-princes",
+      "name": "Parc des Princes, Paris",
+      "lat": 48.8414,
+      "lng": 2.253
+    },
+    {
+      "id": "stadium-estadio-bombonera",
+      "name": "La Bombonera, Buenos Aires",
+      "lat": -34.6356,
+      "lng": -58.3648
+    }
   ]
 }

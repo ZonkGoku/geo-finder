@@ -6,21 +6,251 @@
   "source": "mapillary",
   "scaleKm": 1800,
   "regions": [
-    { "id": "berlin-potsdamer-platz", "name": "Potsdamer Platz, Berlin", "lat": 52.5096, "lng": 13.3759 },
-    { "id": "berlin-alexanderplatz", "name": "Alexanderplatz, Berlin", "lat": 52.5219, "lng": 13.4132 },
-    { "id": "paris-concorde", "name": "Place de la Concorde, Paris", "lat": 48.8656, "lng": 2.3212 },
-    { "id": "paris-notre-dame", "name": "Notre-Dame, Paris", "lat": 48.8530, "lng": 2.3499 },
-    { "id": "london-piccadilly", "name": "Piccadilly Circus, London", "lat": 51.5101, "lng": -0.1342 },
-    { "id": "london-trafalgar", "name": "Trafalgar Square, London", "lat": 51.5080, "lng": -0.1281 },
-    { "id": "madrid-sol", "name": "Puerta del Sol, Madrid", "lat": 40.4169, "lng": -3.7033 },
-    { "id": "madrid-plaza-mayor", "name": "Plaza Mayor, Madrid", "lat": 40.4155, "lng": -3.7074 },
-    { "id": "rome-navona", "name": "Piazza Navona, Rom", "lat": 41.8992, "lng": 12.4731 },
-    { "id": "rome-spagna", "name": "Piazza di Spagna, Rom", "lat": 41.9058, "lng": 12.4823 },
-    { "id": "vienna-stephansplatz", "name": "Stephansplatz, Wien", "lat": 48.2085, "lng": 16.3731 },
-    { "id": "vienna-karlsplatz", "name": "Karlsplatz, Wien", "lat": 48.1986, "lng": 16.3695 },
-    { "id": "amsterdam-dam", "name": "Dam-Platz, Amsterdam", "lat": 52.3731, "lng": 4.8926 },
-    { "id": "amsterdam-museumplein", "name": "Museumplein, Amsterdam", "lat": 52.3600, "lng": 4.8852 },
-    { "id": "tokyo-shibuya", "name": "Shibuya-Kreuzung, Tokio", "lat": 35.6595, "lng": 139.7005 },
-    { "id": "tokyo-station", "name": "Tokyo Station, Tokio", "lat": 35.6812, "lng": 139.7671 }
+    {
+      "id": "berlin-potsdamer-platz",
+      "name": "Potsdamer Platz, Berlin",
+      "lat": 52.5096,
+      "lng": 13.3759
+    },
+    {
+      "id": "berlin-alexanderplatz",
+      "name": "Alexanderplatz, Berlin",
+      "lat": 52.5219,
+      "lng": 13.4132
+    },
+    {
+      "id": "paris-concorde",
+      "name": "Place de la Concorde, Paris",
+      "lat": 48.8656,
+      "lng": 2.3212
+    },
+    {
+      "id": "paris-notre-dame",
+      "name": "Notre-Dame, Paris",
+      "lat": 48.853,
+      "lng": 2.3499
+    },
+    {
+      "id": "london-piccadilly",
+      "name": "Piccadilly Circus, London",
+      "lat": 51.5101,
+      "lng": -0.1342
+    },
+    {
+      "id": "london-trafalgar",
+      "name": "Trafalgar Square, London",
+      "lat": 51.508,
+      "lng": -0.1281
+    },
+    {
+      "id": "madrid-sol",
+      "name": "Puerta del Sol, Madrid",
+      "lat": 40.4169,
+      "lng": -3.7033
+    },
+    {
+      "id": "madrid-plaza-mayor",
+      "name": "Plaza Mayor, Madrid",
+      "lat": 40.4155,
+      "lng": -3.7074
+    },
+    {
+      "id": "rome-navona",
+      "name": "Piazza Navona, Rom",
+      "lat": 41.8992,
+      "lng": 12.4731
+    },
+    {
+      "id": "rome-spagna",
+      "name": "Piazza di Spagna, Rom",
+      "lat": 41.9058,
+      "lng": 12.4823
+    },
+    {
+      "id": "vienna-stephansplatz",
+      "name": "Stephansplatz, Wien",
+      "lat": 48.2085,
+      "lng": 16.3731
+    },
+    {
+      "id": "vienna-karlsplatz",
+      "name": "Karlsplatz, Wien",
+      "lat": 48.1986,
+      "lng": 16.3695
+    },
+    {
+      "id": "amsterdam-dam",
+      "name": "Dam-Platz, Amsterdam",
+      "lat": 52.3731,
+      "lng": 4.8926
+    },
+    {
+      "id": "amsterdam-museumplein",
+      "name": "Museumplein, Amsterdam",
+      "lat": 52.36,
+      "lng": 4.8852
+    },
+    {
+      "id": "tokyo-shibuya",
+      "name": "Shibuya-Kreuzung, Tokio",
+      "lat": 35.6595,
+      "lng": 139.7005
+    },
+    {
+      "id": "tokyo-station",
+      "name": "Tokyo Station, Tokio",
+      "lat": 35.6812,
+      "lng": 139.7671
+    },
+    {
+      "id": "washington-dc",
+      "name": "Washington D.C., USA",
+      "lat": 38.8899,
+      "lng": -77.0091
+    },
+    {
+      "id": "ottawa",
+      "name": "Ottawa, Kanada",
+      "lat": 45.4235,
+      "lng": -75.7009
+    },
+    {
+      "id": "canberra",
+      "name": "Canberra, Australien",
+      "lat": -35.2809,
+      "lng": 149.13
+    },
+    {
+      "id": "wellington",
+      "name": "Wellington, Neuseeland",
+      "lat": -41.2865,
+      "lng": 174.7762
+    },
+    {
+      "id": "brasilia",
+      "name": "Brasília, Brasilien",
+      "lat": -15.7975,
+      "lng": -47.8919
+    },
+    {
+      "id": "buenos-aires",
+      "name": "Buenos Aires, Argentinien",
+      "lat": -34.6037,
+      "lng": -58.3816
+    },
+    {
+      "id": "mexico-city",
+      "name": "Mexiko-Stadt, Mexiko",
+      "lat": 19.4326,
+      "lng": -99.1332
+    },
+    {
+      "id": "cairo",
+      "name": "Kairo, Ägypten",
+      "lat": 30.0444,
+      "lng": 31.2357
+    },
+    {
+      "id": "nairobi",
+      "name": "Nairobi, Kenia",
+      "lat": -1.2921,
+      "lng": 36.8219
+    },
+    {
+      "id": "pretoria",
+      "name": "Pretoria, Südafrika",
+      "lat": -25.7479,
+      "lng": 28.2293
+    },
+    {
+      "id": "new-delhi",
+      "name": "Neu-Delhi, Indien",
+      "lat": 28.6139,
+      "lng": 77.209
+    },
+    {
+      "id": "beijing-capital",
+      "name": "Peking, China",
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    {
+      "id": "seoul-capital",
+      "name": "Seoul, Südkorea",
+      "lat": 37.5665,
+      "lng": 126.978
+    },
+    {
+      "id": "bangkok-capital",
+      "name": "Bangkok, Thailand",
+      "lat": 13.7563,
+      "lng": 100.5018
+    },
+    {
+      "id": "moscow-capital",
+      "name": "Moskau, Russland",
+      "lat": 55.7558,
+      "lng": 37.6173
+    },
+    {
+      "id": "warsaw",
+      "name": "Warschau, Polen",
+      "lat": 52.2297,
+      "lng": 21.0122
+    },
+    {
+      "id": "budapest",
+      "name": "Budapest, Ungarn",
+      "lat": 47.4979,
+      "lng": 19.0402
+    },
+    {
+      "id": "athens-capital",
+      "name": "Athen, Griechenland",
+      "lat": 37.9838,
+      "lng": 23.7275
+    },
+    {
+      "id": "lisbon",
+      "name": "Lissabon, Portugal",
+      "lat": 38.7223,
+      "lng": -9.1393
+    },
+    {
+      "id": "stockholm",
+      "name": "Stockholm, Schweden",
+      "lat": 59.3293,
+      "lng": 18.0686
+    },
+    {
+      "id": "oslo",
+      "name": "Oslo, Norwegen",
+      "lat": 59.9139,
+      "lng": 10.7522
+    },
+    {
+      "id": "copenhagen",
+      "name": "Kopenhagen, Dänemark",
+      "lat": 55.6761,
+      "lng": 12.5683
+    },
+    {
+      "id": "dublin",
+      "name": "Dublin, Irland",
+      "lat": 53.3498,
+      "lng": -6.2603
+    },
+    {
+      "id": "brussels",
+      "name": "Brüssel, Belgien",
+      "lat": 50.8503,
+      "lng": 4.3517
+    },
+    {
+      "id": "bern",
+      "name": "Bern, Schweiz",
+      "lat": 46.948,
+      "lng": 7.4474
+    }
   ]
 }

@@ -6,13 +6,137 @@
   "source": "mapillary",
   "scaleKm": 6,
   "regions": [
-    { "id": "paris-eiffel-tower", "name": "Tour Eiffel", "lat": 48.8584, "lng": 2.2945 },
-    { "id": "paris-arc-de-triomphe", "name": "Arc de Triomphe", "lat": 48.8738, "lng": 2.2950 },
-    { "id": "paris-notre-dame", "name": "Notre-Dame de Paris", "lat": 48.8530, "lng": 2.3499 },
-    { "id": "paris-louvre", "name": "Louvre-Pyramide", "lat": 48.8606, "lng": 2.3376 },
-    { "id": "paris-sacre-coeur", "name": "Sacré-Cœur, Montmartre", "lat": 48.8867, "lng": 2.3431 },
-    { "id": "paris-concorde", "name": "Place de la Concorde", "lat": 48.8656, "lng": 2.3212 },
-    { "id": "paris-champs-elysees", "name": "Champs-Élysées", "lat": 48.8698, "lng": 2.3076 },
-    { "id": "paris-pantheon", "name": "Panthéon", "lat": 48.8462, "lng": 2.3464 }
+    {
+      "id": "paris-eiffel-tower",
+      "name": "Tour Eiffel",
+      "lat": 48.8584,
+      "lng": 2.2945
+    },
+    {
+      "id": "paris-arc-de-triomphe",
+      "name": "Arc de Triomphe",
+      "lat": 48.8738,
+      "lng": 2.295
+    },
+    {
+      "id": "paris-notre-dame",
+      "name": "Notre-Dame de Paris",
+      "lat": 48.853,
+      "lng": 2.3499
+    },
+    {
+      "id": "paris-louvre",
+      "name": "Louvre-Pyramide",
+      "lat": 48.8606,
+      "lng": 2.3376
+    },
+    {
+      "id": "paris-sacre-coeur",
+      "name": "Sacré-Cœur, Montmartre",
+      "lat": 48.8867,
+      "lng": 2.3431
+    },
+    {
+      "id": "paris-concorde",
+      "name": "Place de la Concorde",
+      "lat": 48.8656,
+      "lng": 2.3212
+    },
+    {
+      "id": "paris-champs-elysees",
+      "name": "Champs-Élysées",
+      "lat": 48.8698,
+      "lng": 2.3076
+    },
+    {
+      "id": "paris-pantheon",
+      "name": "Panthéon",
+      "lat": 48.8462,
+      "lng": 2.3464
+    },
+    {
+      "id": "paris-moulin-rouge",
+      "name": "Moulin Rouge, Pigalle",
+      "lat": 48.8841,
+      "lng": 2.3322
+    },
+    {
+      "id": "paris-luxembourg",
+      "name": "Jardin du Luxembourg",
+      "lat": 48.8462,
+      "lng": 2.3372
+    },
+    {
+      "id": "paris-marais",
+      "name": "Le Marais",
+      "lat": 48.8575,
+      "lng": 2.3622
+    },
+    {
+      "id": "paris-invalides",
+      "name": "Les Invalides",
+      "lat": 48.8566,
+      "lng": 2.3126
+    },
+    {
+      "id": "paris-musee-orsay",
+      "name": "Musée d'Orsay",
+      "lat": 48.86,
+      "lng": 2.3266
+    },
+    {
+      "id": "paris-canal-st-martin",
+      "name": "Canal Saint-Martin",
+      "lat": 48.8709,
+      "lng": 2.3651
+    },
+    {
+      "id": "paris-la-defense",
+      "name": "La Défense / Grande Arche",
+      "lat": 48.8918,
+      "lng": 2.236
+    },
+    {
+      "id": "paris-bastille",
+      "name": "Place de la Bastille",
+      "lat": 48.8532,
+      "lng": 2.3692
+    },
+    {
+      "id": "paris-trocadero",
+      "name": "Trocadéro",
+      "lat": 48.8626,
+      "lng": 2.2876
+    },
+    {
+      "id": "paris-versailles",
+      "name": "Schloss Versailles",
+      "lat": 48.8049,
+      "lng": 2.1204
+    },
+    {
+      "id": "paris-belleville",
+      "name": "Belleville",
+      "lat": 48.8722,
+      "lng": 2.382
+    },
+    {
+      "id": "paris-ile-saint-louis",
+      "name": "Île Saint-Louis",
+      "lat": 48.8514,
+      "lng": 2.3567
+    },
+    {
+      "id": "paris-opera-garnier",
+      "name": "Opéra Garnier",
+      "lat": 48.8719,
+      "lng": 2.3316
+    },
+    {
+      "id": "paris-pere-lachaise",
+      "name": "Père Lachaise",
+      "lat": 48.8617,
+      "lng": 2.3936
+    }
   ]
 }

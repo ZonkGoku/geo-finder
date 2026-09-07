@@ -6,13 +6,125 @@
   "source": "mapillary",
   "scaleKm": 8,
   "regions": [
-    { "id": "munich-marienplatz", "name": "Marienplatz", "lat": 48.1374, "lng": 11.5755 },
-    { "id": "munich-frauenkirche", "name": "Frauenkirche", "lat": 48.1385, "lng": 11.5733 },
-    { "id": "munich-englischer-garten", "name": "Englischer Garten / Chinesischer Turm", "lat": 48.1600, "lng": 11.6020 },
-    { "id": "munich-nymphenburg", "name": "Schloss Nymphenburg", "lat": 48.1583, "lng": 11.5030 },
-    { "id": "munich-olympiapark", "name": "Olympiapark", "lat": 48.1755, "lng": 11.5468 },
-    { "id": "munich-viktualienmarkt", "name": "Viktualienmarkt", "lat": 48.1351, "lng": 11.5762 },
-    { "id": "munich-odeonsplatz", "name": "Odeonsplatz", "lat": 48.1425, "lng": 11.5773 },
-    { "id": "munich-deutsches-museum", "name": "Deutsches Museum", "lat": 48.1300, "lng": 11.5836 }
+    {
+      "id": "munich-marienplatz",
+      "name": "Marienplatz",
+      "lat": 48.1374,
+      "lng": 11.5755
+    },
+    {
+      "id": "munich-frauenkirche",
+      "name": "Frauenkirche",
+      "lat": 48.1385,
+      "lng": 11.5733
+    },
+    {
+      "id": "munich-englischer-garten",
+      "name": "Englischer Garten / Chinesischer Turm",
+      "lat": 48.16,
+      "lng": 11.602
+    },
+    {
+      "id": "munich-nymphenburg",
+      "name": "Schloss Nymphenburg",
+      "lat": 48.1583,
+      "lng": 11.503
+    },
+    {
+      "id": "munich-olympiapark",
+      "name": "Olympiapark",
+      "lat": 48.1755,
+      "lng": 11.5468
+    },
+    {
+      "id": "munich-viktualienmarkt",
+      "name": "Viktualienmarkt",
+      "lat": 48.1351,
+      "lng": 11.5762
+    },
+    {
+      "id": "munich-odeonsplatz",
+      "name": "Odeonsplatz",
+      "lat": 48.1425,
+      "lng": 11.5773
+    },
+    {
+      "id": "munich-deutsches-museum",
+      "name": "Deutsches Museum",
+      "lat": 48.13,
+      "lng": 11.5836
+    },
+    {
+      "id": "munich-hofbraeuhaus",
+      "name": "Hofbräuhaus",
+      "lat": 48.1373,
+      "lng": 11.5799
+    },
+    {
+      "id": "munich-theresienwiese",
+      "name": "Theresienwiese / Oktoberfest-Gelände",
+      "lat": 48.1315,
+      "lng": 11.5498
+    },
+    {
+      "id": "munich-maximilianstrasse",
+      "name": "Maximilianstraße",
+      "lat": 48.1391,
+      "lng": 11.5825
+    },
+    {
+      "id": "munich-schwabing",
+      "name": "Schwabing / Leopoldstraße",
+      "lat": 48.1608,
+      "lng": 11.582
+    },
+    {
+      "id": "munich-allianz-arena",
+      "name": "Allianz Arena",
+      "lat": 48.2188,
+      "lng": 11.6247
+    },
+    {
+      "id": "munich-isar",
+      "name": "Isarauen / Reichenbachbrücke",
+      "lat": 48.1259,
+      "lng": 11.5789
+    },
+    {
+      "id": "munich-residenz",
+      "name": "Münchner Residenz",
+      "lat": 48.1417,
+      "lng": 11.5786
+    },
+    {
+      "id": "munich-westpark",
+      "name": "Westpark",
+      "lat": 48.1264,
+      "lng": 11.514
+    },
+    {
+      "id": "munich-au-haidhausen",
+      "name": "Au-Haidhausen",
+      "lat": 48.1272,
+      "lng": 11.5967
+    },
+    {
+      "id": "munich-starnberger-see",
+      "name": "Starnberger See",
+      "lat": 47.9989,
+      "lng": 11.3378
+    },
+    {
+      "id": "munich-glockenbachviertel",
+      "name": "Glockenbachviertel",
+      "lat": 48.1298,
+      "lng": 11.5722
+    },
+    {
+      "id": "munich-pinakotheken",
+      "name": "Kunstareal / Pinakotheken",
+      "lat": 48.1478,
+      "lng": 11.5703
+    }
   ]
 }

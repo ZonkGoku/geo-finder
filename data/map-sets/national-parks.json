@@ -6,13 +6,125 @@
   "source": "mapillary",
   "scaleKm": 4000,
   "regions": [
-    { "id": "park-yellowstone", "name": "Yellowstone-Nationalpark, USA", "lat": 44.4605, "lng": -110.8281 },
-    { "id": "park-yosemite", "name": "Yosemite-Nationalpark, USA", "lat": 37.7456, "lng": -119.5936 },
-    { "id": "park-grand-canyon", "name": "Grand Canyon, USA", "lat": 36.0544, "lng": -112.1401 },
-    { "id": "park-banff", "name": "Banff-Nationalpark, Kanada", "lat": 51.1784, "lng": -115.5708 },
-    { "id": "park-torres-del-paine", "name": "Torres del Paine, Chile", "lat": -50.9423, "lng": -73.4068 },
-    { "id": "park-serengeti", "name": "Serengeti, Tansania", "lat": -2.3333, "lng": 34.8333 },
-    { "id": "park-plitvice", "name": "Plitvicer Seen, Kroatien", "lat": 44.8654, "lng": 15.5820 },
-    { "id": "park-fiordland", "name": "Fiordland, Neuseeland", "lat": -44.6414, "lng": 167.9250 }
+    {
+      "id": "park-yellowstone",
+      "name": "Yellowstone-Nationalpark, USA",
+      "lat": 44.4605,
+      "lng": -110.8281
+    },
+    {
+      "id": "park-yosemite",
+      "name": "Yosemite-Nationalpark, USA",
+      "lat": 37.7456,
+      "lng": -119.5936
+    },
+    {
+      "id": "park-grand-canyon",
+      "name": "Grand Canyon, USA",
+      "lat": 36.0544,
+      "lng": -112.1401
+    },
+    {
+      "id": "park-banff",
+      "name": "Banff-Nationalpark, Kanada",
+      "lat": 51.1784,
+      "lng": -115.5708
+    },
+    {
+      "id": "park-torres-del-paine",
+      "name": "Torres del Paine, Chile",
+      "lat": -50.9423,
+      "lng": -73.4068
+    },
+    {
+      "id": "park-serengeti",
+      "name": "Serengeti, Tansania",
+      "lat": -2.3333,
+      "lng": 34.8333
+    },
+    {
+      "id": "park-plitvice",
+      "name": "Plitvicer Seen, Kroatien",
+      "lat": 44.8654,
+      "lng": 15.582
+    },
+    {
+      "id": "park-fiordland",
+      "name": "Fiordland, Neuseeland",
+      "lat": -44.6414,
+      "lng": 167.925
+    },
+    {
+      "id": "park-kruger",
+      "name": "Krüger-Nationalpark, Südafrika",
+      "lat": -23.9884,
+      "lng": 31.5547
+    },
+    {
+      "id": "park-iguazu",
+      "name": "Iguazú-Wasserfälle, Argentinien/Brasilien",
+      "lat": -25.6953,
+      "lng": -54.4367
+    },
+    {
+      "id": "park-denali",
+      "name": "Denali-Nationalpark, Alaska",
+      "lat": 63.1148,
+      "lng": -151.1926
+    },
+    {
+      "id": "park-zion",
+      "name": "Zion-Nationalpark, USA",
+      "lat": 37.2982,
+      "lng": -113.0263
+    },
+    {
+      "id": "park-jasper",
+      "name": "Jasper-Nationalpark, Kanada",
+      "lat": 52.8734,
+      "lng": -117.9543
+    },
+    {
+      "id": "park-kilimanjaro",
+      "name": "Kilimandscharo, Tansania",
+      "lat": -3.0674,
+      "lng": 37.3556
+    },
+    {
+      "id": "park-great-barrier-reef",
+      "name": "Great Barrier Reef, Australien",
+      "lat": -18.2871,
+      "lng": 147.6992
+    },
+    {
+      "id": "park-lake-district",
+      "name": "Lake District, England",
+      "lat": 54.4609,
+      "lng": -3.0886
+    },
+    {
+      "id": "park-dolomites",
+      "name": "Dolomiten, Italien",
+      "lat": 46.4102,
+      "lng": 11.844
+    },
+    {
+      "id": "park-everglades",
+      "name": "Everglades-Nationalpark, USA",
+      "lat": 25.2866,
+      "lng": -80.8987
+    },
+    {
+      "id": "park-galapagos",
+      "name": "Galápagos-Inseln, Ecuador",
+      "lat": -0.7893,
+      "lng": -90.967
+    },
+    {
+      "id": "park-sagarmatha",
+      "name": "Sagarmatha-Nationalpark, Nepal",
+      "lat": 27.9333,
+      "lng": 86.7333
+    }
   ]
 }

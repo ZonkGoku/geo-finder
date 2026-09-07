@@ -6,13 +6,137 @@
   "source": "mapillary",
   "scaleKm": 10,
   "regions": [
-    { "id": "nyc-times-square", "name": "Times Square", "lat": 40.7580, "lng": -73.9855 },
-    { "id": "nyc-central-park", "name": "Central Park / Bethesda Terrace", "lat": 40.7735, "lng": -73.9712 },
-    { "id": "nyc-brooklyn-bridge", "name": "Brooklyn Bridge", "lat": 40.7061, "lng": -73.9969 },
-    { "id": "nyc-battery-park", "name": "Battery Park / Freiheitsstatue-Blick", "lat": 40.7033, "lng": -74.0170 },
-    { "id": "nyc-empire-state", "name": "Empire State Building", "lat": 40.7484, "lng": -73.9857 },
-    { "id": "nyc-wall-street", "name": "Wall Street", "lat": 40.7069, "lng": -74.0113 },
-    { "id": "nyc-soho", "name": "SoHo", "lat": 40.7233, "lng": -74.0030 },
-    { "id": "nyc-williamsburg", "name": "Williamsburg, Brooklyn", "lat": 40.7081, "lng": -73.9571 }
+    {
+      "id": "nyc-times-square",
+      "name": "Times Square",
+      "lat": 40.758,
+      "lng": -73.9855
+    },
+    {
+      "id": "nyc-central-park",
+      "name": "Central Park / Bethesda Terrace",
+      "lat": 40.7735,
+      "lng": -73.9712
+    },
+    {
+      "id": "nyc-brooklyn-bridge",
+      "name": "Brooklyn Bridge",
+      "lat": 40.7061,
+      "lng": -73.9969
+    },
+    {
+      "id": "nyc-battery-park",
+      "name": "Battery Park / Freiheitsstatue-Blick",
+      "lat": 40.7033,
+      "lng": -74.017
+    },
+    {
+      "id": "nyc-empire-state",
+      "name": "Empire State Building",
+      "lat": 40.7484,
+      "lng": -73.9857
+    },
+    {
+      "id": "nyc-wall-street",
+      "name": "Wall Street",
+      "lat": 40.7069,
+      "lng": -74.0113
+    },
+    {
+      "id": "nyc-soho",
+      "name": "SoHo",
+      "lat": 40.7233,
+      "lng": -74.003
+    },
+    {
+      "id": "nyc-williamsburg",
+      "name": "Williamsburg, Brooklyn",
+      "lat": 40.7081,
+      "lng": -73.9571
+    },
+    {
+      "id": "nyc-statue-of-liberty",
+      "name": "Freiheitsstatue",
+      "lat": 40.6892,
+      "lng": -74.0445
+    },
+    {
+      "id": "nyc-high-line",
+      "name": "High Line",
+      "lat": 40.748,
+      "lng": -74.0048
+    },
+    {
+      "id": "nyc-grand-central",
+      "name": "Grand Central Terminal",
+      "lat": 40.7527,
+      "lng": -73.9772
+    },
+    {
+      "id": "nyc-rockefeller",
+      "name": "Rockefeller Center",
+      "lat": 40.7587,
+      "lng": -73.9787
+    },
+    {
+      "id": "nyc-dumbo",
+      "name": "DUMBO, Brooklyn",
+      "lat": 40.7033,
+      "lng": -73.9894
+    },
+    {
+      "id": "nyc-harlem",
+      "name": "Harlem / 125th Street",
+      "lat": 40.8116,
+      "lng": -73.9465
+    },
+    {
+      "id": "nyc-flatiron",
+      "name": "Flatiron Building",
+      "lat": 40.7411,
+      "lng": -73.9897
+    },
+    {
+      "id": "nyc-coney-island",
+      "name": "Coney Island",
+      "lat": 40.5749,
+      "lng": -73.9857
+    },
+    {
+      "id": "nyc-chinatown",
+      "name": "Chinatown, Manhattan",
+      "lat": 40.7158,
+      "lng": -73.997
+    },
+    {
+      "id": "nyc-greenwich-village",
+      "name": "Greenwich Village",
+      "lat": 40.7336,
+      "lng": -74.0027
+    },
+    {
+      "id": "nyc-queens-astoria",
+      "name": "Astoria, Queens",
+      "lat": 40.7644,
+      "lng": -73.9235
+    },
+    {
+      "id": "nyc-bronx-yankee",
+      "name": "Grand Concourse, Bronx",
+      "lat": 40.8296,
+      "lng": -73.9262
+    },
+    {
+      "id": "nyc-staten-island-ferry",
+      "name": "Staten Island Ferry Terminal",
+      "lat": 40.7011,
+      "lng": -74.0135
+    },
+    {
+      "id": "nyc-fifth-avenue",
+      "name": "Fifth Avenue",
+      "lat": 40.7614,
+      "lng": -73.9776
+    }
   ]
 }

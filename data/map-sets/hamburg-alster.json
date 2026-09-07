@@ -6,15 +6,101 @@
   "source": "mapillary",
   "scaleKm": 4,
   "regions": [
-    { "id": "hamburg-jungfernstieg", "name": "Jungfernstieg / Binnenalster", "lat": 53.5548, "lng": 9.9930 },
-    { "id": "hamburg-rathausmarkt", "name": "Rathausmarkt", "lat": 53.5503, "lng": 9.9928 },
-    { "id": "hamburg-planten-un-blomen", "name": "Planten un Blomen", "lat": 53.5613, "lng": 9.9838 },
-    { "id": "hamburg-michel", "name": "Michaeliskirche (Michel)", "lat": 53.5457, "lng": 9.9789 },
-    { "id": "hamburg-alsterpark", "name": "Alsterpark", "lat": 53.5720, "lng": 10.0030 },
-    { "id": "hamburg-harvestehude", "name": "Harvestehude / Innocentiapark", "lat": 53.5730, "lng": 9.9880 },
-    { "id": "hamburg-rotherbaum", "name": "Rotherbaum / Grindelviertel", "lat": 53.5680, "lng": 9.9840 },
-    { "id": "hamburg-hauptbahnhof", "name": "Hauptbahnhof", "lat": 53.5528, "lng": 10.0067 },
-    { "id": "hamburg-st-georg", "name": "St. Georg / Lange Reihe", "lat": 53.5556, "lng": 10.0134 },
-    { "id": "hamburg-deichstrasse", "name": "Deichstraße", "lat": 53.5460, "lng": 9.9927 }
+    {
+      "id": "hamburg-jungfernstieg",
+      "name": "Jungfernstieg / Binnenalster",
+      "lat": 53.5548,
+      "lng": 9.993
+    },
+    {
+      "id": "hamburg-rathausmarkt",
+      "name": "Rathausmarkt",
+      "lat": 53.5503,
+      "lng": 9.9928
+    },
+    {
+      "id": "hamburg-planten-un-blomen",
+      "name": "Planten un Blomen",
+      "lat": 53.5613,
+      "lng": 9.9838
+    },
+    {
+      "id": "hamburg-michel",
+      "name": "Michaeliskirche (Michel)",
+      "lat": 53.5457,
+      "lng": 9.9789
+    },
+    {
+      "id": "hamburg-alsterpark",
+      "name": "Alsterpark",
+      "lat": 53.572,
+      "lng": 10.003
+    },
+    {
+      "id": "hamburg-harvestehude",
+      "name": "Harvestehude / Innocentiapark",
+      "lat": 53.573,
+      "lng": 9.988
+    },
+    {
+      "id": "hamburg-rotherbaum",
+      "name": "Rotherbaum / Grindelviertel",
+      "lat": 53.568,
+      "lng": 9.984
+    },
+    {
+      "id": "hamburg-hauptbahnhof",
+      "name": "Hauptbahnhof",
+      "lat": 53.5528,
+      "lng": 10.0067
+    },
+    {
+      "id": "hamburg-st-georg",
+      "name": "St. Georg / Lange Reihe",
+      "lat": 53.5556,
+      "lng": 10.0134
+    },
+    {
+      "id": "hamburg-deichstrasse",
+      "name": "Deichstraße",
+      "lat": 53.546,
+      "lng": 9.9927
+    },
+    {
+      "id": "hamburg-poeseldorf",
+      "name": "Pöseldorf",
+      "lat": 53.5713,
+      "lng": 9.9915
+    },
+    {
+      "id": "hamburg-uhlenhorst",
+      "name": "Uhlenhorst / Alsterufer",
+      "lat": 53.568,
+      "lng": 10.009
+    },
+    {
+      "id": "hamburg-eppendorfer-baum",
+      "name": "Eppendorfer Baum",
+      "lat": 53.5809,
+      "lng": 9.9908
+    },
+    {
+      "id": "hamburg-gaensemarkt",
+      "name": "Gänsemarkt",
+      "lat": 53.5551,
+      "lng": 9.9877
+    },
+    {
+      "id": "hamburg-alsterarkaden",
+      "name": "Alsterarkaden",
+      "lat": 53.5518,
+      "lng": 9.9938
+    },
+    {
+      "id": "hamburg-mundsburg",
+      "name": "Mundsburg",
+      "lat": 53.5679,
+      "lng": 10.0219
+    }
   ]
 }

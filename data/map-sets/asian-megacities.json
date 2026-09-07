@@ -6,13 +6,137 @@
   "source": "mapillary",
   "scaleKm": 3000,
   "regions": [
-    { "id": "asia-tokyo-shibuya", "name": "Shibuya, Tokio", "lat": 35.6595, "lng": 139.7005 },
-    { "id": "asia-seoul-gangnam", "name": "Gangnam, Seoul", "lat": 37.4979, "lng": 127.0276 },
-    { "id": "asia-bangkok-siam", "name": "Siam Square, Bangkok", "lat": 13.7466, "lng": 100.5347 },
-    { "id": "asia-hongkong-central", "name": "Central, Hongkong", "lat": 22.2793, "lng": 114.1628 },
-    { "id": "asia-singapore-marina", "name": "Marina Bay, Singapur", "lat": 1.2838, "lng": 103.8591 },
-    { "id": "asia-shanghai-bund", "name": "The Bund, Shanghai", "lat": 31.2396, "lng": 121.4907 },
-    { "id": "asia-mumbai-gateway", "name": "Gateway of India, Mumbai", "lat": 18.9220, "lng": 72.8347 },
-    { "id": "asia-jakarta-monas", "name": "Nationaldenkmal, Jakarta", "lat": -6.1754, "lng": 106.8272 }
+    {
+      "id": "asia-tokyo-shibuya",
+      "name": "Shibuya, Tokio",
+      "lat": 35.6595,
+      "lng": 139.7005
+    },
+    {
+      "id": "asia-seoul-gangnam",
+      "name": "Gangnam, Seoul",
+      "lat": 37.4979,
+      "lng": 127.0276
+    },
+    {
+      "id": "asia-bangkok-siam",
+      "name": "Siam Square, Bangkok",
+      "lat": 13.7466,
+      "lng": 100.5347
+    },
+    {
+      "id": "asia-hongkong-central",
+      "name": "Central, Hongkong",
+      "lat": 22.2793,
+      "lng": 114.1628
+    },
+    {
+      "id": "asia-singapore-marina",
+      "name": "Marina Bay, Singapur",
+      "lat": 1.2838,
+      "lng": 103.8591
+    },
+    {
+      "id": "asia-shanghai-bund",
+      "name": "The Bund, Shanghai",
+      "lat": 31.2396,
+      "lng": 121.4907
+    },
+    {
+      "id": "asia-mumbai-gateway",
+      "name": "Gateway of India, Mumbai",
+      "lat": 18.922,
+      "lng": 72.8347
+    },
+    {
+      "id": "asia-jakarta-monas",
+      "name": "Nationaldenkmal, Jakarta",
+      "lat": -6.1754,
+      "lng": 106.8272
+    },
+    {
+      "id": "asia-taipei-101",
+      "name": "Taipei 101, Taiwan",
+      "lat": 25.033,
+      "lng": 121.5654
+    },
+    {
+      "id": "asia-osaka-dotonbori",
+      "name": "Dōtonbori, Osaka",
+      "lat": 34.6688,
+      "lng": 135.5013
+    },
+    {
+      "id": "asia-beijing-tiananmen",
+      "name": "Tian'anmen-Platz, Peking",
+      "lat": 39.9055,
+      "lng": 116.3976
+    },
+    {
+      "id": "asia-kualalumpur-petronas",
+      "name": "Petronas Towers, Kuala Lumpur",
+      "lat": 3.1579,
+      "lng": 101.7116
+    },
+    {
+      "id": "asia-manila-rizal",
+      "name": "Rizal Park, Manila",
+      "lat": 14.5832,
+      "lng": 120.9794
+    },
+    {
+      "id": "asia-hochiminh-benthanh",
+      "name": "Bến Thành Markt, Ho-Chi-Minh-Stadt",
+      "lat": 10.7725,
+      "lng": 106.698
+    },
+    {
+      "id": "asia-hanoi-oldquarter",
+      "name": "Altstadt, Hanoi",
+      "lat": 21.0333,
+      "lng": 105.85
+    },
+    {
+      "id": "asia-delhi-indiagate",
+      "name": "India Gate, Neu-Delhi",
+      "lat": 28.6129,
+      "lng": 77.2295
+    },
+    {
+      "id": "asia-dubai-burjkhalifa",
+      "name": "Burj Khalifa, Dubai",
+      "lat": 25.1972,
+      "lng": 55.2744
+    },
+    {
+      "id": "asia-guangzhou-canton",
+      "name": "Canton Tower, Guangzhou",
+      "lat": 23.1088,
+      "lng": 113.3244
+    },
+    {
+      "id": "asia-shenzhen",
+      "name": "Shenzhen Bay",
+      "lat": 22.501,
+      "lng": 113.931
+    },
+    {
+      "id": "asia-kyoto-gion",
+      "name": "Gion, Kyoto",
+      "lat": 35.0037,
+      "lng": 135.7756
+    },
+    {
+      "id": "asia-osaka-castle",
+      "name": "Osaka Castle",
+      "lat": 34.6873,
+      "lng": 135.5262
+    },
+    {
+      "id": "asia-seoul-myeongdong",
+      "name": "Myeongdong, Seoul",
+      "lat": 37.5636,
+      "lng": 126.985
+    }
   ]
 }

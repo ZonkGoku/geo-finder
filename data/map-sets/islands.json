@@ -6,13 +6,125 @@
   "source": "mapillary",
   "scaleKm": 4000,
   "regions": [
-    { "id": "island-santorini", "name": "Santorin, Griechenland", "lat": 36.3932, "lng": 25.4615 },
-    { "id": "island-capri", "name": "Capri, Italien", "lat": 40.5532, "lng": 14.2429 },
-    { "id": "island-skye", "name": "Isle of Skye, Schottland", "lat": 57.4126, "lng": -6.1946 },
-    { "id": "island-jeju", "name": "Jeju-Insel, Südkorea", "lat": 33.4996, "lng": 126.5312 },
-    { "id": "island-ibiza", "name": "Ibiza, Spanien", "lat": 38.9067, "lng": 1.4206 },
-    { "id": "island-bali-kuta", "name": "Kuta Beach, Bali", "lat": -8.7183, "lng": 115.1686 },
-    { "id": "island-bora-bora", "name": "Bora Bora, Französisch-Polynesien", "lat": -16.5004, "lng": -151.7415 },
-    { "id": "island-male", "name": "Malé, Malediven", "lat": 4.1755, "lng": 73.5093 }
+    {
+      "id": "island-santorini",
+      "name": "Santorin, Griechenland",
+      "lat": 36.3932,
+      "lng": 25.4615
+    },
+    {
+      "id": "island-capri",
+      "name": "Capri, Italien",
+      "lat": 40.5532,
+      "lng": 14.2429
+    },
+    {
+      "id": "island-skye",
+      "name": "Isle of Skye, Schottland",
+      "lat": 57.4126,
+      "lng": -6.1946
+    },
+    {
+      "id": "island-jeju",
+      "name": "Jeju-Insel, Südkorea",
+      "lat": 33.4996,
+      "lng": 126.5312
+    },
+    {
+      "id": "island-ibiza",
+      "name": "Ibiza, Spanien",
+      "lat": 38.9067,
+      "lng": 1.4206
+    },
+    {
+      "id": "island-bali-kuta",
+      "name": "Kuta Beach, Bali",
+      "lat": -8.7183,
+      "lng": 115.1686
+    },
+    {
+      "id": "island-bora-bora",
+      "name": "Bora Bora, Französisch-Polynesien",
+      "lat": -16.5004,
+      "lng": -151.7415
+    },
+    {
+      "id": "island-male",
+      "name": "Malé, Malediven",
+      "lat": 4.1755,
+      "lng": 73.5093
+    },
+    {
+      "id": "island-seychelles",
+      "name": "Seychellen",
+      "lat": -4.6796,
+      "lng": 55.492
+    },
+    {
+      "id": "island-fiji",
+      "name": "Fidschi",
+      "lat": -17.7134,
+      "lng": 178.065
+    },
+    {
+      "id": "island-maui",
+      "name": "Maui, Hawaii",
+      "lat": 20.7984,
+      "lng": -156.3319
+    },
+    {
+      "id": "island-palawan",
+      "name": "Palawan, Philippinen",
+      "lat": 9.8349,
+      "lng": 118.7384
+    },
+    {
+      "id": "island-zanzibar",
+      "name": "Sansibar, Tansania",
+      "lat": -6.1659,
+      "lng": 39.2026
+    },
+    {
+      "id": "island-madeira",
+      "name": "Madeira, Portugal",
+      "lat": 32.7607,
+      "lng": -16.9595
+    },
+    {
+      "id": "island-tenerife",
+      "name": "Teneriffa, Kanarische Inseln",
+      "lat": 28.2916,
+      "lng": -16.6291
+    },
+    {
+      "id": "island-corsica",
+      "name": "Korsika, Frankreich",
+      "lat": 42.0396,
+      "lng": 9.0129
+    },
+    {
+      "id": "island-sardinia",
+      "name": "Sardinien, Italien",
+      "lat": 40.1209,
+      "lng": 9.0129
+    },
+    {
+      "id": "island-sicily",
+      "name": "Sizilien, Italien",
+      "lat": 37.599,
+      "lng": 14.0154
+    },
+    {
+      "id": "island-faroe",
+      "name": "Färöer-Inseln",
+      "lat": 62.0079,
+      "lng": -6.79
+    },
+    {
+      "id": "island-mauritius",
+      "name": "Mauritius",
+      "lat": -20.3484,
+      "lng": 57.5522
+    }
   ]
 }

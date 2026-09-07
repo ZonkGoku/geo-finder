@@ -6,13 +6,125 @@
   "source": "mapillary",
   "scaleKm": 3000,
   "regions": [
-    { "id": "castle-neuschwanstein", "name": "Schloss Neuschwanstein, Deutschland", "lat": 47.5576, "lng": 10.7498 },
-    { "id": "castle-edinburgh", "name": "Edinburgh Castle, Schottland", "lat": 55.9486, "lng": -3.1999 },
-    { "id": "castle-windsor", "name": "Windsor Castle, England", "lat": 51.4839, "lng": -0.6044 },
-    { "id": "castle-prague", "name": "Prager Burg, Tschechien", "lat": 50.0910, "lng": 14.4016 },
-    { "id": "castle-alhambra", "name": "Alhambra, Granada", "lat": 37.1760, "lng": -3.5880 },
-    { "id": "castle-himeji", "name": "Burg Himeji, Japan", "lat": 34.8394, "lng": 134.6939 },
-    { "id": "castle-chambord", "name": "Château de Chambord, Frankreich", "lat": 47.6161, "lng": 1.5170 },
-    { "id": "castle-ayutthaya", "name": "Ayutthaya, Thailand", "lat": 14.3532, "lng": 100.5680 }
+    {
+      "id": "castle-neuschwanstein",
+      "name": "Schloss Neuschwanstein, Deutschland",
+      "lat": 47.5576,
+      "lng": 10.7498
+    },
+    {
+      "id": "castle-edinburgh",
+      "name": "Edinburgh Castle, Schottland",
+      "lat": 55.9486,
+      "lng": -3.1999
+    },
+    {
+      "id": "castle-windsor",
+      "name": "Windsor Castle, England",
+      "lat": 51.4839,
+      "lng": -0.6044
+    },
+    {
+      "id": "castle-prague",
+      "name": "Prager Burg, Tschechien",
+      "lat": 50.091,
+      "lng": 14.4016
+    },
+    {
+      "id": "castle-alhambra",
+      "name": "Alhambra, Granada",
+      "lat": 37.176,
+      "lng": -3.588
+    },
+    {
+      "id": "castle-himeji",
+      "name": "Burg Himeji, Japan",
+      "lat": 34.8394,
+      "lng": 134.6939
+    },
+    {
+      "id": "castle-chambord",
+      "name": "Château de Chambord, Frankreich",
+      "lat": 47.6161,
+      "lng": 1.517
+    },
+    {
+      "id": "castle-ayutthaya",
+      "name": "Ayutthaya, Thailand",
+      "lat": 14.3532,
+      "lng": 100.568
+    },
+    {
+      "id": "castle-chenonceau",
+      "name": "Château de Chenonceau, Frankreich",
+      "lat": 47.3243,
+      "lng": 1.0709
+    },
+    {
+      "id": "castle-krak-des-chevaliers",
+      "name": "Krak des Chevaliers, Syrien",
+      "lat": 34.757,
+      "lng": 36.2934
+    },
+    {
+      "id": "castle-bran",
+      "name": "Schloss Bran, Rumänien",
+      "lat": 45.5149,
+      "lng": 25.3672
+    },
+    {
+      "id": "castle-malbork",
+      "name": "Marienburg, Polen",
+      "lat": 54.0397,
+      "lng": 19.0272
+    },
+    {
+      "id": "castle-warwick",
+      "name": "Warwick Castle, England",
+      "lat": 52.2793,
+      "lng": -1.585
+    },
+    {
+      "id": "castle-carcassonne",
+      "name": "Cité de Carcassonne, Frankreich",
+      "lat": 43.2065,
+      "lng": 2.3639
+    },
+    {
+      "id": "ruins-great-zimbabwe",
+      "name": "Great Zimbabwe",
+      "lat": -20.268,
+      "lng": 30.933
+    },
+    {
+      "id": "ruins-angkor",
+      "name": "Angkor Wat, Kambodscha",
+      "lat": 13.4125,
+      "lng": 103.867
+    },
+    {
+      "id": "ruins-chichen-itza",
+      "name": "Chichén Itzá, Mexiko",
+      "lat": 20.6843,
+      "lng": -88.5678
+    },
+    {
+      "id": "ruins-petra",
+      "name": "Petra, Jordanien",
+      "lat": 30.3285,
+      "lng": 35.4444
+    },
+    {
+      "id": "ruins-pompeii",
+      "name": "Pompeji, Italien",
+      "lat": 40.7494,
+      "lng": 14.4989
+    },
+    {
+      "id": "castle-hohenzollern",
+      "name": "Burg Hohenzollern, Deutschland",
+      "lat": 48.3238,
+      "lng": 8.9668
+    }
   ]
 }

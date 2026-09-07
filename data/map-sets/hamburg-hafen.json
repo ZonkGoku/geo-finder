@@ -6,15 +6,101 @@
   "source": "mapillary",
   "scaleKm": 5,
   "regions": [
-    { "id": "hamburg-landungsbruecken", "name": "Landungsbrücken", "lat": 53.5459, "lng": 9.9683 },
-    { "id": "hamburg-elbphilharmonie", "name": "Elbphilharmonie", "lat": 53.5413, "lng": 9.9840 },
-    { "id": "hamburg-speicherstadt", "name": "Speicherstadt", "lat": 53.5445, "lng": 9.9915 },
-    { "id": "hamburg-hafencity", "name": "HafenCity / Überseequartier", "lat": 53.5410, "lng": 10.0005 },
-    { "id": "hamburg-alter-elbtunnel", "name": "Alter Elbtunnel", "lat": 53.5453, "lng": 9.9673 },
-    { "id": "hamburg-fischmarkt", "name": "Fischmarkt", "lat": 53.5462, "lng": 9.9548 },
-    { "id": "hamburg-oevelgoenne", "name": "Elbstrand Övelgönne", "lat": 53.5480, "lng": 9.9128 },
-    { "id": "hamburg-elbbruecken", "name": "Elbbrücken", "lat": 53.5320, "lng": 10.0210 },
-    { "id": "hamburg-neumuehlen", "name": "Neumühlen / Museumshafen", "lat": 53.5470, "lng": 9.9270 },
-    { "id": "hamburg-finkenwerder", "name": "Finkenwerder", "lat": 53.5350, "lng": 9.8650 }
+    {
+      "id": "hamburg-landungsbruecken",
+      "name": "Landungsbrücken",
+      "lat": 53.5459,
+      "lng": 9.9683
+    },
+    {
+      "id": "hamburg-elbphilharmonie",
+      "name": "Elbphilharmonie",
+      "lat": 53.5413,
+      "lng": 9.984
+    },
+    {
+      "id": "hamburg-speicherstadt",
+      "name": "Speicherstadt",
+      "lat": 53.5445,
+      "lng": 9.9915
+    },
+    {
+      "id": "hamburg-hafencity",
+      "name": "HafenCity / Überseequartier",
+      "lat": 53.541,
+      "lng": 10.0005
+    },
+    {
+      "id": "hamburg-alter-elbtunnel",
+      "name": "Alter Elbtunnel",
+      "lat": 53.5453,
+      "lng": 9.9673
+    },
+    {
+      "id": "hamburg-fischmarkt",
+      "name": "Fischmarkt",
+      "lat": 53.5462,
+      "lng": 9.9548
+    },
+    {
+      "id": "hamburg-oevelgoenne",
+      "name": "Elbstrand Övelgönne",
+      "lat": 53.548,
+      "lng": 9.9128
+    },
+    {
+      "id": "hamburg-elbbruecken",
+      "name": "Elbbrücken",
+      "lat": 53.532,
+      "lng": 10.021
+    },
+    {
+      "id": "hamburg-neumuehlen",
+      "name": "Neumühlen / Museumshafen",
+      "lat": 53.547,
+      "lng": 9.927
+    },
+    {
+      "id": "hamburg-finkenwerder",
+      "name": "Finkenwerder",
+      "lat": 53.535,
+      "lng": 9.865
+    },
+    {
+      "id": "hamburg-blohm-voss",
+      "name": "Blohm+Voss-Werft",
+      "lat": 53.5424,
+      "lng": 9.9727
+    },
+    {
+      "id": "hamburg-steinwerder",
+      "name": "Steinwerder",
+      "lat": 53.5384,
+      "lng": 9.9765
+    },
+    {
+      "id": "hamburg-elbtower-baustelle",
+      "name": "Elbbrücken-Quartier",
+      "lat": 53.5325,
+      "lng": 10.0225
+    },
+    {
+      "id": "hamburg-veddel",
+      "name": "Veddel",
+      "lat": 53.5288,
+      "lng": 10.0107
+    },
+    {
+      "id": "hamburg-wilhelmsburg",
+      "name": "Wilhelmsburg / Inselpark",
+      "lat": 53.4959,
+      "lng": 10.0075
+    },
+    {
+      "id": "hamburg-cruise-center",
+      "name": "Cruise Center Steinwerder",
+      "lat": 53.5405,
+      "lng": 9.9678
+    }
   ]
 }

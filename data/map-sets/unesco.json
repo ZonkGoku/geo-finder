@@ -1,20 +1,154 @@
 {
   "id": "unesco",
   "name": "UNESCO-Welterbe",
-  "description": "Live-Straßenbilder von zehn UNESCO-Weltkulturerbestätten weltweit über die Mapillary-API.",
+  "description": "Live-Straßenbilder von 24 UNESCO-Weltkulturerbestätten weltweit über die Mapillary-API.",
   "status": "needs-token",
   "source": "mapillary",
   "scaleKm": 3000,
   "regions": [
-    { "id": "unesco-machu-picchu", "name": "Machu Picchu, Peru", "lat": -13.1631, "lng": -72.5450 },
-    { "id": "unesco-petra", "name": "Petra, Jordanien", "lat": 30.3285, "lng": 35.4444 },
-    { "id": "unesco-angkor-wat", "name": "Angkor Wat, Kambodscha", "lat": 13.4125, "lng": 103.8670 },
-    { "id": "unesco-chichen-itza", "name": "Chichén Itzá, Mexiko", "lat": 20.6843, "lng": -88.5678 },
-    { "id": "unesco-acropolis", "name": "Akropolis, Athen", "lat": 37.9715, "lng": 23.7267 },
-    { "id": "unesco-great-wall", "name": "Chinesische Mauer, Badaling", "lat": 40.3584, "lng": 116.0230 },
-    { "id": "unesco-stonehenge", "name": "Stonehenge, England", "lat": 51.1789, "lng": -1.8262 },
-    { "id": "unesco-giza", "name": "Pyramiden von Gizeh, Ägypten", "lat": 29.9792, "lng": 31.1342 },
-    { "id": "unesco-taj-mahal", "name": "Taj Mahal, Indien", "lat": 27.1751, "lng": 78.0421 },
-    { "id": "unesco-colosseum", "name": "Kolosseum, Rom", "lat": 41.8902, "lng": 12.4922 }
+    {
+      "id": "unesco-machu-picchu",
+      "name": "Machu Picchu, Peru",
+      "lat": -13.1631,
+      "lng": -72.545
+    },
+    {
+      "id": "unesco-petra",
+      "name": "Petra, Jordanien",
+      "lat": 30.3285,
+      "lng": 35.4444
+    },
+    {
+      "id": "unesco-angkor-wat",
+      "name": "Angkor Wat, Kambodscha",
+      "lat": 13.4125,
+      "lng": 103.867
+    },
+    {
+      "id": "unesco-chichen-itza",
+      "name": "Chichén Itzá, Mexiko",
+      "lat": 20.6843,
+      "lng": -88.5678
+    },
+    {
+      "id": "unesco-acropolis",
+      "name": "Akropolis, Athen",
+      "lat": 37.9715,
+      "lng": 23.7267
+    },
+    {
+      "id": "unesco-great-wall",
+      "name": "Chinesische Mauer, Badaling",
+      "lat": 40.3584,
+      "lng": 116.023
+    },
+    {
+      "id": "unesco-stonehenge",
+      "name": "Stonehenge, England",
+      "lat": 51.1789,
+      "lng": -1.8262
+    },
+    {
+      "id": "unesco-giza",
+      "name": "Pyramiden von Gizeh, Ägypten",
+      "lat": 29.9792,
+      "lng": 31.1342
+    },
+    {
+      "id": "unesco-taj-mahal",
+      "name": "Taj Mahal, Indien",
+      "lat": 27.1751,
+      "lng": 78.0421
+    },
+    {
+      "id": "unesco-colosseum",
+      "name": "Kolosseum, Rom",
+      "lat": 41.8902,
+      "lng": 12.4922
+    },
+    {
+      "id": "unesco-venice",
+      "name": "Venedig, Italien",
+      "lat": 45.4408,
+      "lng": 12.3155
+    },
+    {
+      "id": "unesco-kyoto",
+      "name": "Historisches Kyoto, Japan",
+      "lat": 35.0116,
+      "lng": 135.7681
+    },
+    {
+      "id": "unesco-hoi-an",
+      "name": "Hội An, Vietnam",
+      "lat": 15.8801,
+      "lng": 108.338
+    },
+    {
+      "id": "unesco-persepolis",
+      "name": "Persepolis, Iran",
+      "lat": 29.9356,
+      "lng": 52.8916
+    },
+    {
+      "id": "unesco-ephesus",
+      "name": "Ephesos, Türkei",
+      "lat": 37.9412,
+      "lng": 27.3418
+    },
+    {
+      "id": "unesco-meteora",
+      "name": "Meteora, Griechenland",
+      "lat": 39.7217,
+      "lng": 21.6306
+    },
+    {
+      "id": "unesco-bagan",
+      "name": "Bagan, Myanmar",
+      "lat": 21.1717,
+      "lng": 94.8585
+    },
+    {
+      "id": "unesco-borobudur",
+      "name": "Borobudur, Indonesien",
+      "lat": -7.6079,
+      "lng": 110.2038
+    },
+    {
+      "id": "unesco-mont-saint-michel",
+      "name": "Mont-Saint-Michel, Frankreich",
+      "lat": 48.6361,
+      "lng": -1.5115
+    },
+    {
+      "id": "unesco-dubrovnik",
+      "name": "Altstadt Dubrovnik, Kroatien",
+      "lat": 42.6407,
+      "lng": 18.1077
+    },
+    {
+      "id": "unesco-halong-bay",
+      "name": "Ha-Long-Bucht, Vietnam",
+      "lat": 20.9101,
+      "lng": 107.1839
+    },
+    {
+      "id": "unesco-uluru",
+      "name": "Uluru, Australien",
+      "lat": -25.3444,
+      "lng": 131.0369
+    },
+    {
+      "id": "unesco-alhambra",
+      "name": "Alhambra, Granada",
+      "lat": 37.176,
+      "lng": -3.588
+    },
+    {
+      "id": "unesco-easter-island",
+      "name": "Osterinsel, Chile",
+      "lat": -27.1127,
+      "lng": -109.3497
+    }
   ]
 }

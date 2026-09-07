@@ -39,7 +39,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": 10
+      "locationCount": 16
     },
     {
       "id": "hamburg-alster",
@@ -49,7 +49,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": 10
+      "locationCount": 16
     },
     {
       "id": "hamburg-szene",
@@ -59,7 +59,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": 8
+      "locationCount": 14
     },
     {
       "id": "landmarks",
@@ -69,7 +69,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "kultur",
-      "locationCount": 7
+      "locationCount": 21
     },
     {
       "id": "capitals",
@@ -79,7 +79,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": 16
+      "locationCount": 41
     },
     {
       "id": "berlin",
@@ -89,7 +89,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": 8
+      "locationCount": 22
     },
     {
       "id": "paris",
@@ -99,7 +99,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": 8
+      "locationCount": 22
     },
     {
       "id": "munich",
@@ -109,7 +109,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": 8
+      "locationCount": 20
     },
     {
       "id": "london",
@@ -119,7 +119,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": 8
+      "locationCount": 22
     },
     {
       "id": "new-york",
@@ -129,7 +129,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": 8
+      "locationCount": 22
     },
     {
       "id": "asian-megacities",
@@ -139,7 +139,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "staedte",
-      "locationCount": 8
+      "locationCount": 22
     },
     {
       "id": "unesco",
@@ -149,7 +149,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "kultur",
-      "locationCount": 10
+      "locationCount": 24
     },
     {
       "id": "stadiums",
@@ -159,7 +159,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "kultur",
-      "locationCount": 8
+      "locationCount": 20
     },
     {
       "id": "ruins-castles",
@@ -169,7 +169,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "kultur",
-      "locationCount": 8
+      "locationCount": 20
     },
     {
       "id": "bridges",
@@ -179,7 +179,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "kultur",
-      "locationCount": 8
+      "locationCount": 18
     },
     {
       "id": "extreme",
@@ -189,7 +189,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "natur",
-      "locationCount": 8
+      "locationCount": 18
     },
     {
       "id": "coastal",
@@ -199,7 +199,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "natur",
-      "locationCount": 8
+      "locationCount": 20
     },
     {
       "id": "country-roads",
@@ -209,7 +209,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "natur",
-      "locationCount": 8
+      "locationCount": 16
     },
     {
       "id": "national-parks",
@@ -219,7 +219,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "natur",
-      "locationCount": 8
+      "locationCount": 20
     },
     {
       "id": "islands",
@@ -229,7 +229,7 @@
       "status": "needs-token",
       "source": "mapillary",
       "tag": "natur",
-      "locationCount": 8
+      "locationCount": 20
     }
   ]
 }
