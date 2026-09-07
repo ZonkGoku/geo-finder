@@ -1972,6 +1972,60 @@ function wireMenuControls() {
   });
 }
 
+const GAME_CAROUSEL_INTERVAL_MS = 6000;
+let gameCarouselTimer = null;
+let gameCarouselIndex = 0;
+
+/** Homepage-Karussell rechts im Hauptmenue (ersetzt den frueheren statischen
+ * Panorama-Teaser) - zeigt PulseMap/360°-Explorer/Battle-Royale mit je einem
+ * "Direkt starten"-Button, der den Modus vorwaehlt und direkt in die
+ * Solo-Lobby springt (soloFlow()). */
+function wireGameCarousel() {
+  const root = el('game-carousel');
+  if (!root) return;
+  const slides = [...root.querySelectorAll('.game-carousel-slide')];
+  const dots = [...root.querySelectorAll('.game-carousel-dot')];
+  if (slides.length === 0) return;
+  const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  function showSlide(index) {
+    gameCarouselIndex = (index + slides.length) % slides.length;
+    slides.forEach((s, i) => s.classList.toggle('active', i === gameCarouselIndex));
+    dots.forEach((d, i) => {
+      d.classList.toggle('active', i === gameCarouselIndex);
+      d.setAttribute('aria-selected', i === gameCarouselIndex ? 'true' : 'false');
+    });
+  }
+
+  function restartAutoAdvance() {
+    clearInterval(gameCarouselTimer);
+    if (prefersReducedMotion) return; // manuelle Navigation (Pfeile/Punkte) bleibt trotzdem moeglich
+    gameCarouselTimer = setInterval(() => showSlide(gameCarouselIndex + 1), GAME_CAROUSEL_INTERVAL_MS);
+  }
+
+  el('game-carousel-prev').addEventListener('click', () => { showSlide(gameCarouselIndex - 1); restartAutoAdvance(); });
+  el('game-carousel-next').addEventListener('click', () => { showSlide(gameCarouselIndex + 1); restartAutoAdvance(); });
+  dots.forEach((d, i) => d.addEventListener('click', () => { showSlide(i); restartAutoAdvance(); }));
+
+  // Auto-Advance pausiert bei Hover/Fokus - ein waehrenddessen wegspringendes
+  // Slide waere schlecht, gerade wenn man den "Direkt starten"-Button anvisiert.
+  root.addEventListener('mouseenter', () => clearInterval(gameCarouselTimer));
+  root.addEventListener('mouseleave', restartAutoAdvance);
+  root.addEventListener('focusin', () => clearInterval(gameCarouselTimer));
+  root.addEventListener('focusout', restartAutoAdvance);
+
+  root.querySelectorAll('.game-carousel-cta').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      sound.unlockAudio();
+      sound.playClick();
+      state.settings.mode = btn.dataset.mode;
+      soloFlow();
+    });
+  });
+
+  restartAutoAdvance();
+}
+
 function resetToMenu() {
   clearInterval(hudTimerInterval);
   clearInterval(resultCountdownInterval);
@@ -2267,6 +2321,7 @@ async function boot() {
   initBrandHomeLink();
   initVisibilityWatch();
   wireMenuControls();
+  wireGameCarousel();
   wireLobbyControls();
   wireHudControls();
   wireHeatmapControls();

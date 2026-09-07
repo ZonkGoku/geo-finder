@@ -319,36 +319,97 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
   width:100%; max-width:440px;
 }
 
-/* --- rechte Seite: Panorama-Teaser statt Formularblock --- */
-.menu-hero-right{ position:relative; overflow:hidden; background:var(--ink); }
-.menu-hero-photo{
-  position:absolute; inset:-4%; background-image:url('../assets/panoramas/cerro-toco.jpg');
-  background-size:cover; background-position:center;
-  filter:saturate(0.85) brightness(0.62) contrast(1.05);
-  animation: heroKenBurns 22s ease-in-out infinite alternate;
+/* --- rechte Seite: interaktives Spielmodi-Karussell statt statischem
+   Panorama-Teaser (siehe wireGameCarousel() in app.js fuer Auto-Advance/
+   Dots/Pfeile). Jede .game-carousel-slide ist absolut uebereinandergelegt
+   und blendet per Opacity zwischen sich - kein Scroll-Snap/Transform-Slide,
+   damit .gc-art-* je Slide frei unterschiedliche Hintergrund-Techniken
+   (Foto vs. reines CSS-Muster) nutzen kann, ohne dass ein gemeinsamer
+   Breiten-Container noetig waere. */
+.game-carousel{ position:relative; overflow:hidden; background:var(--ink); }
+.game-carousel-track{ position:absolute; inset:0; }
+.game-carousel-slide{
+  position:absolute; inset:0; opacity:0; pointer-events:none;
+  transition:opacity 0.6s ease;
 }
+.game-carousel-slide.active{ opacity:1; pointer-events:auto; }
+.game-carousel-art{ position:absolute; inset:-4%; }
+.gc-art-photo{ background-size:cover; background-position:center; filter:saturate(0.85) brightness(0.62) contrast(1.05); animation:heroKenBurns 22s ease-in-out infinite alternate; }
+.gc-art-explorer{ background-image:url('../assets/panoramas/cerro-toco.jpg'); }
+.gc-art-royale{ background-image:url('../assets/panoramas/lascar-volcano.jpg'); }
 @keyframes heroKenBurns{ from{ transform:scale(1) translate(0,0); } to{ transform:scale(1.09) translate(-1%, 1%); } }
-.menu-hero-scanlines{
+.game-carousel-scanlines{
   position:absolute; inset:0;
   background-image: repeating-linear-gradient(180deg, rgba(23,236,255,0.05) 0 2px, transparent 2px 5px);
   mix-blend-mode:screen; animation: scanDrift 9s linear infinite;
 }
 @keyframes scanDrift{ from{ background-position:0 0; } to{ background-position:0 120px; } }
-.menu-hero-gradient{
+.game-carousel-gradient{
   position:absolute; inset:0;
   background: linear-gradient(90deg, var(--ink) 0%, rgba(5,5,5,0.55) 24%, transparent 55%),
               linear-gradient(0deg, var(--ink) 0%, transparent 30%);
 }
-.menu-hero-badge{
-  position:absolute; right:22px; bottom:22px; z-index:2;
-  font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.14em; color:rgba(255,255,255,0.85);
-  background:rgba(0,0,0,0.42); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.14);
-  padding:8px 14px; border-radius:999px;
+.gc-gradient-royale{
+  background: linear-gradient(90deg, var(--ink) 0%, rgba(5,5,5,0.55) 24%, transparent 55%),
+              linear-gradient(0deg, var(--ink) 0%, transparent 30%),
+              radial-gradient(ellipse at center, transparent 40%, rgba(242,85,74,0.25) 100%);
 }
-@media (prefers-reduced-motion: reduce){ .menu-hero-photo, .menu-hero-scanlines{ animation:none; } }
+@media (prefers-reduced-motion: reduce){ .gc-art-photo, .game-carousel-scanlines{ animation:none; } }
+
+/* PulseMap-Slide: reines CSS-Mockup statt Foto (der Modus ist kartenbasiert,
+   kein Panorama) - konzentrische Puls-Ringe hinter dem Marken-Globus, dieselbe
+   "Einschlag"-Idee wie der In-Game-Gluehpuls (siehe heatmapGuessPulse in
+   der Heatmap-Sektion), hier als Dauerschleife fuers Vorschau-Standbild. */
+.gc-art-pulsemap{
+  background:radial-gradient(ellipse at center, #0d2b22 0%, var(--ink) 70%);
+  display:flex; align-items:center; justify-content:center;
+}
+.gc-pulse-ring{
+  position:absolute; width:120px; height:120px; border-radius:50%;
+  border:1.5px solid rgba(57,255,143,0.55); animation:gcPulseExpand 3.6s ease-out infinite;
+}
+.gc-pulse-ring.r2{ animation-delay:1.2s; }
+.gc-pulse-ring.r3{ animation-delay:2.4s; }
+@keyframes gcPulseExpand{
+  0%{ width:60px; height:60px; opacity:0.9; }
+  100%{ width:420px; height:420px; opacity:0; }
+}
+.gc-pulse-globe{ width:64px; height:64px; position:relative; z-index:1; filter:drop-shadow(0 0 16px rgba(57,255,143,0.55)); animation:gcGlobeSpin 14s linear infinite; }
+@keyframes gcGlobeSpin{ from{ transform:rotateY(0deg); } to{ transform:rotateY(360deg); } }
+@media (prefers-reduced-motion: reduce){ .gc-pulse-ring, .gc-pulse-globe{ animation:none; } }
+
+.game-carousel-content{
+  position:absolute; left:0; right:0; bottom:0; z-index:2; padding:0 28px 30px;
+  display:flex; flex-direction:column; align-items:flex-start; gap:8px;
+}
+.game-carousel-eyebrow{
+  font-family:var(--font-mono); font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--accent-2); margin:0; text-shadow:0 0 14px rgba(23,236,255,0.5);
+}
+.game-carousel-tagline{
+  font-family:var(--font-display); font-weight:600; font-size:1.15rem; line-height:1.3;
+  color:#fff; margin:0; max-width:34ch;
+}
+.game-carousel-cta{ margin-top:6px; padding:10px 22px; font-size:0.85rem; }
+
+.game-carousel-arrow{
+  position:absolute; top:50%; transform:translateY(-50%); z-index:3;
+  width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.4); backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.18);
+  color:#fff; font-size:1.3rem; cursor:pointer; transition:background 0.15s ease, border-color 0.15s ease;
+}
+.game-carousel-arrow:hover{ background:rgba(0,0,0,0.6); border-color:rgba(255,255,255,0.35); }
+.game-carousel-arrow.prev{ left:14px; }
+.game-carousel-arrow.next{ right:14px; }
+.game-carousel-dots{ position:absolute; right:22px; top:22px; z-index:3; display:flex; gap:8px; }
+.game-carousel-dot{
+  width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.3); border:none; cursor:pointer;
+  padding:0; transition:background 0.15s ease, transform 0.15s ease;
+}
+.game-carousel-dot.active{ background:var(--accent-2); transform:scale(1.3); }
 @media (max-width: 860px){
   .menu-hero{ grid-template-columns:1fr; }
-  .menu-hero-right{ display:none; }
+  .game-carousel{ display:none; }
   .menu-hero-scroll{ display:block; overflow-y:auto; }
   .menu-hero-left{ padding:28px 20px 40px; max-width:none; }
 }
