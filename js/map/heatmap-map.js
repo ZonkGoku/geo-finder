@@ -75,7 +75,7 @@ export class HeatmapMap {
   _applyLabel(layer) {
     const hasTooltip = typeof layer.getTooltip === 'function' && layer.getTooltip();
     if (this._labelsEnabled && !hasTooltip) {
-      layer.bindTooltip(layer.feature.properties.nameDe, {
+      layer.bindTooltip(layer.feature.properties.displayName, {
         permanent: true,
         direction: 'center',
         className: 'heatmap-country-label',
@@ -85,7 +85,11 @@ export class HeatmapMap {
     }
   }
 
-  /** countries: [{ id, name, geometry }] - einmal pro Partie aufgerufen. */
+  /** countries: [{ id, name, geometry, displayName }] - displayName kommt
+   * bereits sprachaufgeloest vom Aufrufer (siehe countryDisplayName() in
+   * core/i18n.js, aufgerufen in app.js ensureHeatmapWidgets()) - dieses
+   * Modul bleibt bewusst i18n-unabhaengig, reines Kartenmodul. Einmal pro
+   * Partie aufgerufen. */
   setCountries(countries) {
     if (this.layer) this.map.removeLayer(this.layer);
     this.layerByCountryId.clear();
@@ -93,10 +97,7 @@ export class HeatmapMap {
     const features = countries.map((c) => ({
       type: 'Feature',
       id: c.id,
-      // nameDe fuer die eigene Laendername-Beschriftung (siehe _applyLabel())
-      // - Anzeige immer auf Deutsch, konsistent mit Top-3-Liste/Vorschlagsliste/
-      // Ergebnis-Banner (core/country-names-de.js).
-      properties: { name: c.name, nameDe: c.nameDe },
+      properties: { name: c.name, displayName: c.displayName },
       geometry: c.geometry,
     }));
 

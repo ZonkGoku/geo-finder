@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -14,6 +14,16 @@
     try { stored = localStorage.getItem('geofinder-theme'); } catch (e) {}
     var theme = stored || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     document.documentElement.setAttribute('data-theme', theme);
+  })();
+  // Dieselbe Fruehzeitig-Logik wie oben fuers Theme, hier fuer die Sprache
+  // (siehe core/i18n.js detectInitialLang() - identische Regel, nur hier
+  // dupliziert, weil dieses Skript vor jedem Modul-Import laeuft): Default
+  // Englisch, ausser der Browser ist explizit auf Deutsch eingestellt.
+  (function () {
+    var stored = null;
+    try { stored = localStorage.getItem('geofinder-lang'); } catch (e) {}
+    var lang = stored || ((navigator.language || '').toLowerCase().indexOf('de') === 0 ? 'de' : 'en');
+    document.documentElement.setAttribute('lang', lang);
   })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,7 +53,10 @@
       </svg>
       <span class="brand-word"><span class="brand-word-geo">GEO</span><span class="brand-word-finder">FINDER</span></span>
     </button>
-    <p class="kicker">360°-Multiplayer &middot; bis zu 6 Spieler &middot; P2P &uuml;ber WebRTC</p>
+    <p class="kicker" data-i18n="brandTagline">360°-Multiplayer &middot; bis zu 6 Spieler &middot; P2P &uuml;ber WebRTC</p>
+    <button type="button" class="lang-toggle" id="lang-toggle" aria-label="Language / Sprache">
+      <span id="lang-toggle-label">EN</span>
+    </button>
   </div>
 
   <!-- Bewusst wie #screen-menu AUSSERHALB von .device platziert (siehe
@@ -88,8 +101,8 @@
             <span class="brand-word"><span class="brand-word-geo">GEO</span><span class="brand-word-finder">FINDER</span></span>
           </button>
           <p class="menu-hero-eyebrow">360&deg; &middot; Live-Multiplayer &middot; bis zu 6 Spieler</p>
-          <h1 class="menu-hero-title">ERRATE<br><em>DIE&nbsp;WELT.</em></h1>
-          <p class="menu-hero-lede">Kein Account. Kein Server. Peer-to-Peer &uuml;ber WebRTC &mdash; ein Link gen&uuml;gt, um live gegeneinander anzutreten.</p>
+          <h1 class="menu-hero-title"><span data-i18n="menuHeroTitle1">ERRATE</span><br><em data-i18n="menuHeroTitle2">DIE&nbsp;WELT.</em></h1>
+          <p class="menu-hero-lede" data-i18n="menuHeroLede">Kein Account. Kein Server. Peer-to-Peer &uuml;ber WebRTC &mdash; ein Link gen&uuml;gt, um live gegeneinander anzutreten.</p>
 
           <div class="action-list">
             <button class="action-card" id="btn-host">
@@ -97,8 +110,8 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
               </span>
               <span>
-                <span class="action-title">Raum erstellen</span>
-                <div class="action-sub">Lobby er&ouml;ffnen &amp; Link teilen</div>
+                <span class="action-title" data-i18n="actionHostTitle">Raum erstellen</span>
+                <div class="action-sub" data-i18n="actionHostSub">Lobby er&ouml;ffnen &amp; Link teilen</div>
               </span>
             </button>
 
@@ -107,8 +120,8 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h13M13 6l6 6-6 6"/></svg>
               </span>
               <span>
-                <span class="action-title">Beitreten</span>
-                <div class="action-sub">Code oder Link einf&uuml;gen</div>
+                <span class="action-title" data-i18n="actionJoinTitle">Beitreten</span>
+                <div class="action-sub" data-i18n="actionJoinSub">Code oder Link einf&uuml;gen</div>
               </span>
             </button>
             <div class="join-panel hidden" id="join-panel">
@@ -121,8 +134,8 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6"/></svg>
               </span>
               <span>
-                <span class="action-title">Solo spielen</span>
-                <div class="action-sub">Ohne Mitspieler &uuml;ben</div>
+                <span class="action-title" data-i18n="actionSoloTitle">Solo spielen</span>
+                <div class="action-sub" data-i18n="actionSoloSub">Ohne Mitspieler &uuml;ben</div>
               </span>
             </button>
 
@@ -131,8 +144,8 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M12 13.4l1 2 2.2.2-1.7 1.5.5 2.1-2-1.1-2 1.1.5-2.1-1.7-1.5 2.2-.2z" fill="currentColor" stroke="none"/></svg>
               </span>
               <span>
-                <span class="action-title">Tages-Challenge</span>
-                <div class="action-sub" id="daily-challenge-sub">Jeden Tag dieselben Orte f&uuml;r alle</div>
+                <span class="action-title" data-i18n="actionDailyTitle">Tages-Challenge</span>
+                <div class="action-sub" id="daily-challenge-sub" data-i18n="actionDailySub">Jeden Tag dieselben Orte f&uuml;r alle</div>
               </span>
             </button>
           </div>
@@ -207,9 +220,9 @@
             </div>
             <div class="game-carousel-gradient" aria-hidden="true"></div>
             <div class="game-carousel-content">
-              <p class="game-carousel-eyebrow">PulseMap</p>
-              <h3 class="game-carousel-tagline">Errate das gesuchte Land anhand einer live pulsierenden Weltkarte.</h3>
-              <button type="button" class="btn btn-primary game-carousel-cta" data-mode="heatmap">Direkt starten</button>
+              <p class="game-carousel-eyebrow" data-i18n="pulsemapModeLabel">PulseMap</p>
+              <h3 class="game-carousel-tagline" data-i18n="carouselPulsemapTagline">Errate das gesuchte Land anhand einer live pulsierenden Weltkarte.</h3>
+              <button type="button" class="btn btn-primary game-carousel-cta" data-mode="heatmap" data-i18n="carouselCta">Direkt starten</button>
             </div>
           </div>
           <div class="game-carousel-slide" data-mode="points">
@@ -217,9 +230,9 @@
             <div class="game-carousel-scanlines" aria-hidden="true"></div>
             <div class="game-carousel-gradient" aria-hidden="true"></div>
             <div class="game-carousel-content">
-              <p class="game-carousel-eyebrow">360&deg; Explorer</p>
-              <h3 class="game-carousel-tagline">Echte 360&deg;-Panoramen erkunden und den Standort auf der Karte anpinnen.</h3>
-              <button type="button" class="btn btn-primary game-carousel-cta" data-mode="points">Direkt starten</button>
+              <p class="game-carousel-eyebrow" data-i18n="carouselExplorerLabel">360&deg; Explorer</p>
+              <h3 class="game-carousel-tagline" data-i18n="carouselExplorerTagline">Echte 360&deg;-Panoramen erkunden und den Standort auf der Karte anpinnen.</h3>
+              <button type="button" class="btn btn-primary game-carousel-cta" data-mode="points" data-i18n="carouselCta">Direkt starten</button>
             </div>
           </div>
           <div class="game-carousel-slide" data-mode="battle-royale">
@@ -227,9 +240,9 @@
             <div class="game-carousel-scanlines" aria-hidden="true"></div>
             <div class="game-carousel-gradient gc-gradient-royale" aria-hidden="true"></div>
             <div class="game-carousel-content">
-              <p class="game-carousel-eyebrow">Battle Royale</p>
-              <h3 class="game-carousel-tagline">Jede Runde scheidet der schlechteste Tipp aus - bis nur ein Champion bleibt.</h3>
-              <button type="button" class="btn btn-primary game-carousel-cta" data-mode="battle-royale">Direkt starten</button>
+              <p class="game-carousel-eyebrow" data-i18n="carouselRoyaleLabel">Battle Royale</p>
+              <h3 class="game-carousel-tagline" data-i18n="carouselRoyaleTagline">Jede Runde scheidet der schlechteste Tipp aus - bis nur ein Champion bleibt.</h3>
+              <button type="button" class="btn btn-primary game-carousel-cta" data-mode="battle-royale" data-i18n="carouselCta">Direkt starten</button>
             </div>
           </div>
         </div>
@@ -304,7 +317,7 @@
               <h3>Spielregeln</h3>
 
               <div class="setting-group">
-                <div class="setting-group-label">Runden</div>
+                <div class="setting-group-label" data-i18n="settingRounds">Runden</div>
                 <div class="choice-row" id="choice-rounds" data-setting="roundCount">
                   <div class="choice-thumb" aria-hidden="true"></div>
                   <button type="button" data-value="3">3</button>
@@ -314,7 +327,7 @@
               </div>
 
               <div class="setting-group">
-                <div class="setting-group-label">Rundendauer</div>
+                <div class="setting-group-label" data-i18n="settingDuration">Rundendauer</div>
                 <div class="choice-row" id="choice-duration" data-setting="timeLimitMs">
                   <div class="choice-thumb" aria-hidden="true"></div>
                   <button type="button" data-value="30000">30s</button>
@@ -326,18 +339,18 @@
               </div>
 
               <div class="setting-group">
-                <div class="setting-group-label">Modus</div>
+                <div class="setting-group-label" data-i18n="settingMode">Modus</div>
                 <div class="choice-row" id="choice-mode" data-setting="mode">
                   <div class="choice-thumb" aria-hidden="true"></div>
                   <button type="button" data-value="points">Punkte-Duell</button>
                   <button type="button" data-value="hp">HP-Duell (6000 HP)</button>
                   <button type="button" data-value="country-streak">Country-Streak</button>
-                  <button type="button" data-value="heatmap">PulseMap</button>
+                  <button type="button" data-value="heatmap" data-i18n="pulsemapModeLabel">PulseMap</button>
                   <button type="button" data-value="battle-royale">Battle Royale</button>
                 </div>
               </div>
 
-              <p class="heatmap-mode-note hidden" id="heatmap-mode-note">
+              <p class="heatmap-mode-note hidden" id="heatmap-mode-note" data-i18n="pulsemapModeNote">
                 Kein Kartenpaket n&ouml;tig: tippe im Spiel Landesnamen, die Weltkarte f&auml;rbt sich nach Entfernung zum Zielland ein.
               </p>
 
@@ -346,35 +359,35 @@
               </p>
 
               <div class="setting-group heatmap-only hidden" id="heatmap-settings-group">
-                <div class="setting-group-label">Karten-Labels</div>
+                <div class="setting-group-label" data-i18n="settingLabels">Karten-Labels</div>
                 <div class="choice-row" id="choice-heatmap-labels" data-setting="heatmapLabels">
                   <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="on">An</button>
-                  <button type="button" data-value="off">Aus</button>
+                  <button type="button" data-value="on" data-i18n="labelsOn">An</button>
+                  <button type="button" data-value="off" data-i18n="labelsOff">Aus</button>
                 </div>
 
-                <div class="setting-group-label" style="margin-top:14px;">Gegner-Info</div>
+                <div class="setting-group-label" style="margin-top:14px;" data-i18n="settingOpponentInfo">Gegner-Info</div>
                 <div class="choice-row" id="choice-heatmap-opponent-info" data-setting="heatmapOpponentInfo">
                   <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="best">Nur beste Distanz</button>
-                  <button type="button" data-value="all">Alle Tipps</button>
-                  <button type="button" data-value="blind">Blind</button>
+                  <button type="button" data-value="best" data-i18n="opponentInfoBest">Nur beste Distanz</button>
+                  <button type="button" data-value="all" data-i18n="opponentInfoAll">Alle Tipps</button>
+                  <button type="button" data-value="blind" data-i18n="opponentInfoBlind">Blind</button>
                 </div>
 
-                <div class="setting-group-label" style="margin-top:14px;">Spielablauf</div>
+                <div class="setting-group-label" style="margin-top:14px;" data-i18n="settingFlow">Spielablauf</div>
                 <div class="choice-row" id="choice-heatmap-turn-mode" data-setting="heatmapTurnMode">
                   <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="efficiency">Gleichzeitig (Wenigste Tipps)</button>
-                  <button type="button" data-value="simultaneous">Gleichzeitig (Rennen)</button>
-                  <button type="button" data-value="turns">Abwechselnd (Taktik)</button>
+                  <button type="button" data-value="efficiency" data-i18n="turnModeEfficiency">Gleichzeitig (Wenigste Tipps)</button>
+                  <button type="button" data-value="simultaneous" data-i18n="turnModeRace">Gleichzeitig (Rennen)</button>
+                  <button type="button" data-value="turns" data-i18n="turnModeTurns">Abwechselnd (Taktik)</button>
                 </div>
                 <p class="heatmap-turnmode-note" id="heatmap-turnmode-note"></p>
 
-                <div class="setting-group-label" style="margin-top:14px;">Kontinent-Hinweis (Easy Mode)</div>
+                <div class="setting-group-label" style="margin-top:14px;" data-i18n="settingContinentHint">Kontinent-Hinweis (Easy Mode)</div>
                 <div class="choice-row" id="choice-heatmap-continent-hint" data-setting="heatmapContinentHint">
                   <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="off">Aus</button>
-                  <button type="button" data-value="on">An</button>
+                  <button type="button" data-value="off" data-i18n="continentHintOff">Aus</button>
+                  <button type="button" data-value="on" data-i18n="continentHintOn">An</button>
                 </div>
               </div>
 
@@ -588,7 +601,7 @@
           <div id="heatmap-map-container" class="heatmap-map"></div>
 
           <div class="heatmap-top3-panel hidden" id="heatmap-top3-panel">
-            <div class="heatmap-top3-title">Deine Top 3 Tipps</div>
+            <div class="heatmap-top3-title" data-i18n="top3Title">Deine Top 3 Tipps</div>
             <ol class="heatmap-top3-list" id="heatmap-top3-list"></ol>
           </div>
 
@@ -599,7 +612,7 @@
           <div class="heatmap-search-panel">
             <div class="heatmap-search-box" id="heatmap-search-box">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <input type="text" id="heatmap-search-input" placeholder="Land eingeben…" autocomplete="off" spellcheck="false">
+              <input type="text" id="heatmap-search-input" placeholder="Land eingeben…" data-i18n="searchPlaceholder" data-i18n-attr="placeholder" autocomplete="off" spellcheck="false">
             </div>
             <p class="heatmap-turn-status hidden" id="heatmap-turn-status"></p>
             <div class="heatmap-suggestions hidden" id="heatmap-suggestions"></div>
@@ -610,7 +623,7 @@
           <div class="heatmap-result-banner hidden" id="heatmap-result-banner">
             <p class="heatmap-result-title" id="heatmap-result-title"></p>
             <p class="heatmap-result-sub" id="heatmap-result-sub"></p>
-            <button type="button" class="btn btn-ghost heatmap-share-btn hidden" id="heatmap-share-btn">Ergebnis teilen</button>
+            <button type="button" class="btn btn-ghost heatmap-share-btn hidden" id="heatmap-share-btn" data-i18n="shareResultBtn">Ergebnis teilen</button>
           </div>
         </div>
       </section>

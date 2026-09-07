@@ -35,6 +35,7 @@ import {
   decodeChallengeLink,
 } from './core/challenge.js';
 import * as sound from './audio/sound.js';
+import { t, getLang, setLang, onLangChange, applyTranslations, countryDisplayName } from './core/i18n.js';
 
 const PROFILE_KEY = 'geofinder.profile';
 const RESULT_DISPLAY_SECONDS = 8;
@@ -132,6 +133,34 @@ function initThemeToggle() {
       /* Storage nicht verfuegbar (z. B. privater Modus) - Wahl gilt nur fuer diese Sitzung. */
     }
     sync();
+  });
+}
+
+// ---------------------------------------------------------------- Sprache
+
+function initLangToggle() {
+  const btn = el('lang-toggle');
+  const label = el('lang-toggle-label');
+  // Zeigt die SPRACHE, zu der ein Klick wechseln wuerde (nicht die aktuell
+  // aktive) - dieselbe Konvention wie viele Sprach-Umschalter ("DE" heisst
+  // "zu Deutsch wechseln", nicht "Deutsch ist aktiv").
+  const sync = () => {
+    label.textContent = getLang() === 'de' ? 'EN' : 'DE';
+    btn.title = getLang() === 'de' ? 'Switch to English' : 'Zu Deutsch wechseln';
+  };
+  sync();
+  btn.addEventListener('click', () => {
+    sound.playClick();
+    setLang(getLang() === 'de' ? 'en' : 'de');
+  });
+  onLangChange(() => {
+    sync();
+    applyTranslations();
+    // Dynamisch (nicht per data-i18n) erzeugte Texte, die gerade sichtbar
+    // sein koennten, muessen bei einem Sprachwechsel live nachgezogen werden -
+    // ausserhalb der Lobby ist renderLobby() ein guenstiger No-Op auf
+    // verstecktem Markup, kein Sonderfall noetig.
+    if (state.role) renderLobby();
   });
 }
 
@@ -683,7 +712,7 @@ function renderLobby() {
     renderChoiceRow('choice-heatmap-opponent-info', state.settings.heatmapOpponentInfo);
     renderChoiceRow('choice-heatmap-turn-mode', state.settings.heatmapTurnMode);
     renderChoiceRow('choice-heatmap-continent-hint', state.settings.heatmapContinentHint);
-    el('heatmap-turnmode-note').textContent = HEATMAP_TURNMODE_NOTES[state.settings.heatmapTurnMode] || '';
+    el('heatmap-turnmode-note').textContent = t(HEATMAP_TURNMODE_NOTE_KEYS[state.settings.heatmapTurnMode] || '');
     renderLobbyStage();
   } else if (mapSetIndex.length) {
     renderMapSetGrid();
@@ -949,11 +978,12 @@ function renderHpBars() {
 
 // Kurzer Erklaertext unter dem Spielablauf-Wahlschalter (siehe renderLobby())
 // - drei aehnlich klingende "Gleichzeitig"/"Abwechselnd"-Optionen brauchen
-// eine Zeile Kontext, welches Sieg-Kriterium jeweils gilt.
-const HEATMAP_TURNMODE_NOTES = {
-  efficiency: 'Alle tippen gleichzeitig weiter, bis jede:r geloest hat - wer die wenigsten Tipps braucht, gewinnt die Runde. Bei Gleichstand gibt es ein paar Extra-Punkte fuer mehr Tempo.',
-  simultaneous: 'Alle tippen gleichzeitig - die Runde endet sofort beim ersten exakten Treffer.',
-  turns: 'Reihum tippen, immer nur eine Person gleichzeitig.',
+// eine Zeile Kontext, welches Sieg-Kriterium jeweils gilt. Text kommt aus
+// core/i18n.js, damit er mit der UI-Sprache mitwechselt.
+const HEATMAP_TURNMODE_NOTE_KEYS = {
+  efficiency: 'turnModeNoteEfficiency',
+  simultaneous: 'turnModeNoteRace',
+  turns: 'turnModeNoteTurns',
 };
 
 /**
@@ -999,7 +1029,11 @@ async function ensureHeatmapWidgets() {
   if (!heatmapMap) heatmapMap = new HeatmapMap(el('heatmap-map-container'), { labels });
   else heatmapMap.setLabels(labels); // Einstellung kann sich zwischen zwei Partien in derselben Session geaendert haben
   if (!countryStore) countryStore = await ensureCountryStore();
-  heatmapMap.setCountries(countryStore.countries);
+  // displayName statt hartcodiertem nameDe an heatmap-map.js uebergeben -
+  // die Kartenbeschriftung soll mit der UI-Sprache mitwechseln, aber
+  // heatmap-map.js selbst bleibt bewusst i18n-unabhaengig (reines
+  // Kartenmodul, siehe dortiger Kommentar).
+  heatmapMap.setCountries(countryStore.countries.map((c) => ({ ...c, displayName: countryDisplayName(c) })));
 }
 
 function heatmapPlayerName(peerId) {
@@ -1088,7 +1122,7 @@ function renderHeatmapTop3() {
   list.innerHTML = top3
     .map(
       (g, i) =>
-        `<li><span class="rank">${i + 1}.</span><span class="name">${escapeHtml(g.name)}</span><span class="dist">${Math.round(g.distanceKm).toLocaleString('de-DE')} km</span>${g.proximity === 'neighbor' ? '<span class="proximity-badge neighbor">Nachbarland</span>' : ''}</li>`
+        `<li><span class="rank">${i + 1}.</span><span class="name">${escapeHtml(g.name)}</span><span class="dist">${Math.round(g.distanceKm).toLocaleString('de-DE')} km</span>${g.proximity === 'neighbor' ? `<span class="proximity-badge neighbor">${escapeHtml(t('neighborBadge'))}</span>` : ''}</li>`
     )
     .join('');
 }
@@ -1112,7 +1146,7 @@ function renderHeatmapSolvedWaiting({ attempts }) {
   el('heatmap-search-box').classList.add('locked');
   const status = el('heatmap-turn-status');
   status.classList.remove('hidden');
-  status.textContent = `Gelöst in ${attempts} ${attempts === 1 ? 'Tipp' : 'Tipps'} – warte auf die anderen Spieler…`;
+  status.textContent = t('solvedWaiting', { attempts, attemptsUnit: t(attempts === 1 ? 'attemptUnitOne' : 'attemptUnitMany') });
 }
 
 function renderHeatmapTurnUpdate({ activePlayerId }) {
@@ -1127,7 +1161,7 @@ function renderHeatmapTurnUpdate({ activePlayerId }) {
     if (document.activeElement !== input) input.focus();
   } else {
     status.classList.remove('hidden');
-    status.textContent = `Warten auf ${heatmapPlayerName(activePlayerId)}…`;
+    status.textContent = t('turnStatusWaiting', { name: heatmapPlayerName(activePlayerId) });
   }
 }
 
@@ -1158,7 +1192,7 @@ function heatmapActivityLine(text, tone = '') {
 function renderHeatmapGuessResult({ countryId, distanceKm, exact, proximity }) {
   heatmapMap?.colorCountry(countryId, getColorForDistance(distanceKm, exact), proximity);
   const country = countryStore?.byId.get(countryId);
-  const name = country?.nameDe ?? countryId;
+  const name = country ? countryDisplayName(country) : countryId;
   if (exact) {
     heatmapActivityLine(`Volltreffer! ${name} war richtig.`, 'exact');
   } else if (proximity === 'neighbor') {
@@ -1203,7 +1237,7 @@ function renderHeatmapRoundResult({ winnerPlayerId, target, results }) {
   const title = el('heatmap-result-title');
   const sub = el('heatmap-result-sub');
   const targetCountry = countryStore?.byId.get(target.id);
-  const tipp = (n) => (n === 1 ? 'Tipp' : 'Tipps');
+  const attemptsUnit = (n) => t(n === 1 ? 'attemptUnitOne' : 'attemptUnitMany');
 
   if (state.settings.heatmapTurnMode === 'efficiency') {
     // Sieg = wenigste Zuege (siehe net/host.js _endHeatmapEfficiencyRound()) -
@@ -1215,14 +1249,15 @@ function renderHeatmapRoundResult({ winnerPlayerId, target, results }) {
     const won = mine?.won ?? false;
     title.classList.toggle('won', won);
     if (!mine || mine.attempts == null) {
-      title.textContent = 'Nicht gefunden.';
+      title.textContent = t('resultNotFound');
     } else if (won) {
-      title.textContent = mine.bonus
-        ? `Bestes Ergebnis! ${mine.attempts} ${tipp(mine.attempts)} + Tempo-Bonus!`
-        : `Bestes Ergebnis! ${mine.attempts} ${tipp(mine.attempts)}`;
+      title.textContent = t(mine.bonus ? 'resultBestScoreBonus' : 'resultBestScore', {
+        attempts: mine.attempts,
+        attemptsUnit: attemptsUnit(mine.attempts),
+      });
     } else {
       const bestAttempts = Math.min(...results.filter((r) => r.attempts != null).map((r) => r.attempts));
-      title.textContent = `Gelöst in ${mine.attempts} ${tipp(mine.attempts)} – beste Runde: ${bestAttempts}.`;
+      title.textContent = t('resultSolvedNotBest', { attempts: mine.attempts, attemptsUnit: attemptsUnit(mine.attempts), best: bestAttempts });
     }
     if (won) {
       recordHeatmapSolve(mine.attempts);
@@ -1233,7 +1268,7 @@ function renderHeatmapRoundResult({ winnerPlayerId, target, results }) {
     }
   } else if (winnerPlayerId) {
     const won = winnerPlayerId === state.self.id;
-    title.textContent = won ? 'Exakter Treffer!' : `${heatmapPlayerName(winnerPlayerId)} war am schnellsten!`;
+    title.textContent = won ? t('resultExact') : t('resultFastest', { name: heatmapPlayerName(winnerPlayerId) });
     title.classList.toggle('won', won);
     if (won) {
       recordHeatmapSolve(heatmapOwnGuesses.length);
@@ -1247,10 +1282,10 @@ function renderHeatmapRoundResult({ winnerPlayerId, target, results }) {
       haptics.tapStrong();
     }
   } else {
-    title.textContent = 'Die Zeit ist abgelaufen.';
+    title.textContent = t('resultTimeUp');
     title.classList.remove('won');
   }
-  sub.textContent = `Gesuchtes Land: ${targetCountry?.nameDe ?? target.name}`;
+  sub.textContent = t('resultTargetLabel', { name: targetCountry ? countryDisplayName(targetCountry) : target.name });
   banner.classList.remove('hidden');
 
   // Nur anzeigen, wenn diese Runde ueberhaupt eigene Tipps hatte - ein
@@ -1294,7 +1329,7 @@ function renderHeatmapSuggestions(query) {
   box.innerHTML = matches
     .map(
       (c, i) =>
-        `<button type="button" class="heatmap-suggestion${heatmapGuessedThisRound.has(c.id) ? ' guessed' : ''}" data-country-id="${escapeHtml(c.id)}" data-index="${i}">${escapeHtml(c.nameDe)}</button>`
+        `<button type="button" class="heatmap-suggestion${heatmapGuessedThisRound.has(c.id) ? ' guessed' : ''}" data-country-id="${escapeHtml(c.id)}" data-index="${i}">${escapeHtml(countryDisplayName(c))}</button>`
     )
     .join('');
 }
@@ -2498,6 +2533,8 @@ function registerServiceWorker() {
 
 async function boot() {
   registerServiceWorker();
+  applyTranslations();
+  initLangToggle();
   initProfileUI();
   initThemeToggle();
   initSoundToggle();
