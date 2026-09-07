@@ -40,7 +40,13 @@ export const state = {
     // "nur beste Distanz" haelt trotzdem Wettbewerbsdruck (siehe
     // renderHeatmapOpponentRecord() in app.js).
     heatmapOpponentInfo: 'best',
-    heatmapTurnMode: 'simultaneous', // 'simultaneous' | 'turns' - gleichzeitig oder reihum tippen
+    // 'simultaneous' | 'turns' | 'efficiency' - gleichzeitig (Renn-Modus:
+    // Runde endet beim ersten Treffer), reihum, oder gleichzeitig mit
+    // Sieg-Kriterium "wenigste Zuege" statt "zuerst richtig" (Runde geht
+    // weiter, bis alle geloest haben - siehe net/host.js
+    // _endHeatmapEfficiencyRound()). 'efficiency' ist per Nutzer-Wunsch der
+    // neue Default.
+    heatmapTurnMode: 'efficiency',
     // 'on' | 'off' - ob ein Tipp auf demselben Kontinent (aber kein
     // Nachbarland) als solcher benannt wird ("Richtiger Kontinent, aber
     // noch X km entfernt") statt nur die Distanz zu zeigen. Nutzer-Feedback:

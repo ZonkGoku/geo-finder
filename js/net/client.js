@@ -284,6 +284,9 @@ export class ClientController {
       case MSG.HEATMAP_GUESS_RESULT:
         bus.emit('ui:heatmap-guess-result', message.payload);
         break;
+      case MSG.HEATMAP_SOLVED_WAITING:
+        bus.emit('ui:heatmap-solved-waiting', message.payload);
+        break;
       case MSG.HEATMAP_ACTIVITY:
         bus.emit('ui:heatmap-activity', message.payload);
         break;

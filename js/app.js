@@ -683,6 +683,7 @@ function renderLobby() {
     renderChoiceRow('choice-heatmap-opponent-info', state.settings.heatmapOpponentInfo);
     renderChoiceRow('choice-heatmap-turn-mode', state.settings.heatmapTurnMode);
     renderChoiceRow('choice-heatmap-continent-hint', state.settings.heatmapContinentHint);
+    el('heatmap-turnmode-note').textContent = HEATMAP_TURNMODE_NOTES[state.settings.heatmapTurnMode] || '';
     renderLobbyStage();
   } else if (mapSetIndex.length) {
     renderMapSetGrid();
@@ -946,6 +947,15 @@ function renderHpBars() {
 
 // ---------------------------------------------------------------- Heatmap-Modus
 
+// Kurzer Erklaertext unter dem Spielablauf-Wahlschalter (siehe renderLobby())
+// - drei aehnlich klingende "Gleichzeitig"/"Abwechselnd"-Optionen brauchen
+// eine Zeile Kontext, welches Sieg-Kriterium jeweils gilt.
+const HEATMAP_TURNMODE_NOTES = {
+  efficiency: 'Alle tippen gleichzeitig weiter, bis jede:r geloest hat - wer die wenigsten Tipps braucht, gewinnt die Runde. Bei Gleichstand gibt es ein paar Extra-Punkte fuer mehr Tempo.',
+  simultaneous: 'Alle tippen gleichzeitig - die Runde endet sofort beim ersten exakten Treffer.',
+  turns: 'Reihum tippen, immer nur eine Person gleichzeitig.',
+};
+
 /**
  * Kurzlebiger expandierender Ring an einer Bildschirmposition ("Radar-Ping")
  * fuer den exakten Treffer - ein simples DOM-Element statt Canvas-Partikeln
@@ -1092,6 +1102,19 @@ function renderHeatmapOpponentRecord(recordKm) {
 }
 
 /** heatmapTurnMode==='turns': sperrt/entsperrt das Suchfeld je nachdem, wer dran ist. */
+// heatmapTurnMode==='efficiency': der lokale Spieler hat exakt getroffen,
+// die Runde laeuft aber fuer die anderen weiter (siehe HEATMAP_SOLVED_WAITING
+// in protocol.js). Sperrt das Suchfeld wie im Taktik-Modus (dasselbe
+// #heatmap-turn-status-Element, hier nur mit anderem Text) statt eines
+// eigenen neuen UI-Elements.
+function renderHeatmapSolvedWaiting({ attempts }) {
+  el('heatmap-search-input').disabled = true;
+  el('heatmap-search-box').classList.add('locked');
+  const status = el('heatmap-turn-status');
+  status.classList.remove('hidden');
+  status.textContent = `Gelöst in ${attempts} ${attempts === 1 ? 'Tipp' : 'Tipps'} – warte auf die anderen Spieler…`;
+}
+
 function renderHeatmapTurnUpdate({ activePlayerId }) {
   heatmapActiveTurnPlayerId = activePlayerId;
   const isMyTurn = activePlayerId === state.self.id;
@@ -1170,7 +1193,7 @@ function renderHeatmapActivity(payload) {
   else heatmapActivityLine(`${name} tippt … (${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt)`, 'peer');
 }
 
-function renderHeatmapRoundResult({ winnerPlayerId, target }) {
+function renderHeatmapRoundResult({ winnerPlayerId, target, results }) {
   clearHeatmapTimer();
   el('heatmap-search-input').disabled = true;
   el('heatmap-suggestions').classList.add('hidden');
@@ -1180,7 +1203,35 @@ function renderHeatmapRoundResult({ winnerPlayerId, target }) {
   const title = el('heatmap-result-title');
   const sub = el('heatmap-result-sub');
   const targetCountry = countryStore?.byId.get(target.id);
-  if (winnerPlayerId) {
+  const tipp = (n) => (n === 1 ? 'Tipp' : 'Tipps');
+
+  if (state.settings.heatmapTurnMode === 'efficiency') {
+    // Sieg = wenigste Zuege (siehe net/host.js _endHeatmapEfficiencyRound()) -
+    // winnerPlayerId allein reicht hier nicht, weil bei einem echten
+    // Gleichstand MEHRERE Spieler gleichzeitig "won" sein koennen (nur der
+    // Tempo-Bonus geht an eine einzelne Person) - massgeblich ist der eigene
+    // Eintrag in results.
+    const mine = results?.find((r) => r.playerId === state.self.id);
+    const won = mine?.won ?? false;
+    title.classList.toggle('won', won);
+    if (!mine || mine.attempts == null) {
+      title.textContent = 'Nicht gefunden.';
+    } else if (won) {
+      title.textContent = mine.bonus
+        ? `Bestes Ergebnis! ${mine.attempts} ${tipp(mine.attempts)} + Tempo-Bonus!`
+        : `Bestes Ergebnis! ${mine.attempts} ${tipp(mine.attempts)}`;
+    } else {
+      const bestAttempts = Math.min(...results.filter((r) => r.attempts != null).map((r) => r.attempts));
+      title.textContent = `Gelöst in ${mine.attempts} ${tipp(mine.attempts)} – beste Runde: ${bestAttempts}.`;
+    }
+    if (won) {
+      recordHeatmapSolve(mine.attempts);
+      const anchor = targetCountry && heatmapMap ? heatmapMap.containerPointFor(targetCountry.lat, targetCountry.lng) : {};
+      particleBurst({ ...anchor, colors: ['#39ff8f', '#17ecff', '#ff1fb0'] });
+      spawnRadarPing(anchor.x, anchor.y);
+      haptics.tapStrong();
+    }
+  } else if (winnerPlayerId) {
     const won = winnerPlayerId === state.self.id;
     title.textContent = won ? 'Exakter Treffer!' : `${heatmapPlayerName(winnerPlayerId)} war am schnellsten!`;
     title.classList.toggle('won', won);
@@ -2342,6 +2393,7 @@ function wireBusEvents() {
   bus.on('ui:heatmap-activity', renderHeatmapActivity);
   bus.on('ui:heatmap-round-result', renderHeatmapRoundResult);
   bus.on('ui:heatmap-turn-update', renderHeatmapTurnUpdate);
+  bus.on('ui:heatmap-solved-waiting', renderHeatmapSolvedWaiting);
   bus.on('ui:map-resolving', renderLoadProgress);
   bus.on('ui:map-resolve-failed', () => {
     hideLoadProgress();

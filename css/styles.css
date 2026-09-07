@@ -1249,6 +1249,7 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 }
 .heatmap-mode-note.hidden{ display:none; }
 .heatmap-only.hidden{ display:none; }
+.heatmap-turnmode-note{ margin:6px 2px 0; font-size:0.76rem; color:var(--text-faint); }
 .battle-royale-mode-note{
   margin-top:14px; padding:12px 16px; border-radius:10px; font-size:0.82rem; color:var(--text-dim);
   background:color-mix(in srgb, var(--surface-raised) 60%, transparent); border:1px solid var(--line);

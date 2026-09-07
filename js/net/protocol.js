@@ -34,6 +34,12 @@ export const MSG = {
   HEATMAP_ACTIVITY: 'HEATMAP_ACTIVITY',
   HEATMAP_WIN: 'HEATMAP_WIN', // Host -> alle: Runde vorbei, Zielland + Gewinner werden aufgedeckt
   HEATMAP_TURN_UPDATE: 'HEATMAP_TURN_UPDATE', // Host -> alle: wer im "Abwechselnd"-Modus gerade an der Reihe ist
+  // heatmapTurnMode==='efficiency': Host -> NUR der Spieler, der gerade exakt
+  // getroffen hat. Die Runde geht fuer alle ANDEREN weiter (Sieg = wenigste
+  // Zuege, siehe net/host.js _endHeatmapEfficiencyRound()) - dieser Spieler
+  // bekommt statt HEATMAP_WIN nur eine private "geloest, warte auf die
+  // anderen"-Nachricht, sein Suchfeld sperrt sich lokal.
+  HEATMAP_SOLVED_WAITING: 'HEATMAP_SOLVED_WAITING',
   // Asynchrones Runden-Streaming (siehe net/host.js startGame()): das Spiel
   // startet schon, sobald die ersten Runden fertig sind, waehrend der Rest
   // im Hintergrund weiterlaedt. Reicht das Kartenpaket am Ende trotzdem

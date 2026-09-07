@@ -22,6 +22,12 @@ const HEATMAP_WIN_POINTS = 1000;
 // alle Laender durchprobiert, um das Zielland aus den Antworten
 // einzugrenzen, schon.
 const HEATMAP_GUESS_MIN_INTERVAL_MS = 150;
+// heatmapTurnMode==='efficiency': kleiner Bonus obendrauf fuer die schnellste
+// Person unter mehreren, die die Runde mit der gleich niedrigsten Zug-Zahl
+// abgeschlossen haben (siehe _endHeatmapEfficiencyRound()) - bewusst klein
+// gegenueber HEATMAP_WIN_POINTS, da die Zug-Zahl das eigentliche
+// Sieg-Kriterium bleibt und Tempo nur bei echtem Gleichstand den Ausschlag gibt.
+const HEATMAP_EFFICIENCY_TIEBREAK_BONUS = 200;
 // Nach diesen ersten paar fertig geladenen Runden startet das Spiel schon,
 // waehrend der Rest im Hintergrund weiterlaedt (siehe startGame()/
 // _continueStreamingRounds() unten) - "Runde 1 und idealerweise Runde 2
@@ -216,6 +222,12 @@ export class HostController {
     // einen Tipp, der nie mehr kommt.
     if (this._heatmapTurnOrder && peerId === this._currentHeatmapTurnPlayerId()) {
       this._advanceHeatmapTurn();
+    }
+    // Effizienz-Modus: derselbe Gedanke - wartet die Runde gerade nur noch
+    // auf den Spieler, der eben getrennt wurde, muss sie trotzdem enden
+    // koennen, statt auf einen Tipp zu warten, der nie mehr kommt.
+    if (state.settings.mode === 'heatmap' && state.settings.heatmapTurnMode === 'efficiency' && this._heatmapTarget) {
+      this._maybeEndHeatmapEfficiencyRound();
     }
 
     const timer = setTimeout(() => {
@@ -774,6 +786,9 @@ export class HostController {
     recordShown('heatmap-countries', target.id);
     this._heatmapTarget = target; // NUR host-intern - wird nie gebroadcastet, siehe _handleHeatmapGuess()
     this._heatmapOpponentBestKm = Infinity; // fuer heatmapOpponentInfo==='best', pro Runde neu
+    // heatmapTurnMode==='efficiency': peerId -> {attempts, elapsedMs} sobald
+    // jemand exakt trifft - pro Runde neu, siehe _endHeatmapEfficiencyRound().
+    this._heatmapEfficiencyResults = new Map();
     state.round = {
       index,
       total: state.settings.roundCount,
@@ -807,7 +822,14 @@ export class HostController {
 
     clearTimeout(this.roundTimer);
     if (state.round.timeLimitMs != null) {
-      this.roundTimer = setTimeout(() => this._endHeatmapRound(null), state.round.timeLimitMs);
+      this.roundTimer = setTimeout(() => {
+        // 'efficiency' hat standardmaessig unbegrenzte Zeit (siehe Lobby-
+        // Default), aber der Host kann trotzdem manuell ein Zeitlimit setzen -
+        // dann muss der Ablauf dieselbe Zuege-basierte Auswertung nutzen wie
+        // ein natuerliches Rundenende, nicht das Renn-Modus-"niemand gewinnt".
+        if (state.settings.heatmapTurnMode === 'efficiency') this._endHeatmapEfficiencyRound();
+        else this._endHeatmapRound(null);
+      }, state.round.timeLimitMs);
     }
   }
 
@@ -938,10 +960,32 @@ export class HostController {
     // opponentInfo === 'blind': keine Aktivitaetsmeldung ueberhaupt.
 
     if (exact) {
+      if (state.settings.heatmapTurnMode === 'efficiency') {
+        // Runde geht fuer alle ANDEREN weiter - nur dieser Spieler bekommt
+        // eine private "geloest, warte auf die anderen"-Nachricht statt des
+        // vollen Rundenendes (siehe HEATMAP_SOLVED_WAITING in protocol.js).
+        this._heatmapEfficiencyResults.set(peerId, { attempts: seen.size, elapsedMs: Date.now() - state.round.startTimestamp });
+        this.pm.sendTo(peerId, makeMessage(MSG.HEATMAP_SOLVED_WAITING, { attempts: seen.size }, state.self.id));
+        if (peerId === state.self.id) bus.emit('ui:heatmap-solved-waiting', { attempts: seen.size });
+        this._maybeEndHeatmapEfficiencyRound();
+        return;
+      }
       this._endHeatmapRound(peerId);
       return;
     }
     if (this._heatmapTurnOrder) this._advanceHeatmapTurn();
+  }
+
+  /** heatmapTurnMode==='efficiency': beendet die Runde, sobald jeder noch
+   * VERBUNDENE Spieler entweder geloest hat oder das Spiel verlassen hat -
+   * verhindert, dass eine Runde ewig auf jemanden wartet, der gerade
+   * getrennt wurde (dieselbe Ueberlegung wie _advanceHeatmapTurn() im
+   * Taktik-Modus). Wird sowohl nach jedem Treffer als auch beim Verlassen
+   * eines Spielers aufgerufen (siehe _onPeerLost()). */
+  _maybeEndHeatmapEfficiencyRound() {
+    const connected = [...state.players.values()].filter((p) => p.connected);
+    const allSolved = connected.every((p) => this._heatmapEfficiencyResults.has(p.id));
+    if (allSolved) this._endHeatmapEfficiencyRound();
   }
 
   /**
@@ -972,6 +1016,60 @@ export class HostController {
       results.push({ playerId: player.id, won, score: roundTotal });
     }
 
+    this._finishHeatmapRound(winnerPlayerId, results);
+  }
+
+  /**
+   * heatmapTurnMode==='efficiency': Sieg = wenigste Zuege bis zum exakten
+   * Treffer (siehe _heatmapEfficiencyResults, befuellt in
+   * _handleHeatmapGuess()) statt "zuerst richtig". Bei Gleichstand in der
+   * Zug-Zahl bekommt nur die schnellste Person unter den Gleichauf-Liegenden
+   * einen kleinen Bonus obendrauf (HEATMAP_EFFICIENCY_TIEBREAK_BONUS) - wer
+   * bis Rundenende (oder Zeitlimit) gar nicht geloest hat, bekommt 0 Punkte,
+   * genau wie im Renn-Modus bei abgelaufener Zeit.
+   */
+  _endHeatmapEfficiencyRound() {
+    clearTimeout(this.roundTimer);
+    const target = this._heatmapTarget;
+    if (!target) return;
+
+    const solvedEntries = [...this._heatmapEfficiencyResults.entries()];
+    const minAttempts = solvedEntries.length ? Math.min(...solvedEntries.map(([, r]) => r.attempts)) : null;
+    const leaders = solvedEntries.filter(([, r]) => r.attempts === minAttempts).map(([id]) => id);
+    // Der Zeit-Tiebreak ist nur relevant (und nur dann faellig), wenn es
+    // ueberhaupt einen echten Gleichstand in der Zug-Zahl gibt.
+    let fastestLeaderId = leaders.length === 1 ? leaders[0] : null;
+    if (leaders.length > 1) {
+      fastestLeaderId = leaders.reduce((best, id) => {
+        const r = this._heatmapEfficiencyResults.get(id);
+        const bestR = this._heatmapEfficiencyResults.get(best);
+        return r.elapsedMs < bestR.elapsedMs ? id : best;
+      }, leaders[0]);
+    }
+
+    const results = [];
+    for (const player of state.players.values()) {
+      if (!state.scores.has(player.id)) state.scores.set(player.id, freshScoreEntry());
+      const scoreEntry = state.scores.get(player.id);
+      const solved = this._heatmapEfficiencyResults.get(player.id);
+      const won = leaders.includes(player.id);
+      const bonus = won && leaders.length > 1 && player.id === fastestLeaderId ? HEATMAP_EFFICIENCY_TIEBREAK_BONUS : 0;
+      const roundTotal = won ? HEATMAP_WIN_POINTS + bonus : 0;
+
+      scoreEntry.total += roundTotal;
+      scoreEntry.perRound[state.round.index] = { total: roundTotal, won };
+      results.push({ playerId: player.id, won, score: roundTotal, attempts: solved?.attempts ?? null, bonus: bonus > 0 });
+    }
+
+    this._finishHeatmapRound(leaders.length > 1 ? fastestLeaderId : (leaders[0] ?? null), results);
+  }
+
+  /** Gemeinsamer Abschluss fuer beide Heatmap-Rundenenden (Renn- und
+   * Effizienz-Modus): Historie/Broadcast/naechste-Runde-Terminierung sind in
+   * beiden Faellen identisch, nur wie `results` zustande kommt unterscheidet
+   * sich (siehe _endHeatmapRound() vs. _endHeatmapEfficiencyRound()). */
+  _finishHeatmapRound(winnerPlayerId, results) {
+    const target = this._heatmapTarget;
     state.roundHistory[state.round.index] = { targetCountryId: target.id, targetCountryName: target.name, results };
 
     this.pm.broadcast(
