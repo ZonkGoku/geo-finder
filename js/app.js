@@ -659,6 +659,11 @@ function renderLobby() {
   el('heatmap-mode-note').classList.toggle('hidden', !isHeatmap);
   el('heatmap-settings-group').classList.toggle('hidden', !isHeatmap);
   el('panorama-controls-group').classList.toggle('hidden', isHeatmap);
+  // Fog of War/Broken Compass/No-Pan sind reine Panorama-Mutatoren (steuern
+  // Sichtbarkeit/Blickrichtung/Bewegungsfreiheit im 360°-Viewer) - im
+  // kartenbasierten PulseMap-Modus gibt es keinen Panorama-Viewer, die
+  // gesamte "Mutatoren"-Gruppe waere dort nur verwirrende, wirkungslose UI.
+  el('mutator-settings-group').classList.toggle('hidden', isHeatmap);
   el('battle-royale-mode-note').classList.toggle('hidden', !isBattleRoyale);
   // Die Rundenzahl ergibt sich in diesem Modus automatisch aus der
   // Spielerzahl (siehe net/host.js startGame()) - der Runden-Wahlschalter
