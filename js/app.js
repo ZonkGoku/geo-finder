@@ -17,6 +17,15 @@ import { loadMapSetIndex, loadMapSetDetail } from './core/pool-loader.js';
 import { getHighScore, recordScoreIfBest } from './core/high-scores.js';
 import { getPlayerStats, averageScore, recordGamePlayed } from './core/player-stats.js';
 import {
+  getHeatmapStats,
+  averageAttempts,
+  topDropOffRound,
+  recordHeatmapGameStarted,
+  recordHeatmapSolve,
+  recordHeatmapGameCompleted,
+  recordHeatmapDropOff,
+} from './core/heatmap-stats.js';
+import {
   DAILY_CHALLENGE_MAPSET_ID,
   DAILY_CHALLENGE_SETTINGS,
   dailySeed,
@@ -1018,6 +1027,7 @@ async function renderHeatmapRoundStart() {
   heatmapOwnGuesses = [];
   heatmapOpponentRecordKm = null;
   heatmapActiveTurnPlayerId = null;
+  if (state.round.index === 0) recordHeatmapGameStarted();
 
   el('heatmap-round-index').textContent = String(state.round.index + 1).padStart(2, '0');
   el('heatmap-round-total').textContent = String(state.round.total).padStart(2, '0');
@@ -1155,6 +1165,7 @@ function renderHeatmapRoundResult({ winnerPlayerId, target }) {
     title.textContent = won ? 'Exakter Treffer!' : `${heatmapPlayerName(winnerPlayerId)} war am schnellsten!`;
     title.classList.toggle('won', won);
     if (won) {
+      recordHeatmapSolve(heatmapOwnGuesses.length);
       // Ursprung am Zielland selbst statt Bildschirmmitte, wenn dessen
       // Position bekannt ist (countryStore ist zu diesem Zeitpunkt immer
       // schon geladen, siehe ensureHeatmapWidgets()) - "geht vom Land aus"
@@ -1860,6 +1871,11 @@ function renderLeaderboard({ finalScores }) {
       recordGamePlayed(ownEntry.total, state.round.total);
       if (state.challenge?.type === 'daily') recordDailyResult(ownEntry.total);
     }
+  } else if (state.settings.mode === 'heatmap') {
+    // Erreicht die Leaderboard-Ansicht ueberhaupt, heisst: die Partie ist
+    // regulaer zu Ende gelaufen (letzte Runde vorbei), kein Abbruch - siehe
+    // recordHeatmapDropOff() in resetToMenu() fuer den Gegenfall.
+    recordHeatmapGameCompleted();
   }
 
   // Challenge-Link teilen ist bewusst nur fuer Solo-Partien: der geteilte
@@ -2089,6 +2105,13 @@ function wireGameCarousel() {
 }
 
 function resetToMenu() {
+  // Abbruch-Tracking: nur wenn #screen-heatmap gerade aktiv ist (also noch
+  // eine Runde lief) - von der Leaderboard-Ansicht aus "zurueck zum Menue"
+  // ist KEIN Abbruch, das ist ein regulaer beendetes Spiel (siehe
+  // recordHeatmapGameCompleted() in renderLeaderboard()).
+  if (state.settings.mode === 'heatmap' && el('screen-heatmap').classList.contains('active')) {
+    recordHeatmapDropOff(state.round.index);
+  }
   clearInterval(hudTimerInterval);
   clearInterval(resultCountdownInterval);
   sound.stopRoundAmbience();
@@ -2118,6 +2141,7 @@ function resetToMenu() {
   showScreen('menu');
   renderDailyChallengeCard();
   renderMenuStats();
+  renderHeatmapMenuStats();
 }
 
 // Klick-Impact-Ripple fuer die neuen Neo-Brutalism-CTAs (.cta-mega,
@@ -2249,6 +2273,26 @@ function renderMenuStats() {
   el('stat-games-played').textContent = String(stats.gamesPlayed);
   el('stat-avg-score').textContent = averageScore(stats).toLocaleString('de-DE');
   el('stat-best-score').textContent = stats.bestGameScore.toLocaleString('de-DE');
+}
+
+function renderHeatmapMenuStats() {
+  const stats = getHeatmapStats();
+  const panel = el('heatmap-stats-panel');
+  panel.classList.toggle('hidden', stats.roundsSolved === 0);
+  if (stats.roundsSolved > 0) {
+    el('heatmap-stat-solved').textContent = String(stats.roundsSolved);
+    el('heatmap-stat-avg-attempts').textContent = String(averageAttempts(stats));
+    el('heatmap-stat-best-attempts').textContent = String(stats.bestAttempts);
+  }
+
+  const dropOff = topDropOffRound(stats);
+  const hint = el('heatmap-dropoff-hint');
+  // Erst ab ein paar Datenpunkten anzeigen - bei nur einem einzigen
+  // Abbruch waere "meistens in Runde X" nur Zufall, keine echte Tendenz.
+  hint.classList.toggle('hidden', !dropOff || dropOff.count < 3);
+  if (dropOff && dropOff.count >= 3) {
+    hint.textContent = `Du steigst am häufigsten in Runde ${dropOff.roundNumber} aus (${Math.round(dropOff.share * 100)}% deiner Abbrüche).`;
+  }
 }
 
 function wireBusEvents() {
@@ -2392,6 +2436,7 @@ async function boot() {
   wireBusEvents();
   renderDailyChallengeCard();
   renderMenuStats();
+  renderHeatmapMenuStats();
   handleDeepLink();
   ensureMapSetIndex().catch((err) => console.error('Kartenpaket-Index konnte nicht geladen werden', err));
 }

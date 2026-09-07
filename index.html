@@ -153,6 +153,26 @@
             </div>
           </div>
 
+          <!-- Rein lokale PulseMap-Statistik (siehe core/heatmap-stats.js) -
+               kein Cross-Player-Vergleich, nur der eigene Verlauf auf diesem
+               Geraet. Bleibt bis zur ersten geloesten Runde versteckt,
+               genau wie .menu-stats-panel oben. -->
+          <div class="menu-stats-panel hidden" id="heatmap-stats-panel">
+            <div class="menu-stat">
+              <span class="menu-stat-num" id="heatmap-stat-solved">0</span>
+              <span class="menu-stat-lbl">PulseMap-Runden gel&ouml;st</span>
+            </div>
+            <div class="menu-stat">
+              <span class="menu-stat-num" id="heatmap-stat-avg-attempts">0</span>
+              <span class="menu-stat-lbl">&Oslash; Tipps bis Treffer</span>
+            </div>
+            <div class="menu-stat">
+              <span class="menu-stat-num" id="heatmap-stat-best-attempts">0</span>
+              <span class="menu-stat-lbl">Rekord</span>
+            </div>
+          </div>
+          <p class="heatmap-dropoff-hint hidden" id="heatmap-dropoff-hint"></p>
+
           <div class="profile-box">
             <div>
               <label class="field-label" for="player-name-input">Dein Name</label>

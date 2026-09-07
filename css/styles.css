@@ -310,6 +310,8 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 }
 .menu-stat-num{ font-family:var(--font-display); font-weight:700; font-size:1.15rem; color:var(--accent-2); }
 .menu-stat-lbl{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); }
+.heatmap-dropoff-hint{ font-size:0.76rem; color:var(--text-faint); margin:8px 0 0; max-width:440px; }
+.heatmap-dropoff-hint.hidden{ display:none; }
 .join-panel{ display:flex; gap:8px; padding:0 4px; }
 .join-panel.hidden{ display:none; }
 .menu-error{ color:var(--danger); font-size:0.85rem; margin-top:14px; }
