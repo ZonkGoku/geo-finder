@@ -44,6 +44,15 @@ const DURATION_OPTIONS = [30000, 60000, 90000, 180000, null];
 
 let peerManager = null;
 let controller = null;
+// Schuetzt hostFlow()/joinFlow()/soloFlow() vor doppelter Ausfuehrung - ohne
+// dieses Flag erzeugte ein Doppel-Tap auf Mobile (oder Enter+Klick auf
+// "Verbinden" kurz hintereinander) ZWEI parallele PeerManager/Controller-
+// Instanzen, die beide eine eigene WebRTC-Verbindung zum Host aufbauten. Der
+// Host sah dadurch zwei Spieler-Eintraege vom selben Geraet - der aeltere
+// blieb als verwaiste Verbindung auf "wartet..." haengen, weil die UI danach
+// nur noch an der zuletzt erzeugten Instanz haengt. Siehe Nutzer-Report
+// "bin nun zwei mal in einer session im spiel".
+let menuActionInFlight = false;
 let mapSetIndex = [];
 let mapSetDetailCache = new Map(); // id -> resolved detail JSON
 let activeMapSetDetail = null; // detail used for the game currently running
@@ -343,6 +352,8 @@ function createSoloPeerManager() {
 }
 
 async function hostFlow() {
+  if (menuActionInFlight) return;
+  menuActionInFlight = true;
   sound.unlockAudio();
   sound.playClick();
   clearMenuError();
@@ -361,18 +372,22 @@ async function hostFlow() {
     console.error(err);
     showMenuError('Verbindung fehlgeschlagen. Prüfe deine Internetverbindung und versuche es erneut.');
     updateChrome('Nicht verbunden', null);
+  } finally {
+    menuActionInFlight = false;
   }
 }
 
 async function joinFlow(rawCode) {
-  sound.unlockAudio();
-  sound.playClick();
-  clearMenuError();
+  if (menuActionInFlight) return;
   const code = extractRoomCode(rawCode);
   if (!code) {
     showMenuError('Bitte einen gültigen Raum-Code oder Link eingeben.');
     return;
   }
+  menuActionInFlight = true;
+  sound.unlockAudio();
+  sound.playClick();
+  clearMenuError();
   peerManager = new PeerManager();
   updateChrome('Verbinde…', null);
   try {
@@ -385,6 +400,8 @@ async function joinFlow(rawCode) {
     console.error(err);
     showMenuError('Raum nicht erreichbar. Prüfe den Code oder frage nach einem neuen Link.');
     updateChrome('Nicht verbunden', null);
+  } finally {
+    menuActionInFlight = false;
   }
 }
 
@@ -396,15 +413,21 @@ function extractRoomCode(raw) {
 }
 
 async function soloFlow() {
-  sound.unlockAudio();
-  sound.playClick();
-  clearMenuError();
-  peerManager = createSoloPeerManager();
-  controller = new HostController(peerManager);
-  controller.registerSelfAsHost(peerManager.peer.id, getName(), state.self.color);
-  state.roomCode = null;
-  updateChrome('Solo', peerManager.peer.id);
-  await enterLobby();
+  if (menuActionInFlight) return;
+  menuActionInFlight = true;
+  try {
+    sound.unlockAudio();
+    sound.playClick();
+    clearMenuError();
+    peerManager = createSoloPeerManager();
+    controller = new HostController(peerManager);
+    controller.registerSelfAsHost(peerManager.peer.id, getName(), state.self.color);
+    state.roomCode = null;
+    updateChrome('Solo', peerManager.peer.id);
+    await enterLobby();
+  } finally {
+    menuActionInFlight = false;
+  }
 }
 
 function updateChrome(statusText, peerId) {
