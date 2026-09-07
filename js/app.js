@@ -377,6 +377,66 @@ async function hostFlow() {
   }
 }
 
+const RECONNECT_MAX_ATTEMPTS = 4;
+const RECONNECT_INTERVAL_MS = 3000; // 4 Versuche a 3s ueberdecken die 15s LEAVE_GRACE_MS des Hosts mit etwas Puffer
+let reconnectToken = 0; // siehe attemptReconnect() - verhindert ueberlappende Retry-Ketten
+
+function showHostLostOverlay() {
+  showStateOverlay({
+    title: t('hostLostTitle'),
+    message: t('hostLostMessage'),
+    actionLabel: t('hostLostAction'),
+    onAction: resetToMenu,
+  });
+}
+
+/** Versucht automatisch neu zu verbinden, solange der Host den Spieler-Slot
+ * noch reserviert (LEAVE_GRACE_MS in net/host.js). Nur aus der Lobby heraus
+ * aufgerufen (siehe Aufrufstelle) - dort ist ein frischer ROOM_JOIN_REQUEST
+ * unproblematisch, weil noch keine Runde laeuft, deren Stand verloren gehen
+ * koennte. reconnectToken schuetzt vor zwei ueberlappenden Retry-Ketten,
+ * falls waehrend eines laufenden Versuchs erneut 'ui:host-disconnected'
+ * feuert (z.B. der Reconnect selbst schlaegt sofort wieder fehl). */
+async function attemptReconnect() {
+  const myToken = ++reconnectToken;
+  const roomCode = state.roomCode;
+  const name = state.self.name;
+  const color = state.self.color;
+  if (!roomCode) {
+    showHostLostOverlay();
+    return;
+  }
+
+  for (let attempt = 1; attempt <= RECONNECT_MAX_ATTEMPTS; attempt++) {
+    if (myToken !== reconnectToken) return; // ueberholt durch einen neueren Versuch/Nutzer-Aktion
+    showStateOverlay({
+      title: t('reconnectingTitle'),
+      message: t('reconnectingMessage', { attempt, max: RECONNECT_MAX_ATTEMPTS }),
+      actionLabel: t('reconnectingCancelAction'),
+      onAction: () => {
+        reconnectToken++; // laufende Kette stoppen
+        resetToMenu();
+      },
+    });
+    try {
+      controller?.destroy?.();
+      peerManager?.destroy();
+      peerManager = new PeerManager();
+      await peerManager.joinRoom(roomCode);
+      if (myToken !== reconnectToken) return;
+      controller = new ClientController(peerManager);
+      controller.join(name, color);
+      hideStateOverlay();
+      showToast(t('reconnectSuccessToast'));
+      return;
+    } catch {
+      if (myToken !== reconnectToken) return;
+      if (attempt < RECONNECT_MAX_ATTEMPTS) await new Promise((resolve) => setTimeout(resolve, RECONNECT_INTERVAL_MS));
+    }
+  }
+  if (myToken === reconnectToken) showHostLostOverlay();
+}
+
 async function joinFlow(rawCode) {
   if (menuActionInFlight) return;
   const code = extractRoomCode(rawCode);
@@ -2737,13 +2797,23 @@ function wireBusEvents() {
     resetToMenu();
     showMenuError(reason || 'Beitritt abgelehnt.');
   });
+  // Nur im Lobby-Zustand automatisch neu verbinden versuchen (Audit-Fund
+  // 1.2): der Host reserviert einen getrennten Spieler-Slot bereits fuer
+  // LEAVE_GRACE_MS (siehe net/host.js _onPeerLost()) - bisher nutzte das
+  // aber niemand, ein kurzer Netzwechsel (Handy WLAN<->Mobilfunk) landete
+  // sofort im Sackgassen-"Verbindung verloren"-Screen, obwohl der Host noch
+  // gewartet haette. Bewusst NICHT waehrend einer laufenden Runde: das
+  // Protokoll kennt keinen "mitten in der Partie wieder einsteigen"-Zustand
+  // (_handleJoin() in host.js behandelt jeden Beitritt als frischen Lobby-
+  // Beitritt, ohne Runden-/Punktestand mitzuschicken) - ein automatischer
+  // Reconnect wuerde den Spieler dort nur in einer veralteten Lobby-Ansicht
+  // stranden, waehrend das eigentliche Spiel anderswo weiterlaeuft. Ein
+  // ehrlicher sofortiger "Verbindung verloren"-Hinweis ist dort das
+  // kleinere Uebel, bis das Protokoll einen echten Rundenstand-Resume kennt.
   bus.on('ui:host-disconnected', () => {
-    showStateOverlay({
-      title: 'Verbindung zum Host verloren',
-      message: 'Die Partie kann ohne den Host nicht fortgesetzt werden. Deine bisherigen Ergebnisse sind aber nicht verloren, du kannst jederzeit ein neues Duell starten.',
-      actionLabel: 'Zurück zum Menü',
-      onAction: resetToMenu,
-    });
+    const stillInLobby = document.getElementById('screen-lobby')?.classList.contains('active');
+    if (stillInLobby && state.role === 'client') attemptReconnect();
+    else showHostLostOverlay();
   });
   bus.on('ui:kicked', ({ reason }) => {
     showStateOverlay({
