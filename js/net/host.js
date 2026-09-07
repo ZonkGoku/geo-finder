@@ -14,6 +14,7 @@ import { streamRoundLocations, computeMapSetBounds } from '../core/pool-loader.j
 import { ensureCountryData, findCountryAtPointSync } from '../core/country-lookup.js';
 import { ensureCountryStore, randomCountry } from '../core/country-store.js';
 import { getProximityLevel } from '../core/heatmap-proximity.js';
+import { preferUnseen, recordShown } from '../core/history-manager.js';
 
 const HEATMAP_WIN_POINTS = 1000;
 // Nach diesen ersten paar fertig geladenen Runden startet das Spiel schon,
@@ -713,6 +714,11 @@ export class HostController {
     this._heatmapRand = mulberry32(seed);
     this._heatmapStore = await ensureCountryStore();
     state.round.total = state.settings.roundCount;
+    // Hartes Ausschliessen NUR fuer die laufende Partie (ein Zielland darf
+    // innerhalb derselben Partie nie zweimal drankommen) - der zusaetzliche,
+    // weiche Verlauf ueber mehrere Partien hinweg laeuft separat durch
+    // preferUnseen() in _startHeatmapRound().
+    this._heatmapUsedCountryIds = new Set();
 
     this.pm.broadcast(
       makeMessage(
@@ -742,7 +748,17 @@ export class HostController {
   }
 
   _startHeatmapRound(index) {
-    const target = randomCountry(this._heatmapStore, this._heatmapRand);
+    // Erst hart die in DIESER Partie schon getroffenen Laender ausschliessen
+    // (nie zweimal dasselbe Ziel in einer Partie), dann weich (siehe
+    // preferUnseen()) Laender meiden, die auf diesem Geraet zuletzt in
+    // FRUEHEREN Partien dran waren - faellt auf den vollen Rest-Pool zurueck,
+    // falls davon (bei spaeten Runden einer langen Partie) zu wenige uebrig
+    // blieben.
+    const withinGameCandidates = this._heatmapStore.countries.filter((c) => !this._heatmapUsedCountryIds.has(c.id));
+    const preferred = preferUnseen('heatmap-countries', withinGameCandidates, (c) => c.id, 1);
+    const target = randomCountry({ countries: preferred }, this._heatmapRand);
+    this._heatmapUsedCountryIds.add(target.id);
+    recordShown('heatmap-countries', target.id);
     this._heatmapTarget = target; // NUR host-intern - wird nie gebroadcastet, siehe _handleHeatmapGuess()
     this._heatmapOpponentBestKm = Infinity; // fuer heatmapOpponentInfo==='best', pro Runde neu
     state.round = {

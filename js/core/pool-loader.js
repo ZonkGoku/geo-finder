@@ -3,6 +3,7 @@ import { fetchPanoramaForRegion, fetchPanoramaById } from '../panorama/mapillary
 import { isMapillaryConfigured } from '../config.js';
 import { ensureCountryData, findCountryAtPointSync } from './country-lookup.js';
 import { loadVerifiedEntries, recordVerifiedEntry } from './verified-image-cache.js';
+import { preferUnseen, recordShown } from './history-manager.js';
 
 export async function loadMapSetIndex() {
   const res = await fetch('./data/map-sets/index.json');
@@ -152,7 +153,10 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
   const rand = mulberry32(seed);
 
   if (mapSet.source === 'static') {
-    return pickUniqueLocations(mapSet.locations, roundCount, seed);
+    const candidates = preferUnseen(`locations-${mapSet.id}`, mapSet.locations, (l) => l.id, roundCount);
+    const picked = pickUniqueLocations(candidates, roundCount, seed);
+    recordShown(`locations-${mapSet.id}`, picked.map((l) => l.id));
+    return picked;
   }
 
   if (mapSet.source === 'mapillary') {
@@ -166,7 +170,14 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
     // frueheren bbox-Endpunkt, nicht Nebenlaeufigkeit selbst (siehe
     // mapillary-source.js) - Wellen von Parallel-Anfragen bleiben also
     // schnell UND robust.
-    const pool = pickUniqueLocations(mapSet.regions, mapSet.regions.length, seed);
+    // Regionen, die in vorigen Partien desselben Pakets schon dran waren,
+    // werden bevorzugt gemieden (siehe preferUnseen()-Kommentar) - Ebene
+    // "Region", nicht "genau dieses Bild": ein erneuter Abruf derselben
+    // Region kann ohnehin ein anderes Foto liefern (Mapillary waehlt selbst
+    // zufaellig unter den Kandidaten am Punkt), Wiederholung faellt aber vor
+    // allem auf, wenn wieder dieselbe STELLE (Region) drankommt.
+    const regionCandidates = preferUnseen(`regions-${mapSet.id}`, mapSet.regions, (r) => r.id, roundCount);
+    const pool = pickUniqueLocations(regionCandidates, regionCandidates.length, seed);
     const resolveAttempts = resolveAttemptBudget(pool.length);
     const resolved = [];
     let attempts = 0;
@@ -191,6 +202,7 @@ export async function resolveRoundLocations(mapSet, roundCount, seed) {
         if (result.status === 'fulfilled' && result.value.loc) {
           resolved.push(result.value.loc);
           recordVerifiedEntry(mapSet.id, result.value.loc, result.value.region.id);
+          recordShown(`regions-${mapSet.id}`, result.value.region.id);
         } else if (result.status === 'rejected') {
           console.error('Mapillary-Abruf fehlgeschlagen, versuche Ersatz-Region:', result.reason);
         }
@@ -240,7 +252,15 @@ const STREAM_FIRST_WAVE = 2;
  */
 export async function* streamRoundLocations(mapSet, roundCount, seed) {
   if (mapSet.source === 'static') {
-    for (const loc of pickUniqueLocations(mapSet.locations, roundCount, seed)) yield loc;
+    // Cross-Partien-Verlauf: siehe gleichlautender Kommentar in
+    // resolveRoundLocations() oben - bevorzugt zuletzt NICHT gezeigte
+    // Standorte, faellt aber auf den vollen Pool zurueck, wenn davon
+    // weniger als roundCount uebrig sind (kleine Pakete duerfen nie an zu
+    // wenigen Kandidaten scheitern).
+    const candidates = preferUnseen(`locations-${mapSet.id}`, mapSet.locations, (l) => l.id, roundCount);
+    const picked = pickUniqueLocations(candidates, roundCount, seed);
+    recordShown(`locations-${mapSet.id}`, picked.map((l) => l.id));
+    for (const loc of picked) yield loc;
     return;
   }
 
@@ -250,7 +270,8 @@ export async function* streamRoundLocations(mapSet, roundCount, seed) {
 
   const countryFeatures = await ensureCountryData().catch(() => null);
   const rand = mulberry32(seed);
-  const pool = pickUniqueLocations(mapSet.regions, mapSet.regions.length, seed);
+  const regionCandidates = preferUnseen(`regions-${mapSet.id}`, mapSet.regions, (r) => r.id, roundCount);
+  const pool = pickUniqueLocations(regionCandidates, regionCandidates.length, seed);
   const resolveAttempts = resolveAttemptBudget(pool.length);
 
   let resolved = 0;
@@ -279,6 +300,7 @@ export async function* streamRoundLocations(mapSet, roundCount, seed) {
     for (const result of settled) {
       if (result.status === 'fulfilled' && result.value.loc) {
         recordVerifiedEntry(mapSet.id, result.value.loc, result.value.region.id);
+        recordShown(`regions-${mapSet.id}`, result.value.region.id);
         usedIds.add(result.value.loc.id);
         resolved++;
         yield result.value.loc;
