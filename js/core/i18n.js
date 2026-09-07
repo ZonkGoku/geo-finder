@@ -4,11 +4,15 @@
 // gesetzt; dynamisch in JS erzeugte Strings rufen t() direkt auf.
 //
 // Umfang bewusst NICHT "jeder String der App": migriert sind Kopfzeile/
-// Hauptmenue (immer sichtbar) sowie die komplette PulseMap-Lobby- und
-// In-Game-Oberflaeche (Fokus dieser Session). Die klassischen Panorama-Modi
-// (HUD/Leaderboard/Tages-Challenge-Kachel usw.) bleiben vorerst deutsch -
-// eine vollstaendige Migration aller Strings ist eine eigene, deutlich
-// groessere Aufgabe.
+// Hauptmenue (immer sichtbar), die komplette PulseMap-Lobby-/In-Game-
+// Oberflaeche, sowie die GESAMTE geteilte Lobby (Spieler-Panel, Spielregeln,
+// Kartenpaket-Auswahl, Mutatoren, Ready/Start-Flow) - die Lobby ist EIN
+// gemeinsames Bauteil fuer alle Modi, eine Teilmigration dort erzeugte
+// genau die Mischsprachen-Situation, die diese Migration eigentlich loesen
+// sollte (Nutzer-Report). Die klassischen Panorama-Modi bleiben deutsch NUR
+// noch im eigentlichen IN-GAME-HUD/Leaderboard/Tages-Challenge-Kachel
+// (nachdem "Match starten" gedrueckt wurde) - eine vollstaendige Migration
+// auch dieser Screens ist eine eigene, deutlich groessere Aufgabe.
 const STORAGE_KEY = 'geofinder-lang';
 const SUPPORTED = ['en', 'de'];
 const FALLBACK_LANG = 'en';
@@ -107,6 +111,53 @@ const DICT = {
     carouselRoyaleTagline: 'The worst guess is eliminated each round — until only one champion remains.',
     carouselCta: 'Play now',
 
+    lobbyHeadingWaiting: 'Waiting for players',
+    lobbyHeadingSolo: 'Solo settings',
+    roomCodeLabel: 'Room code',
+    copyLinkBtn: 'Copy link',
+    playersHeading: 'Players',
+    statusDisconnected: 'disconnected',
+    statusReady: 'Ready',
+    statusWaiting: 'waiting…',
+    hostTag: 'Host',
+    settingsHeading: 'Game rules',
+    modePoints: 'Points duel',
+    modeHp: 'HP duel (6000 HP)',
+    modeCountryStreak: 'Country streak',
+    modeBattleRoyale: 'Battle Royale',
+    battleRoyaleModeNote:
+      'The worst guess is eliminated after each round - the round count is derived automatically from the player count (always one fewer), until only one champion remains. Needs at least 2 players.',
+    panoramaControlsLabel: 'Panorama controls',
+    modifierFree: 'Free (zoom allowed)',
+    modifierNoZoom: 'Zoom locked',
+    mutatorsLabel: 'Mutators',
+    mutatorFogDesc: 'Panorama starts blurred, clears over 15s',
+    mutatorCompassDesc: 'View starts facing a random direction',
+    mutatorNoPanDesc: 'Panorama locked, no looking around/zooming',
+    mapsetPanelHeading: 'Map pack',
+    mapsetSearchPlaceholder: 'Search map packs…',
+    mapsetTagAll: 'All',
+    mapsetTagCities: 'Cities',
+    mapsetTagCulture: 'Culture',
+    mapsetTagNature: 'Nature',
+    mapsetEmpty: 'No map packs found.',
+    lobbyStageEmptyHint: 'Choose a map pack below',
+    readyBtn: 'Ready',
+    notReadyBtn: 'Not ready',
+    startBtn: 'Start match',
+    hintReadyToStart: 'Ready to start.',
+    hintWaitForPlayer: 'Waiting for at least one player to join.',
+    hintWaitForReady: 'Waiting for all players to be ready.',
+    hintWaitForHost: 'Waiting for the host to start the game.',
+    hintLoadingMapset: 'Loading map pack…',
+    hintSearchingPanoramas: 'Searching 360° panoramas… ({found}/{target} found)',
+    toastMapsetLoadFailed: "Couldn't load the map pack.",
+    toastLinkCopied: 'Link copied',
+    toastCopyFailed: "Couldn't copy — please select and copy manually",
+    toastResultCopied: 'Result copied — paste it anywhere to share.',
+    defaultPlayerName: 'Player',
+    defaultOpponentName: 'A fellow player',
+
     pulsemapModeLabel: 'PulseMap',
     pulsemapModeNote: 'No map pack needed: type country names during the game — the world map colors in by distance to the target country.',
     settingRounds: 'Rounds',
@@ -168,6 +219,53 @@ const DICT = {
     carouselRoyaleLabel: 'Battle Royale',
     carouselRoyaleTagline: 'Jede Runde scheidet der schlechteste Tipp aus - bis nur ein Champion bleibt.',
     carouselCta: 'Direkt starten',
+
+    lobbyHeadingWaiting: 'Warten auf Mitspieler',
+    lobbyHeadingSolo: 'Solo-Einstellungen',
+    roomCodeLabel: 'Raum-Code',
+    copyLinkBtn: 'Link kopieren',
+    playersHeading: 'Spieler',
+    statusDisconnected: 'getrennt',
+    statusReady: 'Bereit',
+    statusWaiting: 'wartet…',
+    hostTag: 'Host',
+    settingsHeading: 'Spielregeln',
+    modePoints: 'Punkte-Duell',
+    modeHp: 'HP-Duell (6000 HP)',
+    modeCountryStreak: 'Country-Streak',
+    modeBattleRoyale: 'Battle Royale',
+    battleRoyaleModeNote:
+      'Nach jeder Runde scheidet der schlechteste Tipp aus - die Rundenzahl ergibt sich automatisch aus der Spielerzahl (immer einer weniger), bis nur noch ein Champion übrig bleibt. Braucht mindestens 2 Spieler.',
+    panoramaControlsLabel: 'Panorama-Steuerung',
+    modifierFree: 'Frei (Zoom erlaubt)',
+    modifierNoZoom: 'Zoom gesperrt',
+    mutatorsLabel: 'Mutatoren',
+    mutatorFogDesc: 'Panorama startet verschwommen, klart über 15s auf',
+    mutatorCompassDesc: 'Blick startet in eine zufällige Richtung',
+    mutatorNoPanDesc: 'Panorama fest, kein Umsehen/Zoomen',
+    mapsetPanelHeading: 'Kartenpaket',
+    mapsetSearchPlaceholder: 'Kartenpaket suchen…',
+    mapsetTagAll: 'Alle',
+    mapsetTagCities: 'Städte',
+    mapsetTagCulture: 'Kultur',
+    mapsetTagNature: 'Natur',
+    mapsetEmpty: 'Keine Kartenpakete gefunden.',
+    lobbyStageEmptyHint: 'Wähle unten ein Kartenpaket aus',
+    readyBtn: 'Bereit',
+    notReadyBtn: 'Nicht bereit',
+    startBtn: 'Match starten',
+    hintReadyToStart: 'Bereit zum Start.',
+    hintWaitForPlayer: 'Warte, bis mindestens ein Mitspieler dem Raum beitritt.',
+    hintWaitForReady: 'Warte, bis alle Mitspieler bereit sind.',
+    hintWaitForHost: 'Warte auf den Host, das Spiel zu starten.',
+    hintLoadingMapset: 'Lade Kartenpaket…',
+    hintSearchingPanoramas: 'Suche 360°-Panoramen… ({found}/{target} gefunden)',
+    toastMapsetLoadFailed: 'Kartenpaket konnte nicht geladen werden.',
+    toastLinkCopied: 'Link kopiert',
+    toastCopyFailed: 'Kopieren nicht möglich — bitte manuell markieren',
+    toastResultCopied: 'Ergebnis kopiert — einfach einfügen und teilen.',
+    defaultPlayerName: 'Spieler',
+    defaultOpponentName: 'Ein Mitspieler',
 
     pulsemapModeLabel: 'PulseMap',
     pulsemapModeNote: 'Kein Kartenpaket nötig: tippe im Spiel Landesnamen, die Weltkarte färbt sich nach Entfernung zum Zielland ein.',

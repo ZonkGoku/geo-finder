@@ -998,9 +998,17 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
   position:relative; display:flex; flex-wrap:wrap; gap:2px;
   background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:3px;
 }
+/* War ein reiner 2-Stop-Verlauf (--accent -> --accent-2) - bei den meist
+   sehr schmalen Buttons (z.B. dem "unendlich"-Symbol) faellt der Uebergang
+   fast komplett in die Buttonbreite, die Mitte kippt dabei in einen
+   entsaettigten Gruenton, auf dem der dunkle Text (--accent-ink) kaum noch
+   lesbar ist (Nutzer-Report: "teilweise... nicht lesbar", ∞-Symbol praktisch
+   unsichtbar). Ein heller Zwischenstopp haelt die Luminanz durchgehend hoch,
+   damit dunkler Text auf JEDER Position innerhalb des Verlaufs lesbar
+   bleibt, statt nur an den beiden Enden. */
 .choice-thumb{
   position:absolute; top:3px; left:3px; height:calc(100% - 6px); width:0;
-  background:linear-gradient(135deg, var(--accent), var(--accent-2)); border-radius:8px;
+  background:linear-gradient(135deg, var(--accent) 0%, #ffc266 50%, var(--accent-2) 100%); border-radius:8px;
   box-shadow:0 4px 14px -4px rgba(255,122,51,0.55);
   transition:transform .28s cubic-bezier(.34,1.4,.4,1), width .28s cubic-bezier(.34,1.4,.4,1), opacity .2s ease;
   opacity:0; pointer-events:none;
@@ -1015,8 +1023,19 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
   font-family:var(--font-mono); transition:color .2s ease;
   /* overflow:hidden clippt den .btn-ripple-Klick-Impact (attachRipple() in
      app.js, jetzt auch auf allen Lobby-Choice-Buttons statt nur den 3 Menue-
-     Action-Cards, Audit Quick-Win #3) an der eigenen border-radius-Rundung. */
+     Action-Cards, Audit Quick-Win #3) an der eigenen border-radius-Rundung -
+     das hat aber als Nebenwirkung einzeilige Labels ohne Leerzeichen (z.B.
+     "PulseMap", im Gegensatz zu "Punkte-Duell"/"Country-Streak", die an
+     ihrem Bindestrich umbrechen koennen) bei engem Platz stillschweigend
+     abgeschnitten statt sie umbrechen zu lassen ("PulseMa" statt
+     "PulseMap" - Nutzer-Report). overflow-wrap:break-word bevorzugt
+     weiterhin normale Umbruchstellen (Leerzeichen/Bindestrich, siehe
+     "Country-Streak") und bricht nur dort mitten im Wort, wo es GAR keine
+     gibt (also nur bei "PulseMap") - anders als overflow-wrap:anywhere, das
+     auch woanders vorhandene Bindestrich-Umbrueche haesslich ignoriert
+     haette. */
   overflow:hidden;
+  overflow-wrap:break-word;
 }
 .choice-row button:hover{ color:var(--text); }
 .choice-row button.selected{ color:var(--accent-ink); }

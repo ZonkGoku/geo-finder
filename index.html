@@ -317,23 +317,23 @@
           <div>
             <p class="eyebrow">Lobby</p>
             <h2 style="font-size:1.5rem;" id="lobby-heading">Warten auf Mitspieler</h2>
-            <div class="room-code" id="lobby-room-code-row">Raum-Code <b id="lobby-room-code">&mdash;</b></div>
+            <div class="room-code" id="lobby-room-code-row"><span data-i18n="roomCodeLabel">Raum-Code</span> <b id="lobby-room-code">&mdash;</b></div>
           </div>
         </div>
 
         <div class="share-row" id="lobby-share-row">
           <div class="share-link" id="lobby-share-link">&mdash;</div>
-          <button class="btn btn-primary" id="copy-link-btn">Link kopieren</button>
+          <button class="btn btn-primary" id="copy-link-btn" data-i18n="copyLinkBtn">Link kopieren</button>
         </div>
 
         <div class="lobby-main">
           <div class="lobby-main-left">
             <div class="panel" id="lobby-players-panel">
-              <h3>Spieler (<span id="lobby-player-count">0</span>)</h3>
+              <h3><span data-i18n="playersHeading">Spieler</span> (<span id="lobby-player-count">0</span>)</h3>
               <div id="lobby-player-list"></div>
             </div>
             <div class="panel" id="lobby-settings-panel">
-              <h3>Spielregeln</h3>
+              <h3 data-i18n="settingsHeading">Spielregeln</h3>
 
               <div class="setting-group">
                 <div class="setting-group-label" data-i18n="settingRounds">Runden</div>
@@ -361,11 +361,11 @@
                 <div class="setting-group-label" data-i18n="settingMode">Modus</div>
                 <div class="choice-row" id="choice-mode" data-setting="mode">
                   <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="points">Punkte-Duell</button>
-                  <button type="button" data-value="hp">HP-Duell (6000 HP)</button>
-                  <button type="button" data-value="country-streak">Country-Streak</button>
+                  <button type="button" data-value="points" data-i18n="modePoints">Punkte-Duell</button>
+                  <button type="button" data-value="hp" data-i18n="modeHp">HP-Duell (6000 HP)</button>
+                  <button type="button" data-value="country-streak" data-i18n="modeCountryStreak">Country-Streak</button>
                   <button type="button" data-value="heatmap" data-i18n="pulsemapModeLabel">PulseMap</button>
-                  <button type="button" data-value="battle-royale">Battle Royale</button>
+                  <button type="button" data-value="battle-royale" data-i18n="modeBattleRoyale">Battle Royale</button>
                 </div>
               </div>
 
@@ -373,7 +373,7 @@
                 Kein Kartenpaket n&ouml;tig: tippe im Spiel Landesnamen, die Weltkarte f&auml;rbt sich nach Entfernung zum Zielland ein.
               </p>
 
-              <p class="battle-royale-mode-note hidden" id="battle-royale-mode-note">
+              <p class="battle-royale-mode-note hidden" id="battle-royale-mode-note" data-i18n="battleRoyaleModeNote">
                 Nach jeder Runde scheidet der schlechteste Tipp aus - die Rundenzahl ergibt sich automatisch aus der Spielerzahl (immer einer weniger), bis nur noch ein Champion übrig bleibt. Braucht mindestens 2 Spieler.
               </p>
 
@@ -411,28 +411,28 @@
               </div>
 
               <div class="setting-group" id="panorama-controls-group">
-                <div class="setting-group-label">Panorama-Steuerung</div>
+                <div class="setting-group-label" data-i18n="panoramaControlsLabel">Panorama-Steuerung</div>
                 <div class="choice-row" id="choice-modifier" data-setting="modifier">
                   <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="free">Frei (Zoom erlaubt)</button>
-                  <button type="button" data-value="no-zoom">Zoom gesperrt</button>
+                  <button type="button" data-value="free" data-i18n="modifierFree">Frei (Zoom erlaubt)</button>
+                  <button type="button" data-value="no-zoom" data-i18n="modifierNoZoom">Zoom gesperrt</button>
                 </div>
               </div>
 
               <div class="setting-group" id="mutator-settings-group">
-                <div class="setting-group-label">Mutatoren</div>
+                <div class="setting-group-label" data-i18n="mutatorsLabel">Mutatoren</div>
                 <div class="mutator-list" id="mutator-list">
                   <button type="button" class="mutator-chip" data-mutator="fogOfWar">
                     <span class="mutator-chip-title">Fog of War</span>
-                    <span class="mutator-chip-desc">Panorama startet verschwommen, klart über 15s auf</span>
+                    <span class="mutator-chip-desc" data-i18n="mutatorFogDesc">Panorama startet verschwommen, klart über 15s auf</span>
                   </button>
                   <button type="button" class="mutator-chip" data-mutator="brokenCompass">
                     <span class="mutator-chip-title">Broken Compass</span>
-                    <span class="mutator-chip-desc">Blick startet in eine zufällige Richtung</span>
+                    <span class="mutator-chip-desc" data-i18n="mutatorCompassDesc">Blick startet in eine zufällige Richtung</span>
                   </button>
                   <button type="button" class="mutator-chip" data-mutator="noPan">
                     <span class="mutator-chip-title">No-Pan (Hardcore)</span>
-                    <span class="mutator-chip-desc">Panorama fest, kein Umsehen/Zoomen</span>
+                    <span class="mutator-chip-desc" data-i18n="mutatorNoPanDesc">Panorama fest, kein Umsehen/Zoomen</span>
                   </button>
                 </div>
               </div>
@@ -446,7 +446,7 @@
           <div class="lobby-stage" id="lobby-stage">
             <div class="lobby-stage-empty" id="lobby-stage-empty">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 4 6 4 9s-1.5 6.3-4 9c-2.5-2.7-4-6-4-9s1.5-6.3 4-9z"/></svg>
-              <p>W&auml;hle unten ein Kartenpaket aus</p>
+              <p data-i18n="lobbyStageEmptyHint">W&auml;hle unten ein Kartenpaket aus</p>
             </div>
             <div class="lobby-stage-content hidden" id="lobby-stage-content">
               <div class="lobby-stage-art" id="lobby-stage-art">
@@ -462,10 +462,10 @@
                 </div>
               </div>
               <div class="lobby-cta">
-                <button class="btn btn-primary" id="btn-ready-toggle">Bereit</button>
+                <button class="btn btn-primary" id="btn-ready-toggle" data-i18n="readyBtn">Bereit</button>
                 <button class="btn btn-primary cta-mega" id="btn-start-game" hidden>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
-                  Match starten
+                  <span data-i18n="startBtn">Match starten</span>
                 </button>
                 <span class="cta-hint" id="lobby-hint"></span>
                 <div class="load-progress hidden" id="lobby-load-progress">
@@ -478,21 +478,21 @@
         </div>
 
         <div class="panel" id="lobby-mapset-panel">
-          <h3>Kartenpaket</h3>
+          <h3 data-i18n="mapsetPanelHeading">Kartenpaket</h3>
           <div class="mapset-toolbar">
             <div class="mapset-search">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <input type="text" id="mapset-search-input" placeholder="Kartenpaket suchen…" autocomplete="off">
+              <input type="text" id="mapset-search-input" placeholder="Kartenpaket suchen…" data-i18n="mapsetSearchPlaceholder" data-i18n-attr="placeholder" autocomplete="off">
             </div>
             <div class="mapset-chips" id="mapset-chips">
-              <button type="button" class="mapset-chip selected" data-tag="alle">Alle</button>
-              <button type="button" class="mapset-chip" data-tag="staedte">St&auml;dte</button>
-              <button type="button" class="mapset-chip" data-tag="kultur">Kultur</button>
-              <button type="button" class="mapset-chip" data-tag="natur">Natur</button>
+              <button type="button" class="mapset-chip selected" data-tag="alle" data-i18n="mapsetTagAll">Alle</button>
+              <button type="button" class="mapset-chip" data-tag="staedte" data-i18n="mapsetTagCities">St&auml;dte</button>
+              <button type="button" class="mapset-chip" data-tag="kultur" data-i18n="mapsetTagCulture">Kultur</button>
+              <button type="button" class="mapset-chip" data-tag="natur" data-i18n="mapsetTagNature">Natur</button>
             </div>
           </div>
           <div class="mapset-grid" id="mapset-grid"></div>
-          <p class="mapset-empty hidden" id="mapset-empty">Keine Kartenpakete gefunden.</p>
+          <p class="mapset-empty hidden" id="mapset-empty" data-i18n="mapsetEmpty">Keine Kartenpakete gefunden.</p>
         </div>
       </section>
 

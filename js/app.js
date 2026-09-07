@@ -112,7 +112,7 @@ function initProfileUI() {
 
 function getName() {
   const name = state.self.name.trim();
-  return name || 'Spieler';
+  return name || t('defaultPlayerName');
 }
 
 // ---------------------------------------------------------------- theme toggle
@@ -674,7 +674,7 @@ function renderLobby() {
     state.settings.mode = 'points';
   }
 
-  el('lobby-heading').textContent = isSolo ? 'Solo-Einstellungen' : 'Warten auf Mitspieler';
+  el('lobby-heading').textContent = isSolo ? t('lobbyHeadingSolo') : t('lobbyHeadingWaiting');
   el('lobby-share-row').classList.toggle('hidden', isSolo);
   el('lobby-room-code-row').classList.toggle('hidden', isSolo);
   el('lobby-players-panel').classList.toggle('hidden', isSolo);
@@ -692,11 +692,11 @@ function renderLobby() {
       row.className = 'player-row';
       const initial = (p.name || '?').trim().charAt(0).toUpperCase();
       const statusClass = !p.connected ? 'status-offline' : p.ready ? 'status-ready' : 'status-wait';
-      const statusText = !p.connected ? 'getrennt' : p.ready ? 'Bereit' : 'wartet…';
+      const statusText = !p.connected ? t('statusDisconnected') : p.ready ? t('statusReady') : t('statusWaiting');
       row.innerHTML = `
         <div class="avatar" style="background:${p.color};">${initial}</div>
-        <div class="player-name">${escapeHtml(p.name)} ${p.isHost ? '<span class="host-tag">Host</span>' : ''}</div>
-        <div class="status-pill ${statusClass}">${statusText}</div>
+        <div class="player-name">${escapeHtml(p.name)} ${p.isHost ? `<span class="host-tag">${escapeHtml(t('hostTag'))}</span>` : ''}</div>
+        <div class="status-pill ${statusClass}">${escapeHtml(statusText)}</div>
       `;
       listEl.appendChild(row);
     }
@@ -757,16 +757,16 @@ function renderLobby() {
     const allOthersReady = others.length > 0 && others.every((p) => p.ready && p.connected);
     startBtn.disabled = !allOthersReady;
     hint.textContent = allOthersReady
-      ? 'Bereit zum Start.'
+      ? t('hintReadyToStart')
       : others.length === 0
-        ? 'Warte, bis mindestens ein Mitspieler dem Raum beitritt.'
-        : 'Warte, bis alle Mitspieler bereit sind.';
+        ? t('hintWaitForPlayer')
+        : t('hintWaitForReady');
   } else {
     readyBtn.hidden = false;
     startBtn.hidden = true;
     const me = state.players.get(state.self.id);
-    readyBtn.textContent = me?.ready ? 'Nicht bereit' : 'Bereit';
-    hint.textContent = 'Warte auf den Host, das Spiel zu starten.';
+    readyBtn.textContent = me?.ready ? t('notReadyBtn') : t('readyBtn');
+    hint.textContent = t('hintWaitForHost');
   }
   syncMobileLobbyCta(readyBtn, startBtn);
 
@@ -818,7 +818,7 @@ function renderLoadProgress({ found, target } = {}) {
   bar.classList.remove('hidden');
   const pct = target > 0 ? Math.min(100, Math.round((found / target) * 100)) : 0;
   el('lobby-load-progress-fill').style.width = `${pct}%`;
-  el('lobby-load-progress-label').textContent = `Suche 360°-Panoramen… (${found}/${target} gefunden)`;
+  el('lobby-load-progress-label').textContent = t('hintSearchingPanoramas', { found, target });
 }
 
 function hideLoadProgress() {
@@ -837,7 +837,7 @@ async function startGameFromLobby(seed) {
       await controller.startGame(null, seed);
       return;
     }
-    hint.textContent = 'Lade Kartenpaket…';
+    hint.textContent = t('hintLoadingMapset');
     const detail = await getMapSetDetail(state.settings.mapSetId);
     activeMapSetDetail = detail;
     await controller.startGame(detail, seed);
@@ -846,7 +846,7 @@ async function startGameFromLobby(seed) {
     hint.textContent = previousHint;
     hideLoadProgress();
     startBtn.disabled = false;
-    showToast('Kartenpaket konnte nicht geladen werden.');
+    showToast(t('toastMapsetLoadFailed'));
   }
 }
 
@@ -856,9 +856,9 @@ function wireLobbyControls() {
     const text = el('lobby-share-link').textContent;
     try {
       await navigator.clipboard.writeText(text);
-      showToast('Link kopiert');
+      showToast(t('toastLinkCopied'));
     } catch {
-      showToast('Kopieren nicht möglich — bitte manuell markieren');
+      showToast(t('toastCopyFailed'));
     }
   });
 
@@ -1103,7 +1103,7 @@ async function ensureHeatmapWidgets() {
 }
 
 function heatmapPlayerName(peerId) {
-  return state.players.get(peerId)?.name || 'Ein Mitspieler';
+  return state.players.get(peerId)?.name || t('defaultOpponentName');
 }
 
 function clearHeatmapTimer() {
@@ -1541,9 +1541,9 @@ function wireHeatmapControls() {
     const text = buildHeatmapShareText();
     try {
       await navigator.clipboard.writeText(text);
-      showToast('Ergebnis kopiert — einfach einfügen und teilen.');
+      showToast(t('toastResultCopied'));
     } catch {
-      showToast('Kopieren nicht möglich — bitte manuell markieren: ' + text);
+      showToast(t('toastCopyFailed') + ': ' + text);
     }
   });
 }
@@ -2000,7 +2000,7 @@ function renderRoundResult({ results, actual, actualMeta, eliminatedPlayerIds = 
       .join('');
     card.innerHTML = `
       <div class="score-card-top">
-        <span class="score-name"><span class="avatar" style="width:22px;height:22px;font-size:0.7rem;background:${player?.color || '#8c99b8'};">${(player?.name || '?').charAt(0).toUpperCase()}</span>${escapeHtml(player?.name || 'Spieler')}${justEliminated ? '<span class="score-card-eliminated-tag">Ausgeschieden</span>' : ''}</span>
+        <span class="score-name"><span class="avatar" style="width:22px;height:22px;font-size:0.7rem;background:${player?.color || '#8c99b8'};">${(player?.name || '?').charAt(0).toUpperCase()}</span>${escapeHtml(player?.name || t('defaultPlayerName'))}${justEliminated ? '<span class="score-card-eliminated-tag">Ausgeschieden</span>' : ''}</span>
         <span class="score-points">0</span>
       </div>
       <div class="score-meta">${meta}</div>
@@ -2147,7 +2147,7 @@ function renderPodium(sorted) {
             : `${entry.total.toLocaleString('de-DE')} Pkt.`;
     step.innerHTML = `
       <div class="avatar" style="background:${player?.color || '#8c99b8'};">${initial}</div>
-      <div class="podium-name">${escapeHtml(player?.name || 'Spieler')}</div>
+      <div class="podium-name">${escapeHtml(player?.name || t('defaultPlayerName'))}</div>
       <div class="podium-score">${scoreLabel}</div>
       <div class="podium-block">${idx + 1}</div>
     `;
@@ -2274,7 +2274,7 @@ function renderLeaderboard({ finalScores }) {
     row.innerHTML = `
       <div class="rank-num">${String(idx + 1).padStart(2, '0')}</div>
       <div>
-        <div class="board-name">${escapeHtml(player?.name || 'Spieler')}</div>
+        <div class="board-name">${escapeHtml(player?.name || t('defaultPlayerName'))}</div>
         <div class="board-chips">${chips}</div>
       </div>
       <div class="board-total">${totalLabel}</div>
@@ -2690,7 +2690,7 @@ function wireBusEvents() {
   bus.on('ui:player-guessed', ({ peerId }) => {
     renderPeerStatus();
     if (peerId !== state.self.id) {
-      const name = state.players.get(peerId)?.name || 'Ein Mitspieler';
+      const name = state.players.get(peerId)?.name || t('defaultOpponentName');
       showToast(`${name} hat getippt!`);
     }
   });
@@ -2698,7 +2698,7 @@ function wireBusEvents() {
   bus.on('ui:game-over', renderLeaderboard);
   bus.on('ui:tab-switch-warning', ({ peerId }) => {
     if (peerId === state.self.id) return;
-    const name = state.players.get(peerId)?.name || 'Ein Mitspieler';
+    const name = state.players.get(peerId)?.name || t('defaultOpponentName');
     showToast(`⚠ ${name} hat den Tab gewechselt`);
   });
   bus.on('ui:emote-received', ({ peerId, emoji }) => {
@@ -2727,7 +2727,7 @@ function wireBusEvents() {
   });
   bus.on('ui:player-kicked', ({ peerId, reason }) => {
     if (peerId === state.self.id) return; // eigener Kick laeuft ueber ui:kicked
-    const name = state.players.get(peerId)?.name || 'Ein Mitspieler';
+    const name = state.players.get(peerId)?.name || t('defaultOpponentName');
     showToast(`${name} wurde entfernt: ${reason}`);
   });
   bus.on('net:error', (err) => {
