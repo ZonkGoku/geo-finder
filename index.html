@@ -257,6 +257,17 @@
     </div>
   </section>
 
+  <!-- Bewusst wie #screen-menu AUSSERHALB von .device platziert: .device hat
+       overflow:hidden UND backdrop-filter, beides bricht position:sticky
+       bzw. position:fixed fuer Nachfahren (siehe Kommentar bei #screen-menu
+       weiter oben und in styles.css bei .mobile-lobby-cta) - ein
+       Sticky-Bottom-Button innerhalb von .device wuerde nie wirklich am
+       Fensterrand einrasten, sondern nur innerhalb der (durch overflow:hidden
+       begrenzten) .device-Box "kleben", was auf Mobile praktisch nie sichtbar
+       waere. Spiegelt per JS (siehe renderLobby() in app.js) Text/Sichtbarkeit
+       von #btn-ready-toggle/#btn-start-game und leitet Klicks dorthin weiter. -->
+  <button type="button" class="mobile-lobby-cta hidden" id="mobile-lobby-cta"></button>
+
   <div class="device">
     <div class="device-chrome">
       <div class="chrome-left">
@@ -609,7 +620,7 @@
             🔥 <span id="heatmap-opponent-record-text"></span>
           </div>
 
-          <div class="heatmap-search-panel">
+          <div class="heatmap-search-panel" id="heatmap-search-panel">
             <div class="heatmap-search-box" id="heatmap-search-box">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
               <input type="text" id="heatmap-search-input" placeholder="Land eingeben…" data-i18n="searchPlaceholder" data-i18n-attr="placeholder" autocomplete="off" spellcheck="false">

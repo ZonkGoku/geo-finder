@@ -1399,7 +1399,6 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 }
 
 @media (max-width: 720px){
-  .heatmap-search-panel{ top:64px; }
   .heatmap-activity-feed{ left:20px; right:20px; width:auto; top:auto; bottom:110px; }
   .heatmap-top3-panel{ width:calc(100% - 40px); top:auto; bottom:110px; left:20px; }
 }
@@ -1441,7 +1440,14 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
   .lobby-main, .result-grid{ grid-template-columns:1fr; }
   .lobby-main-left{ order:2; }
   .lobby-stage{ order:1; position:static; min-height:0; }
-  .screen{ padding:18px; }
+  .screen{ padding:18px; padding-bottom:96px; }
+
+  /* Original-CTA bleibt im normalen Fluss (sichtbar bevor man scrollt) -
+     die zuverlaessig eingerastete Kopie fuer die Daumenzone ist
+     .mobile-lobby-cta weiter unten, siehe dortiger Kommentar dazu, warum
+     weder position:fixed noch position:sticky INNERHALB von .device
+     funktioniert (.device hat overflow:hidden + backdrop-filter). */
+  #btn-ready-toggle, #btn-start-game{ width:100%; justify-content:center; min-height:48px; }
 
   /* --- Wischbare Segmented-Controls: verhindert das Umbrechen/Ueberlappen
      der Runden-/Dauer-/Modus-Buttons auf schmalen Displays (der gemeldete
@@ -1493,6 +1499,17 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
      bleibt einfach die (unveraenderte, weiterhin nutzbare) vorherige
      Optik bestehen - reine Verbesserung, kein Fallback noetig. */
   .device-screen, .screen{ min-height:min(600px, 78vh); }
+  /* dvh (dynamic viewport height) als Verbesserung obendrauf, nicht als
+     Ersatz: reagiert auf ein-/ausblendende Browser-Adressleisten, vh bleibt
+     bei der Hoehe des GROESSTEN moeglichen Viewports haengen (Leiste
+     ausgeblendet) - auf PulseMap traf das am staerksten, die Karte hatte
+     dann oft einen ungenutzten Streifen am unteren Rand oder wurde von der
+     wieder eingeblendeten Adressleiste teilweise verdeckt. Aeltere Browser
+     ohne dvh-Unterstuetzung ignorieren diese Zeile und behalten die
+     vh-Zeile darueber - kein separater Fallback-Pfad noetig. */
+  .device-screen, .screen{ min-height:min(600px, 78dvh); }
+  body:has(#screen-heatmap.active) .device-screen,
+  body:has(#screen-heatmap.active) .screen{ min-height:min(600px, 88dvh); }
   body:has(#screen-hud.active) .page-head,
   body:has(#screen-heatmap.active) .page-head{ display:none; }
   body:has(#screen-hud.active) .device-chrome,
@@ -1551,22 +1568,60 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
   .minimap.expanded .minimap-close-btn{ top:14px; right:14px; }
   @media (prefers-reduced-motion: reduce){ .minimap.expanded{ transition:none; } }
 
-  /* --- Heatmap/PulseMap: Suchfeld/Vorschlaege bleiben BEWUSST am oberen
-     statt am unteren Rand verankert (position:absolute relativ zu
-     .device-screen, nicht an der Fensterhoehe haengend, damit die virtuelle
-     Tastatur sie nicht wegschiebt) - anders als der Tipp-Button im
-     klassischen Modus (.hud-bottom) braucht das Vorschlagsmenue Platz
-     UNTERHALB des Eingabefelds; stuende das Feld unten in der Daumenzone,
-     haette die Liste nur noch den von der Tastatur ueberdeckten Raum. Die
-     .heatmap-top3-panel/.heatmap-activity-feed sitzen dafuer schon unten
-     (siehe 720px-Breakpoint oben) - zusammen bleibt die primaere Eingabe
-     erreichbar sichtbar, waehrend Zusatzinfos die Daumenzone nutzen. Feld
-     und Vorschlagszeilen bekommen zusaetzlich min-height:48px fuer
-     Touch-Target-Konformitaet. */
-  .heatmap-search-panel{ top:60px; }
+  /* --- Floating Bottom Search Sheet (Apple/Google-Maps-Stil): das Suchfeld
+     verlaesst seine feste obere Position und wird zu einer Leiste in der
+     Daumenzone ganz unten. War vorher bewusst OBEN verankert, weil die
+     virtuelle Tastatur ein simples bottom:0 sonst verdeckt haette - das
+     loest jetzt --heatmap-keyboard-inset (siehe initHeatmapSearchViewportOffset()
+     in app.js, ueber die VisualViewport-API: iOS Safari veraendert bei
+     offener Tastatur NICHT die Layout-Viewport-Hoehe, jede rein CSS-basierte
+     bottom:0-Loesung wuerde dort hinter der Tastatur verschwinden).
+     column-reverse dreht die visuelle Reihenfolge um (im Markup steht die
+     Eingabe VOR den Vorschlaegen) - .heatmap-suggestions wandert dadurch
+     automatisch UEBER das Suchfeld statt darunter, waechst also nach oben
+     in Richtung Kartenmitte statt unten aus dem Bildschirm heraus. Die
+     Karte bleibt jederzeit sichtbar (kein Vollbild-Overlay) - nur der
+     untere Bereich wird beim Tippen von der (bereits halbtransparenten)
+     Vorschlagsliste ueberdeckt. Feld und Vorschlagszeilen behalten
+     zusaetzlich min-height:48px fuer Touch-Target-Konformitaet. */
+  .heatmap-search-panel{
+    top:auto; flex-direction:column-reverse;
+    bottom:calc(14px + env(safe-area-inset-bottom) + var(--heatmap-keyboard-inset, 0px));
+  }
   .heatmap-search-box{ min-height:48px; padding:13px 16px; }
   .heatmap-suggestion{ min-height:48px; display:flex; align-items:center; padding:12px 16px; }
+  /* Erst beim Fokussieren/Tippen wirklich "aufschieben" (.expanded wird in
+     app.js beim Fokus/Blur des Suchfelds gesetzt) - ungenutzt bleibt die
+     Vorschlagsliste kompakt, damit moeglichst viel Karte sichtbar bleibt. */
+  .heatmap-suggestions{ max-height:34vh; }
+  .heatmap-search-panel.expanded .heatmap-suggestions{ max-height:52vh; }
 }
+
+/* --- Sticky Bottom Action Bar (Mobile-Lobby): zuverlaessige Kopie von
+   #btn-ready-toggle/#btn-start-game ausserhalb von .device, siehe
+   Kommentar dort im HTML. .device hat sowohl overflow:hidden als auch
+   backdrop-filter - beides bricht position:sticky UND position:fixed fuer
+   Nachfahren (sticky "klebt" dann nur innerhalb der durch overflow:hidden
+   begrenzten .device-Box statt am echten Fensterrand, was auf einem
+   laengeren Mobile-Screen praktisch nie sichtbar waere - selbst
+   ausprobiert und per Scroll-Test bestaetigt, dass die Leiste sonst
+   einfach mit dem Inhalt wegscrollt). Sichtbarkeit/Text/Klick-Weiterleitung
+   kommen aus renderLobby()/wireMobileLobbyCta() in app.js. */
+@media (max-width: 768px){
+  body:has(#screen-lobby.active) .mobile-lobby-cta{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+}
+.mobile-lobby-cta{
+  display:none; position:fixed; left:16px; right:16px;
+  bottom:calc(14px + env(safe-area-inset-bottom)); z-index:50;
+  min-height:52px; padding:14px 20px;
+  background:var(--accent); color:var(--accent-ink); border:none; border-radius:16px;
+  font-family:var(--font-body); font-weight:700; font-size:1rem; cursor:pointer;
+  box-shadow:0 16px 40px -12px rgba(0,0,0,0.6);
+}
+.mobile-lobby-cta.hidden{ display:none !important; }
+.mobile-lobby-cta:disabled{ opacity:0.5; }
 
 /* iOS zoomt bei Fokus automatisch in jedes Eingabefeld mit einer
    Schriftgroesse < 16px hinein - genau das zerschiesst das Layout beim

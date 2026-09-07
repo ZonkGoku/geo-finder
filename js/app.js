@@ -745,8 +745,23 @@ function renderLobby() {
     readyBtn.textContent = me?.ready ? 'Nicht bereit' : 'Bereit';
     hint.textContent = 'Warte auf den Host, das Spiel zu starten.';
   }
+  syncMobileLobbyCta(readyBtn, startBtn);
 
   updateConnectionBanner();
+}
+
+// Spiegelt Text/Sichtbarkeit/Disabled-Status von #btn-ready-toggle bzw.
+// #btn-start-game (je nachdem, welcher gerade sichtbar ist) auf die
+// zuverlaessig eingerastete Mobile-Kopie ausserhalb von .device (siehe
+// Kommentar dort in index.html/styles.css). Klick-Weiterleitung selbst
+// steht einmalig in wireLobbyControls().
+function syncMobileLobbyCta(readyBtn, startBtn) {
+  const mobileCta = el('mobile-lobby-cta');
+  const active = !startBtn.hidden ? startBtn : !readyBtn.hidden ? readyBtn : null;
+  mobileCta.classList.toggle('hidden', !active);
+  if (!active) return;
+  mobileCta.textContent = active.textContent.trim();
+  mobileCta.disabled = active.disabled;
 }
 
 // Gleiche Bedingung wie fuer #btn-start-game in renderLobby() - der
@@ -828,6 +843,13 @@ function wireLobbyControls() {
     sound.playClick();
     const me = state.players.get(state.self.id);
     controller.setReady(!me?.ready);
+  });
+
+  // Mobile Sticky-Bottom-Kopie (siehe syncMobileLobbyCta()) leitet einfach an
+  // den gerade sichtbaren echten Button weiter, statt Klick-Logik zu duplizieren.
+  el('mobile-lobby-cta').addEventListener('click', () => {
+    const startBtn = el('btn-start-game');
+    (startBtn.hidden ? el('btn-ready-toggle') : startBtn).click();
   });
 
   attachRipple(el('btn-start-game'));
@@ -1348,8 +1370,34 @@ function handleHeatmapGuessPick(countryId) {
   el('heatmap-suggestions').classList.add('hidden');
 }
 
+// Bottom-Sheet-Suchfeld auf Mobile (siehe .heatmap-search-panel in
+// styles.css) haelt sich ueber der virtuellen Tastatur: iOS Safari
+// veraendert bei geoeffneter Tastatur NICHT die Layout-Viewport-Hoehe (nur
+// die VisualViewport-Hoehe schrumpft), ein reines CSS bottom:0 wuerde die
+// Leiste dort also hinter der Tastatur verstecken. --heatmap-keyboard-inset
+// wird als CSS-Variable gesetzt und in der bottom-Berechnung addiert.
+function initHeatmapSearchViewportOffset() {
+  if (!window.visualViewport) return; // aeltere Browser: bleibt bei env(safe-area-inset-bottom) allein
+  const panel = el('heatmap-search-panel');
+  if (!panel) return;
+  const update = () => {
+    const vv = window.visualViewport;
+    const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    panel.style.setProperty('--heatmap-keyboard-inset', `${Math.round(inset)}px`);
+  };
+  window.visualViewport.addEventListener('resize', update);
+  window.visualViewport.addEventListener('scroll', update);
+  update();
+}
+
 function wireHeatmapControls() {
   const input = el('heatmap-search-input');
+  // Mobile Bottom-Sheet: .expanded (siehe styles.css) laesst die
+  // Vorschlagsliste hoeher wachsen, waehrend aktiv getippt wird - unfokussiert
+  // bleibt sie kompakt, damit moeglichst viel Karte sichtbar bleibt. Auf
+  // Desktop ohne Wirkung (die Regel existiert nur in der Mobile-Media-Query).
+  input.addEventListener('focus', () => el('heatmap-search-panel').classList.add('expanded'));
+  input.addEventListener('blur', () => el('heatmap-search-panel').classList.remove('expanded'));
   input.addEventListener('input', () => renderHeatmapSuggestions(input.value));
   input.addEventListener('keydown', (e) => {
     const box = el('heatmap-suggestions');
@@ -2546,6 +2594,7 @@ async function boot() {
   wireLobbyControls();
   wireHudControls();
   wireHeatmapControls();
+  initHeatmapSearchViewportOffset();
   wireResultControls();
   wireLeaderboardControls();
   wireBusEvents();
