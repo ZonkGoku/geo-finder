@@ -301,6 +301,14 @@
       </div>
     </div>
 
+    <!-- Battle-Royale-Elimination: kurzer, rein visueller Vignette-Flash
+         ueber dem ganzen Device-Viewport (siehe spawnEliminationFlash() in
+         app.js). Eigenes Element statt state-overlay wiederzuverwenden -
+         state-overlay blockiert Klicks/zeigt eine Karte, dieser Flash soll
+         rein dekorativ hinter dem normalen Rundenergebnis durchscheinen und
+         darf nie Interaktion abfangen (pointer-events:none). -->
+    <div class="elimination-flash" id="elimination-flash" aria-hidden="true"></div>
+
     <div class="device-screen">
 
       <!-- ===================== LOBBY ===================== -->

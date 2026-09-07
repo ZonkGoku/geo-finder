@@ -57,6 +57,14 @@ export function playClick() {
   tone({ freq: 720, duration: 0.06, type: 'square', gain: 0.08 });
 }
 
+/** Sehr leises, kurzes Hover-Feedback fuer interaktive Elemente (Buttons,
+ * Vorschlaege) - deutlich leiser/kuerzer als playClick(), soll bei
+ * schnellem Ueberfahren mehrerer Elemente (z.B. Lobby-Einstellungen)
+ * niemals aufdringlich werden. Audit Quick-Win #4. */
+export function playHover() {
+  tone({ freq: 1100, duration: 0.025, type: 'sine', gain: 0.035 });
+}
+
 export function playPinSet() {
   tone({ freq: 520, duration: 0.09, type: 'sine', gain: 0.14, glideTo: 780 });
 }
@@ -85,6 +93,14 @@ export function playStreak() {
   [660, 880].forEach((freq, i) => {
     tone({ freq, duration: 0.12, type: 'sawtooth', gain: 0.08, delay: i * 0.06 });
   });
+}
+
+/** Battle-Royale-Elimination: bewusst absteigend/duester statt des
+ * aufsteigenden playSuccess()-Jingles - derselbe Moment braucht ein klar
+ * unterscheidbares "Aus"-Gefuehl statt eines generischen Runden-Feedbacks. */
+export function playElimination() {
+  tone({ freq: 320, duration: 0.3, type: 'sawtooth', gain: 0.16, glideTo: 90 });
+  tone({ freq: 160, duration: 0.34, type: 'square', gain: 0.1, delay: 0.05, glideTo: 55 });
 }
 
 // ---------------------------------------------------------------- Runden-Ambience

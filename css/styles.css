@@ -853,6 +853,26 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .state-overlay-icon{ font-size:2rem; }
 .state-overlay-card p{ color:var(--text-dim); font-size:0.88rem; margin:0 0 6px; }
 
+/* Battle-Royale-Elimination-Moment: dunkelrote Vignette, die kurz aufblitzt
+   und wieder ausblendet - der bisher fehlende eigene visuelle Beat fuer den
+   dramatischsten Moment des Modus (Audit Quick-Win #1). Radial-Gradient
+   statt Flaechenfarbe, damit die Bildmitte (wo das eigentliche
+   Rundenergebnis angezeigt wird) frei bleibt und nur die Raender "brennen".
+   pointer-events:none + .active nur kurz gesetzt (siehe spawnEliminationFlash()
+   in app.js) - blockiert nie Klicks auf das Rundenergebnis-Overlay darunter. */
+.elimination-flash{
+  position:absolute; inset:0; z-index:65; pointer-events:none;
+  background:radial-gradient(120% 100% at 50% 50%, transparent 40%, rgba(255,30,30,0.55) 100%);
+  opacity:0;
+}
+.elimination-flash.active{ animation:eliminationFlash 0.9s ease-out; }
+@keyframes eliminationFlash{
+  0%{ opacity:0; }
+  12%{ opacity:1; }
+  100%{ opacity:0; }
+}
+@media (prefers-reduced-motion: reduce){ .elimination-flash.active{ animation:none; } }
+
 /* ===================== ROUND PROGRESS ===================== */
 .round-progress{ position:relative; z-index:2; display:flex; gap:5px; padding:14px 26px 0; }
 .round-progress-seg{ flex:1; height:4px; border-radius:3px; background:rgba(255,255,255,0.14); overflow:visible; }
@@ -993,6 +1013,10 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
   position:relative; z-index:1; flex:1; min-width:52px; padding:8px 10px; border-radius:8px; border:1px solid transparent;
   background:transparent; color:var(--text-dim); font-size:0.82rem; font-weight:600; cursor:pointer;
   font-family:var(--font-mono); transition:color .2s ease;
+  /* overflow:hidden clippt den .btn-ripple-Klick-Impact (attachRipple() in
+     app.js, jetzt auch auf allen Lobby-Choice-Buttons statt nur den 3 Menue-
+     Action-Cards, Audit Quick-Win #3) an der eigenen border-radius-Rundung. */
+  overflow:hidden;
 }
 .choice-row button:hover{ color:var(--text); }
 .choice-row button.selected{ color:var(--accent-ink); }

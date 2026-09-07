@@ -876,6 +876,7 @@ function wireLobbyControls() {
   });
 
   attachRipple(el('btn-start-game'));
+  attachHoverSound(el('btn-start-game'));
   // NICHT direkt startGameFromLobby als Listener registrieren: addEventListener
   // ruft Handler mit dem Klick-Event als erstem Argument auf, das landete sonst
   // ungewollt im optionalen seed-Parameter. mulberry32(seed) macht "seed >>> 0"
@@ -889,6 +890,8 @@ function wireLobbyControls() {
 
   const wireChoiceRow = (rowId, settingKey, parse) => {
     el(rowId).querySelectorAll('button').forEach((btn) => {
+      attachRipple(btn);
+      attachHoverSound(btn);
       btn.addEventListener('click', () => {
         if (state.role !== 'host') return;
         sound.playClick();
@@ -909,6 +912,8 @@ function wireLobbyControls() {
   // schon in state.js selbst auf 'best' steht, da nie von anderen Modi
   // genutzt).
   el('choice-mode').querySelectorAll('button').forEach((btn) => {
+    attachRipple(btn);
+    attachHoverSound(btn);
     btn.addEventListener('click', () => {
       if (state.role !== 'host') return;
       sound.playClick();
@@ -1048,6 +1053,21 @@ function spawnRadarPing(x, y) {
   ping.style.top = `${y}px`;
   document.body.appendChild(ping);
   ping.addEventListener('animationend', () => ping.remove(), { once: true });
+}
+
+/** Battle-Royale-Elimination-Vignette (siehe .elimination-flash in
+ * styles.css) - statisches, immer im DOM vorhandenes Overlay statt eines
+ * pro-Aufruf erzeugten Elements wie spawnRadarPing(), weil es immer
+ * denselben vollflaechigen Bereich abdeckt. Reflow-Trigger-Muster wie
+ * .guess-pulse/.pop an anderer Stelle, damit zwei Eliminations-Events kurz
+ * hintereinander (bei mehreren Gleichstand-Verlierern derselben Runde) die
+ * Animation jeweils neu von vorne starten. */
+function spawnEliminationFlash() {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const flash = el('elimination-flash');
+  flash.classList.remove('active');
+  void flash.offsetWidth;
+  flash.classList.add('active');
 }
 
 function shakeHeatmapSearchBox() {
@@ -1931,12 +1951,22 @@ function renderRoundResult({ results, actual, actualMeta, eliminatedPlayerIds = 
   const isCountryMode = state.settings.mode === 'country-streak';
   const sorted = [...results].sort((a, b) => b.score - a.score);
   const listEl = el('result-score-list');
+  // FLIP-Animation fuer Rangwechsel zwischen Runden (Audit Quick-Win #5):
+  // First - Positionen der noch-alten Karten VOR dem Neuaufbau merken, per
+  // playerId statt Index (die Sortierung selbst aendert sich ja gerade).
+  // Erste Runde: previousRects bleibt leer, es gibt nichts zu animieren.
+  const previousRects = new Map();
+  listEl.querySelectorAll('.score-card').forEach((card) => {
+    if (card.dataset.playerId) previousRects.set(card.dataset.playerId, card.getBoundingClientRect());
+  });
   listEl.innerHTML = '';
   let myBestScore = 0;
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   for (const r of sorted) {
     const player = state.players.get(r.playerId);
     if (r.playerId === state.self.id) myBestScore = r.score;
     const card = document.createElement('div');
+    card.dataset.playerId = r.playerId;
     const justEliminated = eliminatedPlayerIds.includes(r.playerId);
     card.className = justEliminated ? 'score-card eliminated' : 'score-card';
     let meta;
@@ -1979,16 +2009,55 @@ function renderRoundResult({ results, actual, actualMeta, eliminatedPlayerIds = 
     `;
     listEl.appendChild(card);
     const pointsEl = card.querySelector('.score-points');
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     setTimeout(() => animateCounter(pointsEl, 0, r.score), reduceMotion ? 0 : 1600);
+  }
+
+  // FLIP Schritt 2 (Last/Invert/Play): neue Positionen messen, per Transform
+  // sofort optisch an die GEMERKTE alte Position zurueckversetzen (Invert),
+  // dann im naechsten Frame zur echten Transition auf transform:none
+  // wechseln (Play) - der Browser rendert dadurch einen fluessigen Gleit-
+  // statt eines harten Sprungs, obwohl die DOM-Reihenfolge schon final ist.
+  // Karten ohne previousRects-Eintrag (erste Runde) bleiben unangetastet.
+  if (!reduceMotion) {
+    requestAnimationFrame(() => {
+      listEl.querySelectorAll('.score-card').forEach((card) => {
+        const prev = previousRects.get(card.dataset.playerId);
+        if (!prev) return;
+        const next = card.getBoundingClientRect();
+        const deltaY = prev.top - next.top;
+        if (Math.abs(deltaY) < 1) return;
+        card.style.transition = 'none';
+        card.style.transform = `translateY(${deltaY}px)`;
+        requestAnimationFrame(() => {
+          card.style.transition = 'transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1)';
+          card.style.transform = '';
+        });
+      });
+    });
   }
 
   renderHpBars();
 
   const myResult = results.find((r) => r.playerId === state.self.id);
+  // Konfetti + Radar-Ping als fester Kombi-Effekt fuer jeden "grossen"
+  // Rundensieg-Moment, ueber alle klassischen Modi hinweg - vorher bekam
+  // nur PulseMap diese Kombination, klassische Modi nur die Partikel (oder
+  // im Country-Streak-Fall gar keinen Partikeleffekt). spawnRadarPing()
+  // ohne konkreten Welt-Ankerpunkt (anders als bei PulseMap, wo das Zielland
+  // eine natuerliche Position liefert) faellt hier auf denselben
+  // Default-Ursprung wie particleBurst() selbst zurueck (Bildschirmmitte,
+  // leicht oberhalb der Mitte), Audit Quick-Win #2.
+  const celebrate = (colors) => {
+    particleBurst({ colors });
+    spawnRadarPing(window.innerWidth / 2, window.innerHeight * 0.35);
+  };
   if (isCountryMode) {
-    if (myResult?.correct) sound.playSuccess();
-    else sound.playRoundReveal();
+    if (myResult?.correct) {
+      sound.playSuccess();
+      celebrate(['#ff7a33', '#17ecff', '#ff1fb0', '#39ff8f']);
+    } else {
+      sound.playRoundReveal();
+    }
     if (myResult?.correct && myResult.streak >= 2) sound.playStreak();
     haptics.tapMedium();
   } else {
@@ -2000,7 +2069,7 @@ function renderRoundResult({ results, actual, actualMeta, eliminatedPlayerIds = 
     // ein 4999-von-5000-Punkte-Tipp UND ein technisch perfekter Tipp fuehlen
     // sich beide wie "extrem nah" an, sollen also beide feiern.
     if (!myResult?.noGuess && myResult?.distanceKm != null && myResult.distanceKm < 5) {
-      particleBurst({ colors: ['#ff7a33', '#17ecff', '#ff1fb0', '#39ff8f'] });
+      celebrate(['#ff7a33', '#17ecff', '#ff1fb0', '#39ff8f']);
       haptics.tapStrong();
     } else if (myResult?.hpDamage > 0) {
       haptics.tapStrong();
@@ -2009,8 +2078,13 @@ function renderRoundResult({ results, actual, actualMeta, eliminatedPlayerIds = 
     }
   }
   // Battle Royale: eigenes Ausscheiden ueberschreibt das normale Feedback
-  // oben mit einem deutlich spuerbaren Impact statt eines Erfolgs-Tons.
+  // oben mit einem deutlich spuerbaren Impact statt eines Erfolgs-Tons -
+  // eigener duesterer Sound (statt playSuccess()/playStreak()) + rote
+  // Vignette statt nur der Haptik allein (Audit Quick-Win #1: der bisher
+  // dramatischste Moment ohne eigenes Signal).
   if (eliminatedPlayerIds.includes(state.self.id)) {
+    sound.playElimination();
+    spawnEliminationFlash();
     haptics.tapStrong();
   }
 
@@ -2249,6 +2323,9 @@ function wireMenuControls() {
   attachRipple(el('btn-host'));
   attachRipple(el('btn-join-toggle'));
   attachRipple(el('btn-solo'));
+  attachHoverSound(el('btn-host'));
+  attachHoverSound(el('btn-join-toggle'));
+  attachHoverSound(el('btn-solo'));
   el('btn-host').addEventListener('click', hostFlow);
   el('btn-solo').addEventListener('click', soloFlow);
 
@@ -2265,6 +2342,7 @@ function wireMenuControls() {
   });
 
   attachRipple(el('btn-daily-challenge'));
+  attachHoverSound(el('btn-daily-challenge'));
   el('btn-daily-challenge').addEventListener('click', () => {
     sound.unlockAudio();
     sound.playClick();
@@ -2426,6 +2504,15 @@ function attachRipple(button) {
     button.appendChild(ripple);
     ripple.addEventListener('animationend', () => ripple.remove());
   });
+}
+
+// Leises Hover-Sound-Feedback (sound.playHover(), Audit Quick-Win #4) -
+// mouseenter statt mouseover: bubbelt nicht und feuert genau einmal beim
+// tatsaechlichen Betreten des Elements, kein Debouncing noetig (anders als
+// bei delegiertem mouseover auf einem Container).
+function attachHoverSound(button) {
+  if (!button) return;
+  button.addEventListener('mouseenter', () => sound.playHover());
 }
 
 function escapeHtml(str) {
