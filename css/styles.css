@@ -1140,8 +1140,12 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .heatmap-header{ position:relative; z-index:3; display:flex; justify-content:space-between; align-items:flex-start; padding:22px 26px; pointer-events:none; }
 .heatmap-header .round-chip, .heatmap-header .timer{ pointer-events:auto; }
 .heatmap-stage{ position:absolute; inset:0; }
-.heatmap-map{ position:absolute; inset:0; z-index:0; }
-.heatmap-map .leaflet-control-attribution{ font-size:0.6rem; }
+/* Kein Kachel-Layer mehr als Hintergrund (siehe Kommentar in heatmap-map.js -
+   Esris "Base"-Kacheln rendern trotz ihres Namens eigene Laendernamen ins
+   Rasterbild, doppelt zu unseren Tooltips). Ein einfacher, dezent
+   verlaufender dunkler Hintergrund erfuellt den gleichen Zweck (neutraler
+   Kontrast zu den eingefaerbten Laender-Polygonen) ohne jede Fremd-Quelle. */
+.heatmap-map{ position:absolute; inset:0; z-index:0; background:radial-gradient(120% 120% at 50% 30%, var(--surface-hi) 0%, var(--surface) 65%); }
 
 /* Eigene Laendername-Beschriftung statt eines externen Kachel-Layers (siehe
    HeatmapMap._applyLabel() in heatmap-map.js) - Leaflets Standard-Tooltip-

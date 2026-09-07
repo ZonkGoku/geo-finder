@@ -1,28 +1,18 @@
 import { HEATMAP_COLORS } from '../core/heatmap-color.js';
 
-// Fester dunkler Basemap-Kachel-Layer statt des ueblichen Satellit/Karte-
-// Umschalters (attachTileLayer in tile-config.js) - Satellitenbilder wuerden
-// optisch mit den eingefaerbten Laender-Polygonen konkurrieren, ein neutraler
-// dunkler Hintergrund laesst die Distanz-Farben klar hervortreten.
-// Urspruenglich CartoDB Dark Matter (schluessellos nutzbares Kachel-Paar MIT/
-// OHNE Beschriftungen) - CartoDBs anonymer basemaps.cartocdn.com-Zugang zeigt
-// inzwischen aber (wie schon einmal bei tile-config.js erlebt) ein "API KEY
-// REQUIRED"-Wasserzeichen ueber der gesamten Karte. Stattdessen jetzt Esri's
-// ebenfalls schluessellose "Canvas"-Basemap World_Dark_Gray_Base (reiner
-// Basemap ohne jede Beschriftung).
-//
-// Beschriftungen kommen NICHT mehr aus Esris World_Dark_Gray_Reference-Layer
-// (das war ein generischer mehrstufiger Referenz-Layer mit Laendern UND
-// Bundeslaendern/Staedten - beim Reinzoomen erschienen automatisch immer mehr
-// Orts-/Regionsnamen, nicht nur Laender, siehe Nutzer-Feedback "auch wenn man
-// dichter reinzoomt nur Laendernamen"). Stattdessen jetzt eigene, permanente
-// Leaflet-Tooltips direkt an jedem Laender-Polygon (siehe setCountries()) -
-// aus unseren eigenen 177 Laendern erzeugt, es gibt also gar keine anderen
-// Namen, die bei irgendeinem Zoom auftauchen koennten, und die Textgroesse
-// bleibt (als HTML/CSS statt Kachel-Rasterbild) bei jedem Zoom gleich scharf.
-const DARK_BASE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
-const DARK_TILE_ATTRIBUTION = '&copy; Esri';
-const DARK_MAX_ZOOM = 12;
+// KEIN externer Kachel-Layer mehr als Hintergrund. Frueher Esri's Canvas-
+// Basemap "World_Dark_Gray_Base" - trotz des Namens (und trotz Esris eigener
+// Beschreibung als unbeschrifteter reiner Basemap) rendert dieser Layer bei
+// mittleren Zoomstufen tatsaechlich Laendernamen direkt ins Kachel-Rasterbild
+// (z.B. weit auseinandergezogenes "U N I T E D S T A T E S" quer ueber dem
+// Land) - doppelt mit unseren eigenen permanenten Tooltips aus setCountries()
+// (Nutzer-Report: Laendername erscheint zweimal). Da der Kachel-Layer hier
+// ohnehin nur als neutraler dunkler Hintergrund hinter den eingefaerbten
+// Laender-Polygonen dient (keine Strassen/Gelaende noetig), reicht dafuer ein
+// simpler CSS-Hintergrund auf dem Map-Container voellig aus - und schliesst
+// diese ganze Fehlerklasse (irgendein externer Layer bringt irgendwann doch
+// wieder eigene Beschriftungen mit) dauerhaft aus, statt nur den naechsten
+// vermeintlich "unbeschrifteten" Kachel-Dienst zu suchen.
 // Laender-Umrisse waren bei weight:1/28% Deckkraft auf kleinen Bildschirmen
 // kaum zu erkennen, und ungetippte Laender hatten wegen HEATMAP_COLORS.
 // unguessed==='transparent' UEBERHAUPT keine Fuellung (0 Alpha bleibt 0
@@ -47,15 +37,12 @@ export class HeatmapMap {
     const isNarrowViewport = typeof window !== 'undefined' && window.innerWidth < 600;
     this.map = window.L.map(containerEl, {
       zoomControl: false,
-      attributionControl: true,
+      attributionControl: false,
       worldCopyJump: true,
       minZoom: 2,
+      maxZoom: 12,
     }).setView([20, 10], isNarrowViewport ? 2.6 : 2);
 
-    this.baseLayer = window.L.tileLayer(DARK_BASE_URL, {
-      attribution: DARK_TILE_ATTRIBUTION,
-      maxZoom: DARK_MAX_ZOOM,
-    }).addTo(this.map);
     this._labelsEnabled = labels;
 
     this.layer = null;
