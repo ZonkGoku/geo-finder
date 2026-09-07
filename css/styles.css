@@ -1134,6 +1134,23 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .heatmap-map{ position:absolute; inset:0; z-index:0; }
 .heatmap-map .leaflet-control-attribution{ font-size:0.6rem; }
 
+/* Eigene Laendername-Beschriftung statt eines externen Kachel-Layers (siehe
+   HeatmapMap._applyLabel() in heatmap-map.js) - Leaflets Standard-Tooltip-
+   Chrome (weisser Hintergrund, Rahmen, Schatten, Richtungspfeil) komplett
+   entfernt zugunsten von reinem Text mit Schlagschatten, der auf jeder
+   Fuellfarbe der Distanz-Skala lesbar bleibt. pointer-events:none, damit das
+   Label nie Hover/Klicks auf dem darunterliegenden Laender-Polygon abfaengt -
+   bleibt als HTML-Text zudem bei jedem Zoom gleich scharf (kein
+   Kachel-Rasterbild). */
+.heatmap-map .leaflet-tooltip.heatmap-country-label{
+  background:none; border:none; box-shadow:none; padding:0; margin:0;
+  color:rgba(255,255,255,0.92); font-family:var(--font-body); font-weight:600;
+  font-size:0.72rem; letter-spacing:0.01em; text-shadow:0 1px 3px rgba(0,0,0,0.85), 0 0 6px rgba(0,0,0,0.5);
+  pointer-events:none; opacity:1;
+  white-space:nowrap;
+}
+.heatmap-map .leaflet-tooltip.heatmap-country-label::before{ display:none; }
+
 .heatmap-search-panel{
   position:absolute; top:78px; left:50%; transform:translateX(-50%); z-index:4;
   /* War min(420px, ...) - bei mittleren Fensterbreiten (etwa 700-950px)

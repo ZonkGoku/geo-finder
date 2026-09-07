@@ -8,13 +8,19 @@ import { HEATMAP_COLORS } from '../core/heatmap-color.js';
 // OHNE Beschriftungen) - CartoDBs anonymer basemaps.cartocdn.com-Zugang zeigt
 // inzwischen aber (wie schon einmal bei tile-config.js erlebt) ein "API KEY
 // REQUIRED"-Wasserzeichen ueber der gesamten Karte. Stattdessen jetzt Esri's
-// ebenfalls schluessellose "Canvas"-Dienste: World_Dark_Gray_Base (reiner
-// Basemap ohne jede Beschriftung) plus World_Dark_Gray_Reference (nur die
-// Beschriftungen, als transparenter Overlay-Layer) - zusammen ergeben sie
-// dasselbe "mit/ohne Labels"-Paar, nur als zwei uebereinandergelegte Layer
-// statt zwei alternativer Einzel-URLs.
+// ebenfalls schluessellose "Canvas"-Basemap World_Dark_Gray_Base (reiner
+// Basemap ohne jede Beschriftung).
+//
+// Beschriftungen kommen NICHT mehr aus Esris World_Dark_Gray_Reference-Layer
+// (das war ein generischer mehrstufiger Referenz-Layer mit Laendern UND
+// Bundeslaendern/Staedten - beim Reinzoomen erschienen automatisch immer mehr
+// Orts-/Regionsnamen, nicht nur Laender, siehe Nutzer-Feedback "auch wenn man
+// dichter reinzoomt nur Laendernamen"). Stattdessen jetzt eigene, permanente
+// Leaflet-Tooltips direkt an jedem Laender-Polygon (siehe setCountries()) -
+// aus unseren eigenen 177 Laendern erzeugt, es gibt also gar keine anderen
+// Namen, die bei irgendeinem Zoom auftauchen koennten, und die Textgroesse
+// bleibt (als HTML/CSS statt Kachel-Rasterbild) bei jedem Zoom gleich scharf.
 const DARK_BASE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
-const DARK_LABELS_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
 const DARK_TILE_ATTRIBUTION = '&copy; Esri';
 const DARK_MAX_ZOOM = 12;
 // Laender-Umrisse waren bei weight:1/28% Deckkraft auf kleinen Bildschirmen
@@ -50,26 +56,32 @@ export class HeatmapMap {
       attribution: DARK_TILE_ATTRIBUTION,
       maxZoom: DARK_MAX_ZOOM,
     }).addTo(this.map);
-    this.labelsLayer = null;
-    if (labels) this._addLabelsLayer();
+    this._labelsEnabled = labels;
 
     this.layer = null;
     this.layerByCountryId = new Map();
   }
 
-  _addLabelsLayer() {
-    this.labelsLayer = window.L.tileLayer(DARK_LABELS_URL, { maxZoom: DARK_MAX_ZOOM }).addTo(this.map);
+  /** Wechselt die Laendername-Beschriftung nachtraeglich (falls die
+   * Einstellung sich zwischen zwei Runden nicht aendern kann - hier nur fuer
+   * Robustheit, die Lobby-Einstellung steht schon fest bevor die Karte
+   * erzeugt wird). Bindet/loest die permanenten Tooltips aus setCountries()
+   * auf allen bereits vorhandenen Laender-Layern. */
+  setLabels(labels) {
+    this._labelsEnabled = labels;
+    this.layerByCountryId.forEach((layer) => this._applyLabel(layer));
   }
 
-  /** Wechselt den Beschriftungs-Overlay nachtraeglich (falls die Einstellung sich
-   * zwischen zwei Runden nicht aendern kann - hier nur fuer Robustheit, die
-   * Lobby-Einstellung steht schon fest bevor die Karte erzeugt wird). */
-  setLabels(labels) {
-    if (labels && !this.labelsLayer) {
-      this._addLabelsLayer();
-    } else if (!labels && this.labelsLayer) {
-      this.map.removeLayer(this.labelsLayer);
-      this.labelsLayer = null;
+  _applyLabel(layer) {
+    const hasTooltip = typeof layer.getTooltip === 'function' && layer.getTooltip();
+    if (this._labelsEnabled && !hasTooltip) {
+      layer.bindTooltip(layer.feature.properties.nameDe, {
+        permanent: true,
+        direction: 'center',
+        className: 'heatmap-country-label',
+      });
+    } else if (!this._labelsEnabled && hasTooltip) {
+      layer.unbindTooltip();
     }
   }
 
@@ -81,7 +93,10 @@ export class HeatmapMap {
     const features = countries.map((c) => ({
       type: 'Feature',
       id: c.id,
-      properties: { name: c.name },
+      // nameDe fuer die eigene Laendername-Beschriftung (siehe _applyLabel())
+      // - Anzeige immer auf Deutsch, konsistent mit Top-3-Liste/Vorschlagsliste/
+      // Ergebnis-Banner (core/country-names-de.js).
+      properties: { name: c.name, nameDe: c.nameDe },
       geometry: c.geometry,
     }));
 
@@ -96,6 +111,7 @@ export class HeatmapMap {
 
     this.layer.eachLayer((layer) => {
       this.layerByCountryId.set(String(layer.feature.id), layer);
+      this._applyLabel(layer);
     });
   }
 
