@@ -16,6 +16,7 @@ import * as haptics from './ui/haptics.js';
 import { loadMapSetIndex, loadMapSetDetail } from './core/pool-loader.js';
 import { getHighScore, recordScoreIfBest } from './core/high-scores.js';
 import { getPlayerStats, averageScore, recordGamePlayed } from './core/player-stats.js';
+import { recordDailyPlay } from './core/profile.js';
 import {
   getHeatmapStats,
   averageAttempts,
@@ -2272,6 +2273,7 @@ function renderLeaderboard({ finalScores }) {
     if (ownEntry) {
       recordScoreIfBest(state.pool.id, state.settings.mode, ownEntry.total);
       recordGamePlayed(ownEntry.total, state.round.total);
+      recordDailyPlay();
       if (state.challenge?.type === 'daily') recordDailyResult(ownEntry.total);
     }
   } else if (state.settings.mode === 'heatmap') {
@@ -2279,6 +2281,7 @@ function renderLeaderboard({ finalScores }) {
     // regulaer zu Ende gelaufen (letzte Runde vorbei), kein Abbruch - siehe
     // recordHeatmapDropOff() in resetToMenu() fuer den Gegenfall.
     recordHeatmapGameCompleted();
+    recordDailyPlay();
   }
 
   // Challenge-Link teilen ist bewusst nur fuer Solo-Partien: der geteilte
