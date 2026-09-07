@@ -1022,7 +1022,7 @@ function renderHeatmapTop3() {
   list.innerHTML = top3
     .map(
       (g, i) =>
-        `<li><span class="rank">${i + 1}.</span> ${escapeHtml(g.name)} ${g.proximity === 'neighbor' ? '<span class="proximity-badge neighbor">Nachbarland</span>' : ''}<span class="dist">${Math.round(g.distanceKm).toLocaleString('de-DE')} km</span></li>`
+        `<li><span class="rank">${i + 1}.</span><span class="name">${escapeHtml(g.name)}</span><span class="dist">${Math.round(g.distanceKm).toLocaleString('de-DE')} km</span>${g.proximity === 'neighbor' ? '<span class="proximity-badge neighbor">Nachbarland</span>' : ''}</li>`
     )
     .join('');
 }
@@ -1060,7 +1060,11 @@ function heatmapActivityLine(text, tone = '') {
   feed.prepend(line);
   // Feed nicht unbegrenzt wachsen lassen - alte Zeilen sind fuer den
   // Zeitdruck-Effekt ohnehin irrelevant, sobald genug neue nachgekommen sind.
-  while (feed.children.length > 12) feed.removeChild(feed.lastChild);
+  // War 12 - zusammen mit der (Nutzerfeedback: "zu prominent und gross")
+  // verkleinerten Kartenhoehe (siehe .heatmap-activity-feed max-height in
+  // styles.css) wirkte ein voller 12er-Stapel weiterhin wie ein dominanter
+  // Textblock statt einer knappen Nebeninfo.
+  while (feed.children.length > 6) feed.removeChild(feed.lastChild);
 }
 
 function renderHeatmapGuessResult({ countryId, distanceKm, exact, proximity }) {
