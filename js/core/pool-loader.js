@@ -60,12 +60,22 @@ export function computeMapSetBounds(mapSet) {
 // live keine Mapillary-Abdeckung im engen 50m-Radius - bei 10 gewuenschten
 // Runden brach das Budget ab, bevor der 48er-Pool ueberhaupt einmal ganz
 // durchprobiert war (live bestaetigt: "RUNDE 01 / 03" trotz 10 gewaehlter
-// Runden). Das Budget skaliert daher mit der Poolgroesse (grob 3 Versuche
-// pro Region), bleibt aber nach oben gedeckelt.
-const MIN_RESOLVE_ATTEMPTS = 24;
-const MAX_RESOLVE_ATTEMPTS_CAP = 90;
+// Runden). Das Budget skaliert daher mit der Poolgroesse, bleibt aber nach
+// oben gedeckelt.
+//
+// Nochmal erhoeht (Faktor 3->6, Untergrenze 24->40, Obergrenze 90->150):
+// live gemeldet mit dem "Stadien & Arenen"-Paket (nur 8 Regionen) - das
+// alte Budget (max(24, 8*3)=24) reichte selbst fuer den KLEINSTEN
+// unguenstigsten Fall nicht, ein Duell endete nach nur 1 statt 5 gewaehlten
+// Runden. Kleine Pools brauchen PROPORTIONAL MEHR Versuche pro Region, nicht
+// weniger - es gibt ja keine anderen Regionen, auf die ausgewichen werden
+// koennte, wenn eine einzelne haeufig genug erneut (mit frischem Jitter,
+// siehe JITTER_RADIUS_M) versucht werden muss, um die knappe 50m-
+// Radiussuche irgendwann zu treffen.
+const MIN_RESOLVE_ATTEMPTS = 40;
+const MAX_RESOLVE_ATTEMPTS_CAP = 150;
 function resolveAttemptBudget(regionCount) {
-  return Math.min(MAX_RESOLVE_ATTEMPTS_CAP, Math.max(MIN_RESOLVE_ATTEMPTS, regionCount * 3));
+  return Math.min(MAX_RESOLVE_ATTEMPTS_CAP, Math.max(MIN_RESOLVE_ATTEMPTS, regionCount * 6));
 }
 
 // Kleine Streuung um die handverlesenen Regionen-Koordinaten statt echter

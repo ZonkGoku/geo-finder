@@ -320,9 +320,15 @@ export class HostController {
     }
     // Kartenpaket konnte nicht mal den Mindestpuffer liefern - die
     // urspruenglich gewuenschte Rundenzahl war von Anfang an zu hoch fuer
-    // dieses Paket, kein Hintergrund-Nachladen mehr noetig.
-    if (exhausted) this._targetRoundCount = this.roundLocations.length;
-    state.round.total = this._targetRoundCount;
+    // dieses Paket, kein Hintergrund-Nachladen mehr noetig. _finalizeRoundCap()
+    // wiederverwendet (statt hier nur still this._targetRoundCount zu setzen):
+    // sonst haetten Host UND Mitspieler nie erfahren, WARUM das Spiel z. B.
+    // nur 1 statt der gewaehlten 5 Runden hatte - live gemeldet als "Spiel
+    // nach 1 Runde einfach zu Ende" ohne jede Erklaerung. Broadcastet
+    // ROUND_CAP_ADJUSTED (denselben Toast wie beim spaeteren Erschoepfen
+    // waehrend des Hintergrund-Nachladens) UND setzt state.round.total.
+    if (exhausted) this._finalizeRoundCap(this.roundLocations.length);
+    else state.round.total = this._targetRoundCount;
 
     // Nur Name/Quelle/grobe Bounding-Box gehen an die Mitspieler - NICHT die
     // vollstaendige Standortliste mit echten Koordinaten. Die haelt nur der
