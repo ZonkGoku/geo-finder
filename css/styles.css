@@ -1739,6 +1739,42 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
      Vorschlagsliste kompakt, damit moeglichst viel Karte sichtbar bleibt. */
   .heatmap-suggestions{ max-height:34vh; }
   .heatmap-search-panel.expanded .heatmap-suggestions{ max-height:52vh; }
+
+  /* --- Kompaktes Settings-Accordion: auf Mobile waren vorher ALLE
+     Einstellungsgruppen (Runden/Dauer/Modus/Panorama-Steuerung/Mutatoren,
+     plus im PulseMap-Modus zusaetzlich Labels/Gegner-Info/Spielablauf/
+     Kontinent-Hinweis) permanent ausgeklappt - die Lobby wurde dadurch auf
+     einem Handy mehrere Bildschirmhoehen lang, bis ueberhaupt "Match
+     starten" oder die Kartenpaket-Auswahl in Sicht kamen (Audit-Punkt
+     "kompaktes Accordion/Grid fuer Lobby-Einstellungen"). Jede
+     .setting-group klappt jetzt auf Tap ihres Labels auf/zu, Default-
+     Zustand ist eingeklappt (siehe initSettingsAccordion() in app.js, nur
+     einmalig beim ersten Lobby-Eintritt gesetzt - ein spaeteres
+     renderLobby() durch Einstellungsaenderungen darf eine gerade
+     aufgeklappte Gruppe nicht wieder zuklappen). max-height statt
+     display:none, damit choice-thumb-Positionsberechnungen (offsetLeft/
+     offsetWidth, misst nur horizontal) auch fuer eingeklappte Gruppen
+     weiterhin korrekt bleiben. */
+  .setting-group-label{
+    cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+    padding:4px 2px; margin:-4px -2px 8px;
+  }
+  .setting-group-label::after{
+    content:''; width:8px; height:8px; flex:none; margin-left:8px;
+    border-right:2px solid var(--text-dim); border-bottom:2px solid var(--text-dim);
+    transform:rotate(45deg); transition:transform 0.2s ease;
+  }
+  .setting-group.collapsed .setting-group-label::after{ transform:rotate(-45deg); }
+  .setting-group-label ~ *{
+    overflow:hidden; max-height:400px; opacity:1;
+    transition:max-height 0.25s ease, opacity 0.2s ease, margin 0.2s ease;
+  }
+  .setting-group.collapsed .setting-group-label ~ *{
+    max-height:0 !important; opacity:0; margin-top:0; margin-bottom:0; pointer-events:none;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .setting-group-label::after, .setting-group-label ~ *{ transition:none; }
+  }
 }
 
 /* --- Sticky Bottom Action Bar (Mobile-Lobby): zuverlaessige Kopie von

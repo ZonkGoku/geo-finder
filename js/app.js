@@ -958,6 +958,34 @@ function wireLobbyControls() {
       renderMapSetGrid();
     });
   });
+
+  initSettingsAccordion();
+}
+
+/** Mobile-Accordion fuer die Lobby-Einstellungsgruppen (Runden/Dauer/Modus/
+ * Panorama-Steuerung/Mutatoren, sowie im PulseMap-Modus als ein Block die
+ * vier heatmap-eigenen Einstellungen) - vorher waren auf Mobile ALLE Gruppen
+ * permanent ausgeklappt, die Lobby wurde dadurch mehrere Bildschirmhoehen
+ * lang, bevor ueberhaupt "Match starten" in Sicht kam (Audit-Punkt
+ * "kompaktes Accordion/Grid"). Rein CSS-getriebenes Ein-/Ausklappen per
+ * .collapsed-Klasse (siehe styles.css) - hier nur der Klick-Toggle und der
+ * EINMALIGE Default-Zustand beim ersten Lobby-Eintritt. Bewusst NICHT in
+ * renderLobby() (das bei jeder Einstellungsaenderung erneut laeuft) gesetzt,
+ * sonst wuerde eine gerade vom Spieler aufgeklappte Gruppe beim naechsten
+ * Tipp in einer ANDEREN Gruppe wieder eingeklappt. */
+function initSettingsAccordion() {
+  const groups = el('lobby-settings-panel').querySelectorAll(':scope > .setting-group');
+  if (window.matchMedia('(max-width: 768px)').matches) {
+    groups.forEach((g) => g.classList.add('collapsed'));
+  }
+  groups.forEach((group) => {
+    group.querySelectorAll(':scope > .setting-group-label').forEach((label) => {
+      label.addEventListener('click', () => {
+        sound.playClick();
+        group.classList.toggle('collapsed');
+      });
+    });
+  });
 }
 
 // ---------------------------------------------------------------- hud
