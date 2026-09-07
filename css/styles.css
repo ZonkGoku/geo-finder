@@ -1362,7 +1362,11 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
     -webkit-overflow-scrolling:touch; scrollbar-width:none;
   }
   .choice-row::-webkit-scrollbar{ display:none; }
-  .choice-row button{ flex:0 0 auto; min-width:64px; scroll-snap-align:start; }
+  /* min-height:48px - Touch-Target-Mindestgroesse (Nutzer-Vorgabe fuer die
+     PulseMap-Ueberarbeitung), auf Desktop bewusst NICHT erzwungen: die
+     kompakten 33px-Buttons sind dort mit Maus praezise treffbar und die
+     dichtere Optik gewollt (siehe Basis-Regel oben). */
+  .choice-row button{ flex:0 0 auto; min-width:64px; min-height:48px; padding:10px 12px; scroll-snap-align:start; }
   .choice-row[data-setting="mode"] button,
   .choice-row[data-setting="modifier"] button,
   .choice-row[data-setting="heatmapOpponentInfo"] button,
@@ -1455,10 +1459,21 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
   .minimap.expanded .minimap-close-btn{ top:14px; right:14px; }
   @media (prefers-reduced-motion: reduce){ .minimap.expanded{ transition:none; } }
 
-  /* --- Heatmap: Suchfeld/Vorschlaege bleiben am oberen Rand verankert
-     (position:absolute relativ zu .device-screen, nicht an der Fenster-
-     hoehe haengend) - die virtuelle Tastatur schiebt sie so nicht weg. */
+  /* --- Heatmap/PulseMap: Suchfeld/Vorschlaege bleiben BEWUSST am oberen
+     statt am unteren Rand verankert (position:absolute relativ zu
+     .device-screen, nicht an der Fensterhoehe haengend, damit die virtuelle
+     Tastatur sie nicht wegschiebt) - anders als der Tipp-Button im
+     klassischen Modus (.hud-bottom) braucht das Vorschlagsmenue Platz
+     UNTERHALB des Eingabefelds; stuende das Feld unten in der Daumenzone,
+     haette die Liste nur noch den von der Tastatur ueberdeckten Raum. Die
+     .heatmap-top3-panel/.heatmap-activity-feed sitzen dafuer schon unten
+     (siehe 720px-Breakpoint oben) - zusammen bleibt die primaere Eingabe
+     erreichbar sichtbar, waehrend Zusatzinfos die Daumenzone nutzen. Feld
+     und Vorschlagszeilen bekommen zusaetzlich min-height:48px fuer
+     Touch-Target-Konformitaet. */
   .heatmap-search-panel{ top:60px; }
+  .heatmap-search-box{ min-height:48px; padding:13px 16px; }
+  .heatmap-suggestion{ min-height:48px; display:flex; align-items:center; padding:12px 16px; }
 }
 
 /* iOS zoomt bei Fokus automatisch in jedes Eingabefeld mit einer
