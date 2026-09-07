@@ -17,6 +17,11 @@ import { preferUnseen, recordShown } from '../core/history-manager.js';
 import { borderDistanceKm } from '../core/border-distance.js';
 
 const HEATMAP_WIN_POINTS = 1000;
+// Mindestabstand zwischen zwei AKZEPTIERTEN Tipps desselben Spielers (siehe
+// _handleHeatmapGuess()) - kein Mensch tippt schneller, ein Bot/Skript, das
+// alle Laender durchprobiert, um das Zielland aus den Antworten
+// einzugrenzen, schon.
+const HEATMAP_GUESS_MIN_INTERVAL_MS = 150;
 // Nach diesen ersten paar fertig geladenen Runden startet das Spiel schon,
 // waehrend der Rest im Hintergrund weiterlaedt (siehe startGame()/
 // _continueStreamingRounds() unten) - "Runde 1 und idealerweise Runde 2
@@ -719,6 +724,13 @@ export class HostController {
     // weiche Verlauf ueber mehrere Partien hinweg laeuft separat durch
     // preferUnseen() in _startHeatmapRound().
     this._heatmapUsedCountryIds = new Set();
+    // peerId -> Timestamp des letzten AKZEPTIERTEN Tipps (siehe
+    // _handleHeatmapGuess() Rate-Limit weiter unten) - verhindert, dass ein
+    // skriptgesteuerter Client alle ~177 Laender in Millisekunden durchtippt
+    // und aus den einzelnen HEATMAP_GUESS_RESULT-Antworten das Zielland
+    // schneller eingrenzt, als es das Spiel je vorsieht (kein Mensch tippt
+    // schneller als HEATMAP_GUESS_MIN_INTERVAL_MS).
+    this._heatmapLastGuessAt = new Map();
 
     this.pm.broadcast(
       makeMessage(
@@ -834,6 +846,12 @@ export class HostController {
     // Suchfeld dort clientseitig nicht gesperrt waere.
     if (this._heatmapTurnOrder && peerId !== this._currentHeatmapTurnPlayerId()) return;
 
+    // Rate-Limit gegen Guess-Spam (siehe HEATMAP_GUESS_MIN_INTERVAL_MS) - vor
+    // dem Country-Lookup geprueft, damit ein Spam-Versuch den Host so wenig
+    // wie moeglich Arbeit kostet.
+    const lastAt = this._heatmapLastGuessAt.get(peerId);
+    if (lastAt != null && Date.now() - lastAt < HEATMAP_GUESS_MIN_INTERVAL_MS) return;
+
     const country = this._heatmapStore.byId.get(payload.countryId);
     if (!country) return;
 
@@ -844,6 +862,7 @@ export class HostController {
     }
     if (seen.has(country.id)) return; // schon geraten - keine doppelte Aktivitaet/Wertung fuer denselben Tipp
     seen.add(country.id);
+    this._heatmapLastGuessAt.set(peerId, Date.now());
 
     const exact = country.id === this._heatmapTarget.id;
     // Nur der Host kennt hier beide Laender-Objekte (getippt UND Ziel)
