@@ -7,7 +7,7 @@ import { ResultMap } from './map/result-map.js';
 import { HeatmapMap } from './map/heatmap-map.js';
 import { PanoViewer } from './panorama/pano-viewer.js';
 import { ensureCountryStore, searchCountries, findCountryByName } from './core/country-store.js';
-import { getColorForDistance } from './core/heatmap-color.js';
+import { getColorForDistance, getDistanceLevel } from './core/heatmap-color.js';
 import { proximityLabel } from './core/heatmap-proximity.js';
 import { showScreen } from './ui/router.js';
 import { showToast } from './ui/toast.js';
@@ -1170,6 +1170,33 @@ function renderHeatmapRoundResult({ winnerPlayerId, target }) {
   }
   sub.textContent = `Gesuchtes Land: ${targetCountry?.nameDe ?? target.name}`;
   banner.classList.remove('hidden');
+
+  // Nur anzeigen, wenn diese Runde ueberhaupt eigene Tipps hatte - ein
+  // leeres Quadrat-Raster (z.B. bei Zeitablauf ohne einen einzigen Tipp)
+  // waere ein sinnloser Share.
+  el('heatmap-share-btn').classList.toggle('hidden', heatmapOwnGuesses.length === 0);
+}
+
+// Farbquadrate wie beim Wordle-Share: dieselbe Distanz-Skala wie die
+// Kartenfaerbung (getDistanceLevel(), core/heatmap-color.js), nur als Emoji
+// statt Fuellfarbe - verraet nichts ueber das Zielland selbst, nur den
+// eigenen Rateverlauf, genau wie Wordles gruene/gelbe Kaestchen nie den
+// gesuchten Begriff zeigen.
+const HEATMAP_SHARE_EMOJI = { exact: '🟩', near: '🟥', mid: '🟧', far: '🟨', cold: '🟦' };
+
+function buildHeatmapShareText() {
+  const squares = heatmapOwnGuesses
+    .map((g) => HEATMAP_SHARE_EMOJI[getDistanceLevel(g.distanceKm, g.proximity === 'exact')])
+    .join('');
+  const solved = heatmapOwnGuesses.some((g) => g.proximity === 'exact');
+  const attemptsLabel = solved
+    ? `${heatmapOwnGuesses.length} ${heatmapOwnGuesses.length === 1 ? 'Tipp' : 'Tipps'} bis zum Treffer`
+    : 'nicht gefunden';
+  return [
+    `PulseMap – Runde ${state.round.index + 1}/${state.round.total}`,
+    `${squares} (${attemptsLabel})`,
+    `${location.origin}${location.pathname}`,
+  ].join('\n');
 }
 
 function renderHeatmapSuggestions(query) {
@@ -1235,6 +1262,17 @@ function wireHeatmapControls() {
   el('heatmap-suggestions').addEventListener('click', (e) => {
     const btn = e.target.closest('.heatmap-suggestion');
     if (btn) handleHeatmapGuessPick(btn.dataset.countryId);
+  });
+
+  el('heatmap-share-btn').addEventListener('click', async () => {
+    sound.playClick();
+    const text = buildHeatmapShareText();
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Ergebnis kopiert — einfach einfügen und teilen.');
+    } catch {
+      showToast('Kopieren nicht möglich — bitte manuell markieren: ' + text);
+    }
   });
 }
 

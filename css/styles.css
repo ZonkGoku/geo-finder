@@ -1219,6 +1219,8 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
    Erfolgsmoment wirken. */
 .heatmap-result-title.won{ color:#39ff8f; font-weight:700; }
 .heatmap-result-sub{ font-size:0.85rem; color:var(--text-dim); margin:4px 0 0; }
+.heatmap-share-btn{ margin-top:14px; padding:8px 20px; font-size:0.82rem; }
+.heatmap-share-btn.hidden{ display:none; }
 
 /* Kleiner Hinweistext in der Lobby, wenn Heatmap-Modus gewaehlt ist - ersetzt
    die (fuer diesen Modus irrelevante) Kartenpaket-Auswahl. */

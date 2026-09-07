@@ -31,11 +31,19 @@ export const HEATMAP_COLORS = {
   unguessed: '#ffffff',
 };
 
+/** Liefert den Skalen-Schluessel (Key von HEATMAP_COLORS) statt der Farbe
+ * selbst - z.B. fuer den Wordle-artigen Farbquadrat-Share-Text
+ * (buildHeatmapShareText() in app.js), der dieselbe Skala als Emoji statt
+ * als Fuellfarbe braucht. */
+export function getDistanceLevel(km, exact = false) {
+  if (exact) return 'exact';
+  if (km == null) return 'cold';
+  if (km < NEAR_KM) return 'near';
+  if (km < MID_KM) return 'mid';
+  if (km < FAR_KM) return 'far';
+  return 'cold';
+}
+
 export function getColorForDistance(km, exact = false) {
-  if (exact) return HEATMAP_COLORS.exact;
-  if (km == null) return HEATMAP_COLORS.cold;
-  if (km < NEAR_KM) return HEATMAP_COLORS.near;
-  if (km < MID_KM) return HEATMAP_COLORS.mid;
-  if (km < FAR_KM) return HEATMAP_COLORS.far;
-  return HEATMAP_COLORS.cold;
+  return HEATMAP_COLORS[getDistanceLevel(km, exact)];
 }
