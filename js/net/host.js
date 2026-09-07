@@ -730,7 +730,7 @@ export class HostController {
           modifier: state.settings.modifier,
           mutators: state.settings.mutators,
           mapSetId: null,
-          mapSetName: 'Heatmap',
+          mapSetName: 'PulseMap',
           mapSetSource: 'heatmap',
           focusBounds: null,
           // Neue konfigurierbare Heatmap-Regeln (siehe state.js) - muessen

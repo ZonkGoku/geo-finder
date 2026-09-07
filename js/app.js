@@ -534,7 +534,7 @@ function renderLobbyStage() {
     el('lobby-stage-icon').innerHTML = HEATMAP_STAGE_ICON;
     el('lobby-stage-badge').className = 'mapset-card-badge ready';
     el('lobby-stage-badge').textContent = 'Bereit';
-    el('lobby-stage-name').textContent = 'Heatmap-Modus';
+    el('lobby-stage-name').textContent = 'PulseMap-Modus';
     el('lobby-stage-desc').textContent = 'Tippe Landesnamen, statt auf der Karte zu klicken - die Welt färbt sich nach Entfernung zum gesuchten Land ein. Wer zuerst richtig liegt, gewinnt die Runde.';
     el('lobby-stage-best').classList.add('hidden');
     return;
@@ -1835,7 +1835,7 @@ function renderLeaderboard({ finalScores }) {
   } else if (isCountryMode) {
     heading.textContent = 'Country-Streak beendet';
   } else if (state.settings.mode === 'heatmap') {
-    heading.textContent = 'Heatmap-Duell beendet';
+    heading.textContent = 'PulseMap-Duell beendet';
   } else if (isBattleRoyale) {
     const champion = sorted.find((e) => e.eliminatedAtRound == null);
     const championName = state.players.get(champion?.playerId)?.name;
