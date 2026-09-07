@@ -1379,18 +1379,38 @@ function wireHudControls() {
     guessMap?.invalidate();
     setTimeout(() => guessMap?.invalidate(), 340);
   };
-  const collapseMap = () => {
-    sound.playClick();
+  // playSound=false fuer die beiden "beilaeufigen" Schliess-Wege (Klick
+  // ausserhalb, Escape) - anders als ein bewusster Klick auf das X ist das
+  // meist ein Klick, der eigentlich etwas anderem galt (z. B. das Panorama
+  // umschauen), ein Klickgeraeusch dabei waere aufdringlich/verwirrend.
+  const collapseMap = (playSound = true) => {
+    if (!el('minimap').classList.contains('expanded')) return;
+    if (playSound) sound.playClick();
     el('minimap').classList.remove('expanded');
     el('minimap-wrap').classList.remove('expanded');
     el('minimap').style.transform = '';
   };
   el('minimap-open-btn').addEventListener('click', expandMap);
-  el('minimap-close-btn').addEventListener('click', collapseMap);
+  el('minimap-close-btn').addEventListener('click', () => collapseMap());
   el('minimap-style-toggle').addEventListener('click', () => {
     sound.playClick();
     const style = guessMap.toggleTileStyle();
     updateMapStyleLabel('minimap-style-label', style);
+  });
+
+  // Standard-Overlay-Verhalten (wie bei jedem Modal/Popover): ausgeklappte
+  // Karte schliesst sich auch bei einem Klick ausserhalb oder per Escape,
+  // nicht nur ueber den expliziten X-Button/Wisch-Geste. Bubble-Phase-Klick
+  // auf document statt z. B. auf dem Panorama-Hintergrund, damit WIRKLICH
+  // jeder Klick ausserhalb zaehlt (auch auf HUD-Buttons/den Rundenzaehler),
+  // nicht nur einer auf die sichtbare Kartenfläche.
+  document.addEventListener('click', (e) => {
+    if (!el('minimap').classList.contains('expanded')) return;
+    if (el('minimap-wrap').contains(e.target)) return;
+    collapseMap(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') collapseMap();
   });
 
   // Wisch-nach-unten-zum-Schliessen fuer die Mobile-Bottom-Sheet-Minimap:
