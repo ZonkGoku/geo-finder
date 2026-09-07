@@ -1081,7 +1081,7 @@ function heatmapActivityLine(text, tone = '') {
 function renderHeatmapGuessResult({ countryId, distanceKm, exact, proximity }) {
   heatmapMap?.colorCountry(countryId, getColorForDistance(distanceKm, exact), proximity);
   const country = countryStore?.byId.get(countryId);
-  const name = country?.name ?? countryId;
+  const name = country?.nameDe ?? countryId;
   if (exact) {
     heatmapActivityLine(`Volltreffer! ${name} war richtig.`, 'exact');
   } else if (proximity === 'neighbor') {
@@ -1125,6 +1125,7 @@ function renderHeatmapRoundResult({ winnerPlayerId, target }) {
   const banner = el('heatmap-result-banner');
   const title = el('heatmap-result-title');
   const sub = el('heatmap-result-sub');
+  const targetCountry = countryStore?.byId.get(target.id);
   if (winnerPlayerId) {
     const won = winnerPlayerId === state.self.id;
     title.textContent = won ? 'Exakter Treffer!' : `${heatmapPlayerName(winnerPlayerId)} war am schnellsten!`;
@@ -1134,7 +1135,6 @@ function renderHeatmapRoundResult({ winnerPlayerId, target }) {
       // Position bekannt ist (countryStore ist zu diesem Zeitpunkt immer
       // schon geladen, siehe ensureHeatmapWidgets()) - "geht vom Land aus"
       // statt eines generischen Vollbild-Effekts.
-      const targetCountry = countryStore?.byId.get(target.id);
       const anchor = targetCountry && heatmapMap ? heatmapMap.containerPointFor(targetCountry.lat, targetCountry.lng) : {};
       particleBurst({ ...anchor, colors: ['#39ff8f', '#17ecff', '#ff1fb0'] });
       spawnRadarPing(anchor.x, anchor.y);
@@ -1144,7 +1144,7 @@ function renderHeatmapRoundResult({ winnerPlayerId, target }) {
     title.textContent = 'Die Zeit ist abgelaufen.';
     title.classList.remove('won');
   }
-  sub.textContent = `Gesuchtes Land: ${target.name}`;
+  sub.textContent = `Gesuchtes Land: ${targetCountry?.nameDe ?? target.name}`;
   banner.classList.remove('hidden');
 }
 
@@ -1161,7 +1161,7 @@ function renderHeatmapSuggestions(query) {
   box.innerHTML = matches
     .map(
       (c, i) =>
-        `<button type="button" class="heatmap-suggestion${heatmapGuessedThisRound.has(c.id) ? ' guessed' : ''}" data-country-id="${escapeHtml(c.id)}" data-index="${i}">${escapeHtml(c.name)}</button>`
+        `<button type="button" class="heatmap-suggestion${heatmapGuessedThisRound.has(c.id) ? ' guessed' : ''}" data-country-id="${escapeHtml(c.id)}" data-index="${i}">${escapeHtml(c.nameDe)}</button>`
     )
     .join('');
 }

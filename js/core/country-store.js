@@ -9,6 +9,7 @@
 // continents.json, siehe scripts/compute-country-continents.mjs) fuer das
 // "Nachbarland!"/"gleicher Kontinent"-Feedback (core/heatmap-proximity.js).
 import { boundaryPoints } from './border-distance.js';
+import { displayNameDe, searchTermsFor } from './country-names-de.js';
 
 let storePromise = null;
 
@@ -34,9 +35,20 @@ async function build() {
     const id = resolveFeatureId(feature);
     const centroid = centroidRes[id];
     if (!centroid) continue; // sollte nach obigem Skript nie vorkommen, aber lieber ueberspringen als mit lat/lng=null weiterrechnen
+    const name = feature.properties.name;
     countries.push({
       id,
-      name: feature.properties.name,
+      name,
+      // Deutscher Anzeigename (core/country-names-de.js) - das restliche UI
+      // ist durchgehend deutsch, daher wird ueberall dort, wo ein Laendername
+      // angezeigt wird (Top-3-Liste, Vorschlagsliste, Zielland-Anzeige,
+      // Aktivitaets-Meldungen), dieser statt des englischen Datensatz-Namens
+      // genutzt. Die Suche selbst bleibt bilingual (siehe searchTerms unten).
+      nameDe: displayNameDe(name),
+      // Alle Teilstrings, gegen die eine Sucheingabe treffen soll: englischer
+      // Name, deutscher Name, plus etwaige Kurzform-Aliase ("USA" etc.) -
+      // vorberechnet statt bei jedem Tastenanschlag neu zusammengesetzt.
+      searchTerms: searchTermsFor(name).map((t) => t.toLowerCase()),
       geometry: feature.geometry,
       lat: centroid.lat,
       lng: centroid.lng,
@@ -55,7 +67,16 @@ async function build() {
 
   const byId = new Map(countries.map((c) => [c.id, c]));
   const byNameLower = new Map(countries.map((c) => [c.name.toLowerCase(), c]));
-  return { countries, byId, byNameLower };
+  // Exakte Treffer (Enter ohne Auswahl aus der Vorschlagsliste, siehe
+  // findCountryByName()) sollen auch bei komplett eingetipptem deutschen
+  // Namen oder Alias funktionieren ("Vereinigte Staaten", "USA"), nicht nur
+  // beim englischen Datensatz-Namen - jeder Suchbegriff zeigt hier auf das
+  // Land, nicht nur der Primaerschluessel.
+  const byAnyNameLower = new Map();
+  for (const c of countries) {
+    for (const term of c.searchTerms) if (!byAnyNameLower.has(term)) byAnyNameLower.set(term, c);
+  }
+  return { countries, byId, byNameLower, byAnyNameLower };
 }
 
 /** Muss einmal vor dem ersten Zugriff auf ein CountryStore-Objekt awaited werden. */
@@ -65,22 +86,25 @@ export function ensureCountryStore() {
 }
 
 export function findCountryByName(store, rawName) {
-  return store.byNameLower.get((rawName || '').trim().toLowerCase()) || null;
+  const q = (rawName || '').trim().toLowerCase();
+  return store.byAnyNameLower.get(q) || store.byNameLower.get(q) || null;
 }
 
 /**
- * Autocomplete-Vorschlaege: Namen, die den Suchtext enthalten, Treffer am
- * Wortanfang zuerst (z. B. "Ger" -> "Germany" vor "Algeria").
+ * Autocomplete-Vorschlaege: bilingual (DE/EN, siehe core/country-names-de.js) -
+ * ein Land matcht, sobald IRGENDEIN Suchbegriff (englischer Name, deutscher
+ * Name, Kurzform-Alias) den Suchtext enthaelt. Treffer am Wortanfang eines
+ * Begriffs zuerst (z. B. "Ger" -> "Germany"/"Deutschland" vor "Algeria").
  */
 export function searchCountries(store, query, limit = 8) {
   const q = (query || '').trim().toLowerCase();
   if (!q) return [];
   return store.countries
-    .filter((c) => c.name.toLowerCase().includes(q))
+    .filter((c) => c.searchTerms.some((term) => term.includes(q)))
     .sort((a, b) => {
-      const aStarts = a.name.toLowerCase().startsWith(q) ? 0 : 1;
-      const bStarts = b.name.toLowerCase().startsWith(q) ? 0 : 1;
-      return aStarts - bStarts || a.name.localeCompare(b.name);
+      const aStarts = a.searchTerms.some((term) => term.startsWith(q)) ? 0 : 1;
+      const bStarts = b.searchTerms.some((term) => term.startsWith(q)) ? 0 : 1;
+      return aStarts - bStarts || a.nameDe.localeCompare(b.nameDe);
     })
     .slice(0, limit);
 }
