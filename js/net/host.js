@@ -47,6 +47,17 @@ const MAX_PLAYERS = 6;
 // nachschauen, sofort zurueck und tippen".
 const MAX_TAB_SWITCHES_PER_GAME = 3;
 const SUSPICIOUS_GUESS_WINDOW_MS = 2500;
+// Zweites, unabhaengiges Signal (Audit Paket 4): ein Tipp, der SEHR schnell
+// nach Rundenstart kommt UND zufaellig auch noch sehr nah dran ist, deutet
+// (wie der Tab-Wechsel-Fall) eher auf vorheriges Wissen als auf echtes
+// Erraten hin - ein blosses "schneller Tipp" allein waere kein Signal (ein
+// wild draufgeklickter falscher Tipp ist einfach nur unbedacht, kein
+// Cheating-Verdacht), erst die KOMBINATION aus kaum realistischer
+// Reaktionszeit UND hoher Treffgenauigkeit ist der eigentliche Hinweis.
+// Genau wie beim Tab-Wechsel-Signal: kein Beweis, daher nur Punktekappung,
+// keine automatische Bestrafung/Kick.
+const FAST_ACCURATE_GUESS_MS = 2500;
+const FAST_ACCURATE_GUESS_KM = 25;
 
 // Waermt den Browser-Cache fuer die naechste Runde vor, waehrend die
 // aktuelle noch laeuft - rein lokal im Host-Browser (kein Protokoll-/
@@ -622,8 +633,16 @@ export class HostController {
       // reine Zuschauerrolle (siehe _applyBattleRoyaleElimination()).
       if (state.eliminatedAtRound.has(player.id)) continue;
       const guess = guesses.get(player.id) || null;
-      const flagged = Boolean(guess?.suspicious);
       let { distanceKm, score: baseScore, noGuess } = scoreGuess(guess, actual, state.pool.scaleKm);
+      // Zweites Signal erst hier moeglich: distanceKm steht erst nach
+      // scoreGuess() fest, _handleGuess() bei der Tipp-Annahme kennt nur den
+      // Zeitpunkt, noch nicht die Genauigkeit (siehe Kommentar an
+      // FAST_ACCURATE_GUESS_MS/-KM oben).
+      const fastAndAccurate =
+        !noGuess &&
+        distanceKm <= FAST_ACCURATE_GUESS_KM &&
+        guess.submittedAtMs - state.round.startTimestamp <= FAST_ACCURATE_GUESS_MS;
+      const flagged = Boolean(guess?.suspicious) || fastAndAccurate;
 
       if (!state.scores.has(player.id)) state.scores.set(player.id, freshScoreEntry());
       const scoreEntry = state.scores.get(player.id);
@@ -682,7 +701,6 @@ export class HostController {
 
     for (const player of state.players.values()) {
       const guess = guesses.get(player.id) || null;
-      const flagged = Boolean(guess?.suspicious);
       // Wie in scoreGuess() (net/host.js _scorePointsRound): ein Tipp-Objekt
       // mit nicht-numerischen lat/lng zaehlt als kein Tipp, statt unbemerkt
       // als "korrekt getippt" oder mit NaN in den Ergebnissen zu landen.
@@ -690,6 +708,11 @@ export class HostController {
       const noGuess = !hasValidCoords;
       const guessedCountry = hasValidCoords ? findCountryAtPointSync(guess.lat, guess.lng, features) : null;
       let { correct, score } = scoreCountryGuess(guessedCountry, actualCountry);
+      // Zweites Signal (siehe FAST_ACCURATE_GUESS_MS/-KM oben, gleiches
+      // Prinzip nur ohne Distanz-Feinheit): richtig UND unrealistisch
+      // schnell getippt.
+      const fastAndAccurate = correct && guess.submittedAtMs - state.round.startTimestamp <= FAST_ACCURATE_GUESS_MS;
+      const flagged = Boolean(guess?.suspicious) || fastAndAccurate;
       if (flagged) {
         correct = false;
         score = 0;
