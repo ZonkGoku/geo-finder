@@ -1199,10 +1199,43 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 }
 .heatmap-search-box svg{ width:18px; height:18px; color:var(--text-dim); flex:none; }
 .heatmap-search-box input{
-  flex:1; background:none; border:none; outline:none; color:#fff; font-size:0.95rem; font-family:var(--font-body);
+  /* min-width:0 hebt Flexbox' Default-min-width:auto auf - sonst darf das
+     Input nie schmaler als sein Placeholder-Text werden und drueckt das
+     .heatmap-guess-counter-Badge daneben ueber den rechten Rand der Box
+     hinaus (auf schmalen Mobile-Breiten reproduzierbar). */
+  flex:1; min-width:0; background:none; border:none; outline:none; color:#fff; font-size:0.95rem; font-family:var(--font-body);
 }
 .heatmap-search-box input::placeholder{ color:rgba(255,255,255,0.45); }
 .heatmap-search-box input:disabled{ opacity:0.5; }
+
+/* Tipp-Zaehler der aktuellen Runde - eigenes kleines Glass-Badge statt Teil
+   des (erst ab dem ersten Tipp sichtbaren) Top-3-Panels, damit "0 Tipps" von
+   der ersten Sekunde einer Runde an sichtbar ist. flex:none haelt die Breite
+   fest, waehrend das Suchfeld (flex:1) den restlichen Platz nimmt. */
+.heatmap-guess-counter{
+  display:flex; align-items:baseline; gap:4px; flex:none;
+  padding:4px 10px; border-radius:999px;
+  background:color-mix(in srgb, var(--surface-hi) 55%, transparent);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.16);
+  font-family:var(--font-mono);
+}
+.heatmap-guess-counter-value{
+  display:inline-block; min-width:1ch; text-align:center;
+  color:var(--accent-2); font-size:0.86rem; font-weight:700;
+}
+.heatmap-guess-counter-unit{ font-size:0.66rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.04em; }
+/* Kurzer, knackiger Scale-Pop bei jedem neuen Tipp (siehe
+   renderHeatmapGuessCounter() in app.js) - dasselbe Reflow-Trigger-Muster
+   wie .guess-pulse auf der Karte, damit die Animation bei zwei Tipps direkt
+   hintereinander jedes Mal neu von vorne startet. */
+@keyframes heatmapGuessCounterPop{
+  0%{ transform:scale(1); }
+  45%{ transform:scale(1.2); color:#fff; }
+  100%{ transform:scale(1); }
+}
+.heatmap-guess-counter-value.pop{ animation:heatmapGuessCounterPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@media (prefers-reduced-motion: reduce){ .heatmap-guess-counter-value.pop{ animation:none; } }
 
 .heatmap-suggestions{
   display:flex; flex-direction:column; overflow:hidden; border-radius:14px;

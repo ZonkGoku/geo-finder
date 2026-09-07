@@ -1128,6 +1128,7 @@ async function renderHeatmapRoundStart() {
   input.value = '';
   input.disabled = false;
   el('heatmap-suggestions').classList.add('hidden');
+  renderHeatmapGuessCounter({ pop: false });
   renderHeatmapTimer();
   requestAnimationFrame(() => input.focus());
 }
@@ -1226,6 +1227,27 @@ function renderHeatmapGuessResult({ countryId, distanceKm, exact, proximity }) {
   }
   heatmapOwnGuesses.push({ name, distanceKm, proximity });
   renderHeatmapTop3();
+  renderHeatmapGuessCounter({ pop: true });
+}
+
+/** Kleines Glass-Badge neben dem Suchfeld: zaehlt die eigenen Tipps der
+ * aktuellen Runde (heatmapOwnGuesses, siehe renderHeatmapGuessResult() oben).
+ * Nur fuer den Heatmap-Modus relevant - #heatmap-guess-counter existiert nur
+ * in #screen-heatmap, in keinem anderen Spielmodus, wird also von Punkte-/
+ * HP-Duell/Battle-Royale nie beruehrt. pop:true triggert den kurzen
+ * Scale-Pop (siehe .heatmap-guess-counter-value.pop in styles.css) bei jedem
+ * neuen Tipp - reset (Rundenstart) soll dagegen lautlos auf 0 zurueckspringen. */
+function renderHeatmapGuessCounter({ pop = false } = {}) {
+  const value = el('heatmap-guess-counter-value');
+  const unit = el('heatmap-guess-counter-unit');
+  const count = heatmapOwnGuesses.length;
+  value.textContent = String(count);
+  unit.textContent = t(count === 1 ? 'attemptUnitOne' : 'attemptUnitMany');
+  if (pop) {
+    value.classList.remove('pop');
+    void value.offsetWidth; // Reflow erzwingen, siehe shakeHeatmapSearchBox()/guess-pulse fuer dasselbe Muster
+    value.classList.add('pop');
+  }
 }
 
 // Payload-Form haengt von heatmapOpponentInfo ab (siehe net/host.js
