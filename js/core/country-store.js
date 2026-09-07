@@ -8,6 +8,8 @@
 // scripts/compute-country-neighbors.mjs) und Kontinent (data/geo/country-
 // continents.json, siehe scripts/compute-country-continents.mjs) fuer das
 // "Nachbarland!"/"gleicher Kontinent"-Feedback (core/heatmap-proximity.js).
+import { boundaryPoints } from './border-distance.js';
+
 let storePromise = null;
 
 // 3 der 177 Features (Nordzypern, Somaliland, Kosovo) haben im Datensatz
@@ -43,6 +45,11 @@ async function build() {
       // den Aufrufstellen in heatmap-proximity.js.
       neighbors: neighborsRes[id] || [],
       continent: continentRes[id] || null,
+      // Einmal beim Laden vorberechnet statt bei jedem Tipp neu aus der
+      // rohen Geometrie extrahiert (siehe core/border-distance.js) - Laender
+      // mit hunderten Randpunkten (Russland, Kanada) sollen nicht bei jedem
+      // Rateversuch erneut durchlaufen werden muessen.
+      boundaryPoints: boundaryPoints(feature.geometry),
     });
   }
 

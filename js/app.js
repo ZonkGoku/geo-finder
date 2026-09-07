@@ -668,6 +668,7 @@ function renderLobby() {
     renderChoiceRow('choice-heatmap-labels', state.settings.heatmapLabels);
     renderChoiceRow('choice-heatmap-opponent-info', state.settings.heatmapOpponentInfo);
     renderChoiceRow('choice-heatmap-turn-mode', state.settings.heatmapTurnMode);
+    renderChoiceRow('choice-heatmap-continent-hint', state.settings.heatmapContinentHint);
     renderLobbyStage();
   } else if (mapSetIndex.length) {
     renderMapSetGrid();
@@ -815,6 +816,7 @@ function wireLobbyControls() {
   wireChoiceRow('choice-heatmap-labels', 'heatmapLabels', (v) => v);
   wireChoiceRow('choice-heatmap-opponent-info', 'heatmapOpponentInfo', (v) => v);
   wireChoiceRow('choice-heatmap-turn-mode', 'heatmapTurnMode', (v) => v);
+  wireChoiceRow('choice-heatmap-continent-hint', 'heatmapContinentHint', (v) => v);
 
   el('mutator-list').querySelectorAll('.mutator-chip').forEach((chip) => {
     chip.addEventListener('click', () => {

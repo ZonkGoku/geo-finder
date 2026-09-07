@@ -7,7 +7,6 @@ import {
   computeStreakBonus,
   scoreCountryGuess,
   nextCountryStreak,
-  haversineDistanceKm,
 } from '../core/scoring.js';
 import { makeSeed, mulberry32 } from '../core/rng.js';
 import { streamRoundLocations, computeMapSetBounds } from '../core/pool-loader.js';
@@ -15,6 +14,7 @@ import { ensureCountryData, findCountryAtPointSync } from '../core/country-looku
 import { ensureCountryStore, randomCountry } from '../core/country-store.js';
 import { getProximityLevel } from '../core/heatmap-proximity.js';
 import { preferUnseen, recordShown } from '../core/history-manager.js';
+import { borderDistanceKm } from '../core/border-distance.js';
 
 const HEATMAP_WIN_POINTS = 1000;
 // Nach diesen ersten paar fertig geladenen Runden startet das Spiel schon,
@@ -739,6 +739,7 @@ export class HostController {
           heatmapLabels: state.settings.heatmapLabels,
           heatmapOpponentInfo: state.settings.heatmapOpponentInfo,
           heatmapTurnMode: state.settings.heatmapTurnMode,
+          heatmapContinentHint: state.settings.heatmapContinentHint,
         },
         state.self.id
       )
@@ -844,14 +845,34 @@ export class HostController {
     if (seen.has(country.id)) return; // schon geraten - keine doppelte Aktivitaet/Wertung fuer denselben Tipp
     seen.add(country.id);
 
-    const distanceKm = haversineDistanceKm(country.lat, country.lng, this._heatmapTarget.lat, this._heatmapTarget.lng);
     const exact = country.id === this._heatmapTarget.id;
     // Nur der Host kennt hier beide Laender-Objekte (getippt UND Ziel)
     // gleichzeitig - exakt derselbe Autoritaets-Grund wie fuer distanceKm/
     // exact oben. Das Ergebnis ist ein reiner level-String ohne IDs (siehe
     // core/heatmap-proximity.js), verraet also fuer sich genommen nichts
     // ueber das Zielland.
-    const proximity = getProximityLevel(country, this._heatmapTarget);
+    // heatmapContinentHint==='off' (Default - Nutzer-Feedback: "richtiger
+    // Kontinent" macht das Raten zu leicht): eine 'continent'-Einstufung
+    // wird vor dem Versenden auf 'far' herabgestuft, sodass Ratende (und bei
+    // heatmapOpponentInfo==='all' auch Mitspieler) NIE erfahren, dass es
+    // "nur" der Kontinent war - nur die Distanzzahl bleibt als Hinweis. Ein
+    // echter Host-seitiger Informationsentzug (wie die opponentInfo-Modi),
+    // kein reiner Anzeige-Filter im Client.
+    const rawProximity = getProximityLevel(country, this._heatmapTarget);
+    const proximity =
+      rawProximity === 'continent' && state.settings.heatmapContinentHint !== 'on' ? 'far' : rawProximity;
+    // Grenze-zu-Grenze statt Mittelpunkt-zu-Mittelpunkt (Nutzer-Feedback: bei
+    // grossen/laenglichen Laendern wirkte ein Mittelpunkt-Wert irrefuehrend).
+    // Bei einem bereits als Nachbarland erkannten Tipp (getProximityLevel()
+    // oben, basierend auf der praezisen Offline-Analyse in
+    // scripts/compute-country-neighbors.mjs) wird die teure Randpunkt-
+    // Rechnung erst gar nicht angestossen, sondern direkt 0 gezeigt - so
+    // zeigen Badge ("Nachbarland!") und Distanzzahl garantiert dasselbe,
+    // auch fuer die seltenen Faelle, in denen zwei Laender sich zwar
+    // beruehren, ihre vereinfachten Randpunkte im 110m-Datensatz aber nicht
+    // exakt deckungsgleich sind.
+    const distanceKm =
+      proximity === 'neighbor' || exact ? 0 : borderDistanceKm(country.boundaryPoints, this._heatmapTarget.boundaryPoints);
 
     // Privat NUR an den ratenden Spieler zurueck: er kennt sein eigenes
     // getipptes Land bereits, braucht aber die Distanz, um seine EIGENE

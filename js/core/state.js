@@ -36,6 +36,12 @@ export const state = {
     heatmapLabels: 'on', // 'on' | 'off' - Kartenbeschriftungen (String statt Bool, siehe renderChoiceRow() in app.js)
     heatmapOpponentInfo: 'all', // 'all' | 'best' | 'blind' - wie viel vom Gegner-Live-Feed ankommt
     heatmapTurnMode: 'simultaneous', // 'simultaneous' | 'turns' - gleichzeitig oder reihum tippen
+    // 'on' | 'off' - ob ein Tipp auf demselben Kontinent (aber kein
+    // Nachbarland) als solcher benannt wird ("Richtiger Kontinent, aber
+    // noch X km entfernt") statt nur die Distanz zu zeigen. Nutzer-Feedback:
+    // macht das Raten deutlich leichter, daher per Default AUS (echter Easy-
+    // Mode zum bewussten Anschalten, siehe core/heatmap-proximity.js).
+    heatmapContinentHint: 'off',
   },
   pool: null, // aufgeloestes Kartenpaket (nur Host braucht Koordinaten)
   challenge: null, // { type: 'daily' | 'link', seed } - siehe core/challenge.js, sonst null fuer normale Spiele

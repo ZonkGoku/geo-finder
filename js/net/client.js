@@ -138,6 +138,7 @@ export class ClientController {
         state.settings.heatmapLabels = message.payload.heatmapLabels ?? 'on';
         state.settings.heatmapOpponentInfo = message.payload.heatmapOpponentInfo ?? 'all';
         state.settings.heatmapTurnMode = message.payload.heatmapTurnMode ?? 'simultaneous';
+        state.settings.heatmapContinentHint = message.payload.heatmapContinentHint ?? 'off';
         state.scores = new Map();
         state.roundHistory = [];
         state.hp = new Map();
