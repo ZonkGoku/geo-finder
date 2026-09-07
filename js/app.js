@@ -970,7 +970,19 @@ function heatmapPlayerName(peerId) {
 function clearHeatmapTimer() {
   clearInterval(heatmapTimerInterval);
   heatmapTimerInterval = null;
+  // Einziger Choke-Point: wird sowohl bei natuerlichem Rundenende (Timer
+  // laeuft ab, siehe update() unten) als auch bei vorzeitigem Ende (Treffer,
+  // siehe renderHeatmapRoundResult()) aufgerufen - Ambience stoppt so in
+  // beiden Faellen zuverlaessig, ohne den Aufruf doppelt pflegen zu muessen.
+  sound.stopRoundAmbience();
 }
+
+// War fuer PulseMap gar nicht angeschlossen, obwohl startRoundAmbience()/
+// setRoundTension() bereits vollstaendig fuer den klassischen Panorama-HUD-
+// Timer existieren (siehe dort) - PulseMap-Runden hatten dadurch nie
+// Zeitdruck-Ambience. Identisches Muster, nur an renderHeatmapTimer() statt
+// am HUD-Timer angeschlossen.
+const HEATMAP_TENSION_WINDOW_S = 10;
 
 function renderHeatmapTimer() {
   const el2 = el('heatmap-timer');
@@ -982,9 +994,16 @@ function renderHeatmapTimer() {
     const remainingMs = state.round.startTimestamp + state.round.timeLimitMs - Date.now();
     const remainingS = Math.max(0, Math.ceil(remainingMs / 1000));
     el2.textContent = `${remainingS}s`;
+    const tension = 1 - Math.max(0, Math.min(HEATMAP_TENSION_WINDOW_S, remainingMs / 1000)) / HEATMAP_TENSION_WINDOW_S;
+    sound.setRoundTension(tension);
     if (remainingMs <= 0) clearHeatmapTimer();
   };
+  // Reihenfolge wichtig: clearHeatmapTimer() stoppt jetzt auch die Ambience
+  // (siehe dortiger Kommentar) - muss also VOR startRoundAmbience() laufen,
+  // sonst wuerde die gerade gestartete Ambience durch den Aufraeum-Schritt
+  // sofort wieder abgewuergt.
   clearHeatmapTimer();
+  sound.startRoundAmbience();
   update();
   heatmapTimerInterval = setInterval(update, 250);
 }
