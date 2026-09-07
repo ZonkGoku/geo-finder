@@ -1068,6 +1068,7 @@ let heatmapSuggestionIndex = -1;
 let heatmapOwnGuesses = []; // [{name, distanceKm}] - fuer das Top-3-Panel, pro Runde neu
 let heatmapOpponentRecordKm = null; // heatmapOpponentInfo==='best': bisher bester GEGNER-Wert dieser Runde
 let heatmapActiveTurnPlayerId = null; // heatmapTurnMode==='turns': wer gerade dran ist, sonst null
+let heatmapDisplayedScore = 0; // fuer den animierten Hochzaehl-Effekt in renderHeatmapScore() - der zuletzt AUF DEM SCREEN gezeigte Wert, nicht zwingend state.scores' aktueller Wert waehrend die Animation noch laeuft
 
 async function ensureHeatmapWidgets() {
   const labels = state.settings.heatmapLabels !== 'off';
@@ -1136,7 +1137,11 @@ async function renderHeatmapRoundStart() {
   heatmapOwnGuesses = [];
   heatmapOpponentRecordKm = null;
   heatmapActiveTurnPlayerId = null;
-  if (state.round.index === 0) recordHeatmapGameStarted();
+  if (state.round.index === 0) {
+    recordHeatmapGameStarted();
+    heatmapDisplayedScore = 0;
+  }
+  renderHeatmapScore({ animate: false });
 
   el('heatmap-round-index').textContent = String(state.round.index + 1).padStart(2, '0');
   el('heatmap-round-total').textContent = String(state.round.total).padStart(2, '0');
@@ -1294,6 +1299,42 @@ function renderHeatmapActivity(payload) {
   else heatmapActivityLine(`${name} tippt … (${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt)`, 'peer');
 }
 
+/** Live-Punktestand-Badge im Header (#heatmap-score-badge, nur innerhalb von
+ * #screen-heatmap im Markup vorhanden - siehe dortiger Kommentar in
+ * styles.css zur Isolation). state.scores wird auf Host UND Client bei jedem
+ * MSG.HEATMAP_WIN identisch aktualisiert (siehe net/host.js
+ * _finishHeatmapRound() bzw. net/client.js), .total ist also auf beiden
+ * Seiten zuverlaessig der aktuelle Gesamtstand.
+ * animate:false (Rundenstart) setzt den Wert nur lautlos, animate:true
+ * (nach einem Rundenergebnis) zaehlt sichtbar von alt auf neu hoch und
+ * triggert den gruenen Scale-Pop (.heatmap-score-value.pop, styles.css) -
+ * bei unveraendertem Wert (0 Punkte in dieser Runde) bleibt beides aus,
+ * ein Hochzaehlen von X auf X waere nur unnoetiges visuelles Rauschen. */
+function renderHeatmapScore({ animate = false } = {}) {
+  const valueEl = el('heatmap-score-value');
+  const target = state.scores.get(state.self.id)?.total ?? 0;
+  if (!animate || target === heatmapDisplayedScore) {
+    heatmapDisplayedScore = target;
+    valueEl.textContent = String(target);
+    return;
+  }
+  const from = heatmapDisplayedScore;
+  const delta = target - from;
+  const durationMs = 500;
+  const startedAt = performance.now();
+  valueEl.classList.remove('pop');
+  void valueEl.offsetWidth; // Reflow erzwingen, siehe .guess-pulse/.pop fuer dasselbe Muster an anderer Stelle
+  valueEl.classList.add('pop');
+  const step = (now) => {
+    const progress = Math.min(1, (now - startedAt) / durationMs);
+    const eased = 1 - (1 - progress) ** 3; // ease-out-cubic - schnell los, sanft eingebremst
+    valueEl.textContent = String(Math.round(from + delta * eased));
+    if (progress < 1) requestAnimationFrame(step);
+    else heatmapDisplayedScore = target;
+  };
+  requestAnimationFrame(step);
+}
+
 function renderHeatmapRoundResult({ winnerPlayerId, target, results }) {
   clearHeatmapTimer();
   el('heatmap-search-input').disabled = true;
@@ -1359,6 +1400,7 @@ function renderHeatmapRoundResult({ winnerPlayerId, target, results }) {
   // leeres Quadrat-Raster (z.B. bei Zeitablauf ohne einen einzigen Tipp)
   // waere ein sinnloser Share.
   el('heatmap-share-btn').classList.toggle('hidden', heatmapOwnGuesses.length === 0);
+  renderHeatmapScore({ animate: true });
 }
 
 // Farbquadrate wie beim Wordle-Share: dieselbe Distanz-Skala wie die

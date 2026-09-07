@@ -132,6 +132,7 @@ const DICT = {
 
     searchPlaceholder: 'Enter a country…',
     top3Title: 'Your top 3 guesses',
+    scoreLabel: 'Score',
     neighborBadge: 'Neighbor',
     shareResultBtn: 'Share result',
     resultTargetLabel: 'Target country: {name}',
@@ -193,6 +194,7 @@ const DICT = {
 
     searchPlaceholder: 'Land eingeben…',
     top3Title: 'Deine Top 3 Tipps',
+    scoreLabel: 'Punkte',
     neighborBadge: 'Nachbarland',
     shareResultBtn: 'Ergebnis teilen',
     resultTargetLabel: 'Gesuchtes Land: {name}',

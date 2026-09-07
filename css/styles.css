@@ -71,6 +71,20 @@ body{
   color: var(--text);
   font-family: var(--font-body);
   min-height: 100vh;
+  /* dvh statt vh als progressive enhancement (aeltere Browser ignorieren
+     die zweite, ungueltige Deklaration und behalten die vh-Zeile darueber -
+     CSS ueberschreibt eine gueltige Deklaration nie mit einer fuer den
+     Parser ungueltigen). vh haengt sich an die GROESSTMOEGLICHE Viewport-
+     Hoehe (Adressleiste eingeklappt) - auf Mobile faengt Safari/Chrome die
+     Seite dadurch beim ersten Laden oft zu kurz ab (Adressleiste noch
+     sichtbar), dvh trackt die tatsaechlich sichtbare Hoehe live mit. */
+  min-height: 100dvh;
+  /* Verhindert das Pull-to-Refresh-/Overscroll-Bounce beim Wischen ueber die
+     Leaflet-Karte oder das Panorama - ohne das reisst ein Swipe nahe am
+     oberen Bildschirmrand auf Mobile leicht die ganze Seite mit (Chrome/
+     Safari-Refresh-Geste), obwohl eigentlich nur die Karte gepannt werden
+     sollte. */
+  overscroll-behavior: none;
   display:flex;
   justify-content:center;
   /* env(safe-area-inset-*) haengt an den echten Geraeteraendern (iPhone-
@@ -1138,14 +1152,51 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
    Glass-Overlays darueber schweben. */
 #screen-heatmap{ padding:0; min-height:600px; position:relative; overflow:hidden; }
 .heatmap-header{ position:relative; z-index:3; display:flex; justify-content:space-between; align-items:flex-start; padding:22px 26px; pointer-events:none; }
-.heatmap-header .round-chip, .heatmap-header .timer{ pointer-events:auto; }
+.heatmap-header .round-chip, .heatmap-header .timer, .heatmap-header .heatmap-score-badge{ pointer-events:auto; }
+
+/* Live-Punktestand - existiert nur innerhalb #screen-heatmap im Markup, ist
+   also strukturell an den Heatmap-Modus gebunden (dieselbe Isolations-
+   Strategie wie .heatmap-guess-counter: kein zusaetzlicher mode==='heatmap'-
+   Check noetig, weil kein anderer Modus dieses Element je rendert). */
+.heatmap-score-badge{
+  display:flex; align-items:baseline; gap:6px; flex:none; white-space:nowrap;
+  padding:8px 16px; border-radius:999px;
+  background:color-mix(in srgb, var(--surface-raised) 78%, transparent);
+  backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid rgba(255,255,255,0.14);
+  box-shadow:0 16px 40px -16px rgba(0,0,0,0.6), 0 1px 0 0 rgba(255,255,255,0.06) inset;
+  font-family:var(--font-mono);
+}
+.heatmap-score-label{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); }
+.heatmap-score-value{
+  display:inline-block; min-width:1.4ch; text-align:right;
+  color:var(--accent-2); font-size:1rem; font-weight:700;
+  transition:color 0.25s ease;
+}
+/* Grünes Aufleuchten + Scale-Pop bei Punktzuwachs (siehe renderHeatmapScore()
+   in app.js) - dieselbe Reflow-Trigger-Technik wie .guess-pulse/.pop an
+   anderer Stelle, damit zwei Punktzuwaechse kurz hintereinander (z.B. zwei
+   Runden ohne Zwischenstopp) die Animation jeweils neu von vorne starten.
+   Der eigentliche Hochzaehl-Effekt ist reines JS (requestAnimationFrame in
+   renderHeatmapScore()), diese Klasse liefert nur den begleitenden Puls. */
+@keyframes heatmapScorePop{
+  0%{ transform:scale(1); }
+  35%{ transform:scale(1.15); color:#39ff8f; }
+  100%{ transform:scale(1); }
+}
+.heatmap-score-value.pop{ animation:heatmapScorePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@media (prefers-reduced-motion: reduce){ .heatmap-score-value.pop{ animation:none; } }
 .heatmap-stage{ position:absolute; inset:0; }
 /* Kein Kachel-Layer mehr als Hintergrund (siehe Kommentar in heatmap-map.js -
    Esris "Base"-Kacheln rendern trotz ihres Namens eigene Laendernamen ins
    Rasterbild, doppelt zu unseren Tooltips). Ein einfacher, dezent
    verlaufender dunkler Hintergrund erfuellt den gleichen Zweck (neutraler
    Kontrast zu den eingefaerbten Laender-Polygonen) ohne jede Fremd-Quelle. */
-.heatmap-map{ position:absolute; inset:0; z-index:0; background:radial-gradient(120% 120% at 50% 30%, var(--surface-hi) 0%, var(--surface) 65%); }
+/* overscroll-behavior:none zusaetzlich hier (nicht nur auf body) - ein
+   Wisch/Pan direkt auf der Leaflet-Karte selbst soll nie das Pull-to-
+   Refresh-Bounce des umgebenden Browsers ausloesen, unabhaengig davon, ob
+   der Touch am oberen Kartenrand beginnt. */
+.heatmap-map{ position:absolute; inset:0; z-index:0; overscroll-behavior:none; background:radial-gradient(120% 120% at 50% 30%, var(--surface-hi) 0%, var(--surface) 65%); }
 
 /* Eigene Laendername-Beschriftung statt eines externen Kachel-Layers (siehe
    HeatmapMap._applyLabel() in heatmap-map.js). War frueher permanent:true
@@ -1526,6 +1577,12 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
   .round-chip-label{ display:none; }
   .round-chip{ padding:6px 10px; font-size:0.7rem; }
   .timer{ padding:6px 12px; font-size:0.95rem; gap:5px; }
+  /* Gleiches Muster wie .round-chip-label oben - "PUNKTE" faellt weg, nur
+     die Zahl bleibt, damit drei Badges (Runde/Punkte/Timer) nebeneinander
+     auf schmalen Screens nicht umbrechen. */
+  .heatmap-score-label{ display:none; }
+  .heatmap-score-badge{ padding:6px 10px; }
+  .heatmap-score-value{ font-size:0.85rem; }
   .hud-top{ padding:12px 14px; gap:8px; }
   .hud-top-left{ gap:6px; }
   .heatmap-header{ padding:12px 14px; }
