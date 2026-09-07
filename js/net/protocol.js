@@ -25,12 +25,12 @@ export const MSG = {
   // autoritativ (bewertet/erkennt den Treffer selbst) statt einem
   // client-gemeldeten "gewonnen" zu vertrauen, das trivial faelschbar waere.
   HEATMAP_GUESS: 'HEATMAP_GUESS',
-  HEATMAP_GUESS_RESULT: 'HEATMAP_GUESS_RESULT', // Host -> NUR der ratende Spieler: eigene Distanz/Farbe
+  HEATMAP_GUESS_RESULT: 'HEATMAP_GUESS_RESULT', // Host -> NUR der ratende Spieler: eigene Distanz/Farbe/proximity ('exact'|'neighbor'|'continent'|'far', siehe core/heatmap-proximity.js)
   // Host -> alle ANDEREN: nur Distanz, NIE welches Land geraten wurde. Form
   // haengt von state.settings.heatmapOpponentInfo ab (siehe host.js
   // _handleHeatmapGuess()): 'all' schickt jeden Tipp ({playerId,
-  // distanceKm, exact}), 'best' nur eine Verbesserung des bisher besten
-  // Gegner-Werts ({recordKm}, kein playerId - Druck ohne Zielperson), 'blind' nichts.
+  // distanceKm, exact, proximity}), 'best' nur eine Verbesserung des bisher
+  // besten Gegner-Werts ({recordKm}, kein playerId - Druck ohne Zielperson), 'blind' nichts.
   HEATMAP_ACTIVITY: 'HEATMAP_ACTIVITY',
   HEATMAP_WIN: 'HEATMAP_WIN', // Host -> alle: Runde vorbei, Zielland + Gewinner werden aufgedeckt
   HEATMAP_TURN_UPDATE: 'HEATMAP_TURN_UPDATE', // Host -> alle: wer im "Abwechselnd"-Modus gerade an der Reihe ist

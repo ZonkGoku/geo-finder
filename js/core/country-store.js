@@ -3,7 +3,11 @@
 // data/geo/countries-110m.json (auch von core/country-lookup.js fuer den
 // Country-Streak-Modus genutzt) plus Mittelpunkte aus dem neu erzeugten
 // data/geo/country-centroids.json (siehe scripts/compute-country-centroids.mjs -
-// das 110m-Datenset selbst enthaelt nur Umrisse, keine Mittelpunkte).
+// das 110m-Datenset selbst enthaelt nur Umrisse, keine Mittelpunkte), sowie
+// Landgrenzen-Nachbarn (data/geo/country-neighbors.json, siehe
+// scripts/compute-country-neighbors.mjs) und Kontinent (data/geo/country-
+// continents.json, siehe scripts/compute-country-continents.mjs) fuer das
+// "Nachbarland!"/"gleicher Kontinent"-Feedback (core/heatmap-proximity.js).
 let storePromise = null;
 
 // 3 der 177 Features (Nordzypern, Somaliland, Kosovo) haben im Datensatz
@@ -16,9 +20,11 @@ function resolveFeatureId(feature) {
 }
 
 async function build() {
-  const [geoRes, centroidRes] = await Promise.all([
+  const [geoRes, centroidRes, neighborsRes, continentRes] = await Promise.all([
     fetch('./data/geo/countries-110m.json').then((r) => r.json()),
     fetch('./data/geo/country-centroids.json').then((r) => r.json()),
+    fetch('./data/geo/country-neighbors.json').then((r) => r.json()),
+    fetch('./data/geo/country-continents.json').then((r) => r.json()),
   ]);
 
   const countries = [];
@@ -32,6 +38,11 @@ async function build() {
       geometry: feature.geometry,
       lat: centroid.lat,
       lng: centroid.lng,
+      // [] statt undefined, falls ein Land (sollte nach dem Erzeugungsskript
+      // nicht vorkommen) fehlt - vermeidet ".includes ist keine Funktion" an
+      // den Aufrufstellen in heatmap-proximity.js.
+      neighbors: neighborsRes[id] || [],
+      continent: continentRes[id] || null,
     });
   }
 

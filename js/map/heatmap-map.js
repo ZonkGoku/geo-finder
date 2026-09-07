@@ -99,19 +99,46 @@ export class HeatmapMap {
     });
   }
 
-  colorCountry(countryId, color) {
+  /**
+   * proximity (optional): 'exact' | 'neighbor' | 'continent' | 'far' aus
+   * core/heatmap-proximity.js - steuert nur den Gluehrand-Effekt (siehe
+   * .leaflet-interactive.proximity-* in styles.css), NICHT die Fuellfarbe
+   * selbst (die bleibt die Distanz-Farbskala aus heatmap-color.js). Das
+   * eigentliche Fade-In beim Einfaerben ist eine reine CSS-Transition auf
+   * .leaflet-interactive (fill/fill-opacity) - hier wird nur der Zielwert
+   * gesetzt, nicht animiert.
+   */
+  colorCountry(countryId, color, proximity = null) {
     const layer = this.layerByCountryId.get(String(countryId));
     if (!layer) return;
     const isUnguessed = color === HEATMAP_COLORS.unguessed;
     layer.setStyle({ fillColor: color, fillOpacity: isUnguessed ? UNGUESSED_FILL_OPACITY : GUESSED_FILL_OPACITY });
     layer.bringToFront();
+
+    const path = layer.getElement?.();
+    if (path) {
+      path.classList.remove('proximity-exact', 'proximity-neighbor');
+      if (proximity === 'exact' || proximity === 'neighbor') {
+        path.classList.add(`proximity-${proximity}`);
+      }
+    }
+  }
+
+  /** Container-relative Pixelposition eines Punkts - fuer an die Karte
+   * angeheftete Effekte (Konfetti-/Radar-Ping-Ursprung, siehe app.js
+   * renderHeatmapRoundResult()). */
+  containerPointFor(lat, lng) {
+    const p = this.map.latLngToContainerPoint([lat, lng]);
+    const rect = this.map.getContainer().getBoundingClientRect();
+    return { x: rect.left + p.x, y: rect.top + p.y };
   }
 
   /** Alle Faerbungen zuruecksetzen - vor jeder neuen Runde. */
   reset() {
-    this.layerByCountryId.forEach((layer) =>
-      layer.setStyle({ fillColor: HEATMAP_COLORS.unguessed, fillOpacity: UNGUESSED_FILL_OPACITY })
-    );
+    this.layerByCountryId.forEach((layer) => {
+      layer.setStyle({ fillColor: HEATMAP_COLORS.unguessed, fillOpacity: UNGUESSED_FILL_OPACITY });
+      layer.getElement?.()?.classList.remove('proximity-exact', 'proximity-neighbor');
+    });
   }
 
   invalidate() {

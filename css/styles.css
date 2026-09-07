@@ -1078,9 +1078,17 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .heatmap-search-box{
   display:flex; align-items:center; gap:10px; padding:12px 16px;
   background:color-mix(in srgb, var(--surface-raised) 78%, transparent);
-  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%);
   border:1px solid rgba(255,255,255,0.14); border-radius:14px;
   box-shadow:0 16px 40px -16px rgba(0,0,0,0.6), 0 1px 0 0 rgba(255,255,255,0.06) inset;
+  transition:border-color 0.2s ease, box-shadow 0.2s ease;
+}
+/* Dezentes Gluehen beim Fokussieren - dieselbe Akzentfarbe wie die Marken-
+   Cyan-Toene an anderer Stelle im UI, damit sich das aktive Suchfeld klar
+   vom Rest der Glass-Flaeche abhebt. */
+.heatmap-search-box:focus-within{
+  border-color:rgba(23,236,255,0.5);
+  box-shadow:0 16px 40px -16px rgba(0,0,0,0.6), 0 1px 0 0 rgba(255,255,255,0.06) inset, 0 0 0 3px rgba(23,236,255,0.14);
 }
 .heatmap-search-box svg{ width:18px; height:18px; color:var(--text-dim); flex:none; }
 .heatmap-search-box input{
@@ -1121,12 +1129,17 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .heatmap-result-banner{
   position:absolute; left:50%; bottom:32px; transform:translateX(-50%); z-index:5; text-align:center;
   background:color-mix(in srgb, var(--surface-raised) 88%, transparent);
-  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%);
   border:1px solid rgba(255,255,255,0.14); border-radius:16px; padding:16px 28px;
-  box-shadow:0 20px 50px -18px rgba(0,0,0,0.65);
+  box-shadow:0 20px 50px -18px rgba(0,0,0,0.65), 0 1px 0 0 rgba(255,255,255,0.06) inset;
 }
 .heatmap-result-banner.hidden{ display:none; }
 .heatmap-result-title{ font-family:var(--font-hero); font-size:1.1rem; color:#fff; margin:0; }
+/* Eigener exakter Treffer: fetter, gruener Titel statt der neutralen Farbe -
+   derselbe Erfolgston wie proximity-exact/HEATMAP_COLORS.exact, damit Text
+   und Kartenglühen (siehe .proximity-exact oben) als ein zusammenhaengender
+   Erfolgsmoment wirken. */
+.heatmap-result-title.won{ color:#39ff8f; font-weight:700; }
 .heatmap-result-sub{ font-size:0.85rem; color:var(--text-dim); margin:4px 0 0; }
 
 /* Kleiner Hinweistext in der Lobby, wenn Heatmap-Modus gewaehlt ist - ersetzt
@@ -1149,9 +1162,9 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .heatmap-top3-panel{
   position:absolute; left:20px; top:78px; z-index:4; width:min(230px, calc(50% - 30px));
   background:color-mix(in srgb, var(--surface-raised) 80%, transparent);
-  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%);
   border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:12px 14px;
-  box-shadow:0 16px 40px -16px rgba(0,0,0,0.6);
+  box-shadow:0 16px 40px -16px rgba(0,0,0,0.6), 0 1px 0 0 rgba(255,255,255,0.06) inset;
 }
 .heatmap-top3-panel.hidden{ display:none; }
 .heatmap-top3-title{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); margin-bottom:8px; }
@@ -1186,6 +1199,57 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
   animation:heatmapLineIn .2s ease;
 }
 .heatmap-turn-status.hidden{ display:none; }
+
+/* Nachbarland-Badge (siehe core/heatmap-proximity.js) - Top-3-Panel und
+   Aktivitaets-Feed teilen sich dieselbe Akzentfarbe (Gold, gleiche Familie
+   wie der bestehende "mid"-Distanzton), damit "Nachbarland!" auf Anhieb als
+   eigene Kategorie erkennbar ist, nicht nur als Textzusatz. */
+.proximity-badge{
+  font-size:0.6rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:700;
+  padding:2px 7px; border-radius:999px; flex:none;
+}
+.proximity-badge.neighbor{ background:rgba(255,209,102,0.16); color:#ffd166; border:1px solid rgba(255,209,102,0.4); }
+.heatmap-activity-line.neighbor{ color:#ffd166; border-color:rgba(255,209,102,0.4); }
+
+/* Eingabe-Wackeln bei unbekanntem/falsch geschriebenem Land (siehe
+   shakeHeatmapSearchBox() in app.js) - kurzes, gedaempftes Schuetteln statt
+   einer harten Fehlermeldung, "Juice" statt Modal. */
+@keyframes heatmapShake{
+  10%, 90%{ transform:translateX(-1px); }
+  20%, 80%{ transform:translateX(2px); }
+  30%, 50%, 70%{ transform:translateX(-4px); }
+  40%, 60%{ transform:translateX(4px); }
+}
+.heatmap-search-box.shake{ animation:heatmapShake 0.4s ease; border-color:rgba(242,85,74,0.55); }
+@media (prefers-reduced-motion: reduce){ .heatmap-search-box.shake{ animation:none; } }
+
+/* Laender-Einfaerbung: sanftes Fade-In statt eines schlagartigen Farbwechsels
+   (CSS-Transitionen wirken auch auf per JS gesetzte SVG-Praesentations-
+   attribute wie fill/fill-opacity, siehe HeatmapMap.colorCountry()) plus ein
+   Gluehrand, dessen Staerke von der Naeherungsstufe abhaengt (core/heatmap-
+   proximity.js: 'neighbor' dezent gold, 'exact' kraeftig gruen). */
+.heatmap-map .leaflet-interactive{
+  transition:fill 0.6s ease, fill-opacity 0.6s ease, filter 0.4s ease;
+}
+.heatmap-map .leaflet-interactive.proximity-neighbor{ filter:drop-shadow(0 0 6px rgba(255,209,102,0.85)); }
+.heatmap-map .leaflet-interactive.proximity-exact{ filter:drop-shadow(0 0 11px rgba(57,255,143,0.95)); }
+@media (prefers-reduced-motion: reduce){ .heatmap-map .leaflet-interactive{ transition:none; } }
+
+/* Radar-Ping beim exakten Treffer (siehe spawnRadarPing() in app.js) - ein
+   einzelner expandierender Ring, der vom Zielland auf der Karte ausgeht
+   (Ursprung wird per HeatmapMap.containerPointFor() berechnet). position:
+   fixed + Seiten-Koordinaten statt eines Kindelements der Karte, weil der
+   Ring bewusst UEBER dem gesamten Screen (inkl. Ergebnis-Banner) sichtbar
+   sein soll, nicht nur innerhalb von .heatmap-stage. */
+.radar-ping{
+  position:fixed; z-index:401; left:0; top:0; width:16px; height:16px; margin:-8px 0 0 -8px;
+  border-radius:50%; border:2px solid #39ff8f; pointer-events:none;
+  animation:radarPingExpand 0.9s ease-out forwards;
+}
+@keyframes radarPingExpand{
+  0%{ width:16px; height:16px; margin:-8px 0 0 -8px; opacity:0.9; box-shadow:0 0 20px 4px rgba(57,255,143,0.5); }
+  100%{ width:240px; height:240px; margin:-120px 0 0 -120px; opacity:0; box-shadow:0 0 0 0 rgba(57,255,143,0); }
+}
 
 @media (max-width: 720px){
   .heatmap-search-panel{ top:64px; }

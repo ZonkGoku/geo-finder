@@ -13,6 +13,7 @@ import { makeSeed, mulberry32 } from '../core/rng.js';
 import { streamRoundLocations, computeMapSetBounds } from '../core/pool-loader.js';
 import { ensureCountryData, findCountryAtPointSync } from '../core/country-lookup.js';
 import { ensureCountryStore, randomCountry } from '../core/country-store.js';
+import { getProximityLevel } from '../core/heatmap-proximity.js';
 
 const HEATMAP_WIN_POINTS = 1000;
 // Nach diesen ersten paar fertig geladenen Runden startet das Spiel schon,
@@ -815,25 +816,33 @@ export class HostController {
 
     const distanceKm = haversineDistanceKm(country.lat, country.lng, this._heatmapTarget.lat, this._heatmapTarget.lng);
     const exact = country.id === this._heatmapTarget.id;
+    // Nur der Host kennt hier beide Laender-Objekte (getippt UND Ziel)
+    // gleichzeitig - exakt derselbe Autoritaets-Grund wie fuer distanceKm/
+    // exact oben. Das Ergebnis ist ein reiner level-String ohne IDs (siehe
+    // core/heatmap-proximity.js), verraet also fuer sich genommen nichts
+    // ueber das Zielland.
+    const proximity = getProximityLevel(country, this._heatmapTarget);
 
     // Privat NUR an den ratenden Spieler zurueck: er kennt sein eigenes
     // getipptes Land bereits, braucht aber die Distanz, um seine EIGENE
     // Karte einzufaerben (siehe Kommentar an MSG.HEATMAP_ACTIVITY unten,
     // warum das nicht einfach gebroadcastet wird).
-    this.pm.sendTo(peerId, makeMessage(MSG.HEATMAP_GUESS_RESULT, { countryId: country.id, distanceKm, exact }, state.self.id));
-    if (peerId === state.self.id) bus.emit('ui:heatmap-guess-result', { countryId: country.id, distanceKm, exact });
+    this.pm.sendTo(peerId, makeMessage(MSG.HEATMAP_GUESS_RESULT, { countryId: country.id, distanceKm, exact, proximity }, state.self.id));
+    if (peerId === state.self.id) bus.emit('ui:heatmap-guess-result', { countryId: country.id, distanceKm, exact, proximity });
 
     // Live-Feed fuer alle ANDEREN: Form haengt von heatmapOpponentInfo ab.
     // Nie wird das getippte Land selbst verraten, egal in welchem Modus -
     // sonst koennten Mitspieler durch reines Mitlesen auf das Zielland
-    // schliessen, ohne selbst zu raten.
+    // schliessen, ohne selbst zu raten. proximity='neighbor' verraet fuer
+    // sich genommen nicht, WELCHES Nachbarland es war (das Zielland selbst
+    // hat oft mehrere), ist also im selben Rahmen unbedenklich wie distanceKm.
     const opponentInfo = state.settings.heatmapOpponentInfo;
     if (opponentInfo === 'all') {
       for (const p of state.players.values()) {
         if (p.id === peerId) continue;
-        this.pm.sendTo(p.id, makeMessage(MSG.HEATMAP_ACTIVITY, { playerId: peerId, distanceKm, exact }, state.self.id));
+        this.pm.sendTo(p.id, makeMessage(MSG.HEATMAP_ACTIVITY, { playerId: peerId, distanceKm, exact, proximity }, state.self.id));
       }
-      bus.emit('ui:heatmap-activity', { peerId, distanceKm, exact });
+      bus.emit('ui:heatmap-activity', { peerId, distanceKm, exact, proximity });
     } else if (opponentInfo === 'best') {
       // Nur eine Verbesserung des bisher besten GEGNER-Werts loest ueberhaupt
       // eine Nachricht aus - baut Druck auf ("jemand kam naeher ran"), ohne

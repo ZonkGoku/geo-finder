@@ -8,6 +8,7 @@ import { HeatmapMap } from './map/heatmap-map.js';
 import { PanoViewer } from './panorama/pano-viewer.js';
 import { ensureCountryStore, searchCountries, findCountryByName } from './core/country-store.js';
 import { getColorForDistance } from './core/heatmap-color.js';
+import { proximityLabel } from './core/heatmap-proximity.js';
 import { showScreen } from './ui/router.js';
 import { showToast } from './ui/toast.js';
 import { burst as particleBurst } from './ui/particles.js';
@@ -909,6 +910,35 @@ function renderHpBars() {
 
 // ---------------------------------------------------------------- Heatmap-Modus
 
+/**
+ * Kurzlebiger expandierender Ring an einer Bildschirmposition ("Radar-Ping")
+ * fuer den exakten Treffer - ein simples DOM-Element statt Canvas-Partikeln
+ * (siehe ui/particles.js burst() fuer den begleitenden Konfetti-Effekt),
+ * weil ein einzelner CSS-animierter Kreis dafuer voellig ausreicht. Raeumt
+ * sich nach der Animation selbst wieder auf (animationend), damit sich bei
+ * mehreren Runden keine Leichen im DOM ansammeln.
+ */
+function spawnRadarPing(x, y) {
+  if (x == null || y == null) return;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const ping = document.createElement('div');
+  ping.className = 'radar-ping';
+  ping.style.left = `${x}px`;
+  ping.style.top = `${y}px`;
+  document.body.appendChild(ping);
+  ping.addEventListener('animationend', () => ping.remove(), { once: true });
+}
+
+function shakeHeatmapSearchBox() {
+  const box = el('heatmap-search-box');
+  box.classList.remove('shake');
+  // Reflow erzwingen, damit die Animation bei zwei Fehleingaben direkt
+  // hintereinander erneut von vorne startet, statt (weil dieselbe Klasse ja
+  // schon gesetzt war) einfach gar nicht neu zu triggern.
+  void box.offsetWidth;
+  box.classList.add('shake');
+}
+
 let heatmapMap = null;
 let countryStore = null;
 let heatmapTimerInterval = null;
@@ -992,7 +1022,7 @@ function renderHeatmapTop3() {
   list.innerHTML = top3
     .map(
       (g, i) =>
-        `<li><span class="rank">${i + 1}.</span> ${escapeHtml(g.name)} <span class="dist">${Math.round(g.distanceKm).toLocaleString('de-DE')} km</span></li>`
+        `<li><span class="rank">${i + 1}.</span> ${escapeHtml(g.name)} ${g.proximity === 'neighbor' ? '<span class="proximity-badge neighbor">Nachbarland</span>' : ''}<span class="dist">${Math.round(g.distanceKm).toLocaleString('de-DE')} km</span></li>`
     )
     .join('');
 }
@@ -1033,16 +1063,20 @@ function heatmapActivityLine(text, tone = '') {
   while (feed.children.length > 12) feed.removeChild(feed.lastChild);
 }
 
-function renderHeatmapGuessResult({ countryId, distanceKm, exact }) {
-  heatmapMap?.colorCountry(countryId, getColorForDistance(distanceKm, exact));
+function renderHeatmapGuessResult({ countryId, distanceKm, exact, proximity }) {
+  heatmapMap?.colorCountry(countryId, getColorForDistance(distanceKm, exact), proximity);
   const country = countryStore?.byId.get(countryId);
   const name = country?.name ?? countryId;
   if (exact) {
     heatmapActivityLine(`Volltreffer! ${name} war richtig.`, 'exact');
+  } else if (proximity === 'neighbor') {
+    heatmapActivityLine(`${name}: ${proximityLabel('neighbor')} (${Math.round(distanceKm).toLocaleString('de-DE')} km)`, 'neighbor');
+  } else if (proximity === 'continent') {
+    heatmapActivityLine(`${name}: ${proximityLabel('continent')}, aber noch ${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt`);
   } else {
     heatmapActivityLine(`${name}: ${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt`);
   }
-  heatmapOwnGuesses.push({ name, distanceKm });
+  heatmapOwnGuesses.push({ name, distanceKm, proximity });
   renderHeatmapTop3();
 }
 
@@ -1059,10 +1093,11 @@ function renderHeatmapActivity(payload) {
     }
     return;
   }
-  const { peerId, distanceKm, exact } = payload;
+  const { peerId, distanceKm, exact, proximity } = payload;
   if (peerId === state.self.id) return; // eigene Tipps kommen ueber ui:heatmap-guess-result mit Details
   const name = heatmapPlayerName(peerId);
   if (exact) heatmapActivityLine(`${name} hat das Zielland gefunden!`, 'exact');
+  else if (proximity === 'neighbor') heatmapActivityLine(`${name} tippt … Nachbarland! (${Math.round(distanceKm).toLocaleString('de-DE')} km)`, 'peer neighbor');
   else heatmapActivityLine(`${name} tippt … (${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt)`, 'peer');
 }
 
@@ -1070,20 +1105,29 @@ function renderHeatmapRoundResult({ winnerPlayerId, target }) {
   clearHeatmapTimer();
   el('heatmap-search-input').disabled = true;
   el('heatmap-suggestions').classList.add('hidden');
-  heatmapMap?.colorCountry(target.id, getColorForDistance(0, true));
+  heatmapMap?.colorCountry(target.id, getColorForDistance(0, true), 'exact');
 
   const banner = el('heatmap-result-banner');
   const title = el('heatmap-result-title');
   const sub = el('heatmap-result-sub');
   if (winnerPlayerId) {
     const won = winnerPlayerId === state.self.id;
-    title.textContent = won ? 'Du hast es gefunden!' : `${heatmapPlayerName(winnerPlayerId)} war am schnellsten!`;
+    title.textContent = won ? 'Exakter Treffer!' : `${heatmapPlayerName(winnerPlayerId)} war am schnellsten!`;
+    title.classList.toggle('won', won);
     if (won) {
-      particleBurst({ colors: ['#39ff8f', '#17ecff', '#ff1fb0'] });
+      // Ursprung am Zielland selbst statt Bildschirmmitte, wenn dessen
+      // Position bekannt ist (countryStore ist zu diesem Zeitpunkt immer
+      // schon geladen, siehe ensureHeatmapWidgets()) - "geht vom Land aus"
+      // statt eines generischen Vollbild-Effekts.
+      const targetCountry = countryStore?.byId.get(target.id);
+      const anchor = targetCountry && heatmapMap ? heatmapMap.containerPointFor(targetCountry.lat, targetCountry.lng) : {};
+      particleBurst({ ...anchor, colors: ['#39ff8f', '#17ecff', '#ff1fb0'] });
+      spawnRadarPing(anchor.x, anchor.y);
       haptics.tapStrong();
     }
   } else {
     title.textContent = 'Die Zeit ist abgelaufen.';
+    title.classList.remove('won');
   }
   sub.textContent = `Gesuchtes Land: ${target.name}`;
   banner.classList.remove('hidden');
@@ -1143,6 +1187,7 @@ function wireHeatmapControls() {
         // Exakter Name eingetippt, ohne aus der Vorschlagsliste zu waehlen.
         const match = findCountryByName(countryStore, input.value);
         if (match) handleHeatmapGuessPick(match.id);
+        else if (input.value.trim()) shakeHeatmapSearchBox(); // unbekanntes/falsch geschriebenes Land
       }
     } else if (e.key === 'Escape') {
       box.classList.add('hidden');

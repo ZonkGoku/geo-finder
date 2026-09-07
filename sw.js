@@ -51,6 +51,9 @@ const APP_SHELL_URLS = [
   './lib/pannellum/pannellum.js',
   './lib/pannellum/pannellum.css',
   './data/geo/countries-110m.json',
+  './data/geo/country-centroids.json',
+  './data/geo/country-neighbors.json',
+  './data/geo/country-continents.json',
   './data/map-sets/index.json',
 ];
 
