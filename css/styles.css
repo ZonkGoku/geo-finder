@@ -1119,22 +1119,28 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .heatmap-suggestion.guessed{ opacity:0.45; }
 
 .heatmap-activity-feed{
-  position:absolute; right:20px; bottom:20px; z-index:4;
-  /* War 280px/44% Hoehe - Nutzerfeedback: der Live-Feed wirkte "viel zu
-     prominent und gross", draengte sich vor die eigentliche Karte statt als
-     Nebeninfo zu wirken. Schmaler und niedriger gedeckelt, siehe auch die
-     kleinere/dezentere .heatmap-activity-line unten. */
-  width:min(220px, calc(100% - 40px)); max-height:30%; overflow:hidden;
-  display:flex; flex-direction:column-reverse; gap:4px; pointer-events:none;
+  /* War unten rechts, dauerhaft aufeinandergestapelt (bis zu 12, dann 6
+     Zeilen) - Nutzerfeedback: wirkte "viel zu prominent und gross" und
+     draengte sich vor die Karte statt als Nebeninfo zu wirken. Jetzt oben
+     rechts, symmetrisch zum .heatmap-top3-panel links und auf gleicher
+     Hoehe wie das zentrale Suchfeld - zusammen eine ruhige Drei-Panel-HUD-
+     Zeile statt verstreuter Overlays. Einzelne Meldungen blenden sich
+     zudem selbst wieder aus (siehe heatmapActivityLine() in app.js) statt
+     sich dauerhaft anzusammeln. */
+  position:absolute; right:20px; top:78px; z-index:4;
+  width:min(200px, calc(100% - 40px));
+  display:flex; flex-direction:column; gap:6px; pointer-events:none;
 }
 .heatmap-activity-line{
   background:rgba(0,0,0,0.35); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
   border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:4px 9px;
   font-size:0.66rem; line-height:1.35; color:rgba(255,255,255,0.7); animation:heatmapLineIn .2s ease;
+  transition:opacity 0.4s ease, transform 0.4s ease;
 }
+.heatmap-activity-line.leaving{ opacity:0; transform:translateX(10px); }
 .heatmap-activity-line.peer{ color:rgba(255,255,255,0.5); }
 .heatmap-activity-line.exact{ color:#39ff8f; border-color:rgba(57,255,143,0.4); font-weight:600; }
-@keyframes heatmapLineIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+@keyframes heatmapLineIn{ from{ opacity:0; transform:translateY(-4px); } to{ opacity:1; transform:translateY(0); } }
 @media (prefers-reduced-motion: reduce){ .heatmap-activity-line{ animation:none; } }
 
 .heatmap-result-banner{
@@ -1270,6 +1276,20 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .heatmap-map .leaflet-interactive.proximity-exact{ filter:drop-shadow(0 0 11px rgba(57,255,143,0.95)); }
 @media (prefers-reduced-motion: reduce){ .heatmap-map .leaflet-interactive{ transition:none; } }
 
+/* Einschlag-Puls bei jedem neuen Tipp (siehe HeatmapMap.colorCountry()) -
+   --pulse-color kommt per Inline-Style aus derselben Distanz-Farbskala wie
+   die Fuellung, damit ein "kalter" Tipp trotzdem wie ein spuerbarer Treffer
+   wirkt statt nur die Fuellfarbe lautlos zu wechseln. Endet die Animation,
+   fällt der Browser automatisch auf die (nicht animierte) proximity-exact/
+   -neighbor-Gluehkante zurueck, falls die Klasse gesetzt ist. */
+.heatmap-map .leaflet-interactive.guess-pulse{ animation:heatmapGuessPulse 0.7s ease-out; }
+@keyframes heatmapGuessPulse{
+  0%{ filter:drop-shadow(0 0 0 var(--pulse-color, #fff)) brightness(1); }
+  35%{ filter:drop-shadow(0 0 18px var(--pulse-color, #fff)) brightness(1.4); }
+  100%{ filter:drop-shadow(0 0 0 var(--pulse-color, #fff)) brightness(1); }
+}
+@media (prefers-reduced-motion: reduce){ .heatmap-map .leaflet-interactive.guess-pulse{ animation:none; } }
+
 /* Radar-Ping beim exakten Treffer (siehe spawnRadarPing() in app.js) - ein
    einzelner expandierender Ring, der vom Zielland auf der Karte ausgeht
    (Ursprung wird per HeatmapMap.containerPointFor() berechnet). position:
@@ -1288,7 +1308,7 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 
 @media (max-width: 720px){
   .heatmap-search-panel{ top:64px; }
-  .heatmap-activity-feed{ left:20px; right:20px; width:auto; bottom:110px; }
+  .heatmap-activity-feed{ left:20px; right:20px; width:auto; top:auto; bottom:110px; }
   .heatmap-top3-panel{ width:calc(100% - 40px); top:auto; bottom:110px; left:20px; }
 }
 

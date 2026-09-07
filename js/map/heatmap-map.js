@@ -121,6 +121,19 @@ export class HeatmapMap {
       if (proximity === 'exact' || proximity === 'neighbor') {
         path.classList.add(`proximity-${proximity}`);
       }
+      if (!isUnguessed) {
+        // Kurzer Einschlag-Puls bei JEDEM neuen Tipp (auch 'far'/'continent'),
+        // unabhaengig von der dauerhaften proximity-exact/-neighbor-Gluehkante
+        // oben - sonst wirkte ein "kalter" Tipp nur wie ein lautloser
+        // Farbwechsel statt eines spuerbaren Treffers. Farbe kommt per
+        // CSS-Variable aus derselben Distanz-Farbskala wie die Fuellung
+        // (heatmap-color.js), damit Puls und Einfaerbung als ein Effekt lesen.
+        path.style.setProperty('--pulse-color', color);
+        path.classList.remove('guess-pulse');
+        void path.offsetWidth; // Reflow erzwingen: ein zweiter Tipp auf dasselbe Land (anderer
+        // Spieler) soll die Animation erneut abspielen statt sie stumm zu ignorieren.
+        path.classList.add('guess-pulse');
+      }
     }
   }
 

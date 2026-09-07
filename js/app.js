@@ -1054,19 +1054,28 @@ function renderHeatmapTurnUpdate({ activePlayerId }) {
   }
 }
 
+// War ein dauerhaft anwachsender Log unten rechts (bis zu 12, dann 6
+// Zeilen) - Nutzerfeedback: wirkte "zu prominent und gross", stapelte sich
+// vor die Karte statt als kurze Statusmeldung zu wirken. Jetzt einzelne,
+// selbst-ausblendende Toasts oben rechts (siehe .heatmap-activity-feed in
+// styles.css) statt eines dauerhaften Stapels.
+const HEATMAP_TOAST_MAX_VISIBLE = 3;
+const HEATMAP_TOAST_DISMISS_MS = 2600;
+const HEATMAP_TOAST_DISMISS_MS_EXACT = 3600; // exakte Treffer duerfen etwas laenger sichtbar bleiben
+
 function heatmapActivityLine(text, tone = '') {
   const feed = el('heatmap-activity-feed');
   const line = document.createElement('div');
   line.className = `heatmap-activity-line${tone ? ` ${tone}` : ''}`;
   line.textContent = text;
   feed.prepend(line);
-  // Feed nicht unbegrenzt wachsen lassen - alte Zeilen sind fuer den
-  // Zeitdruck-Effekt ohnehin irrelevant, sobald genug neue nachgekommen sind.
-  // War 12 - zusammen mit der (Nutzerfeedback: "zu prominent und gross")
-  // verkleinerten Kartenhoehe (siehe .heatmap-activity-feed max-height in
-  // styles.css) wirkte ein voller 12er-Stapel weiterhin wie ein dominanter
-  // Textblock statt einer knappen Nebeninfo.
-  while (feed.children.length > 6) feed.removeChild(feed.lastChild);
+  while (feed.children.length > HEATMAP_TOAST_MAX_VISIBLE) feed.removeChild(feed.lastChild);
+
+  const dismissMs = tone === 'exact' ? HEATMAP_TOAST_DISMISS_MS_EXACT : HEATMAP_TOAST_DISMISS_MS;
+  setTimeout(() => {
+    line.classList.add('leaving');
+    line.addEventListener('transitionend', () => line.remove(), { once: true });
+  }, dismissMs);
 }
 
 function renderHeatmapGuessResult({ countryId, distanceKm, exact, proximity }) {
