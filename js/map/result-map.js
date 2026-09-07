@@ -47,10 +47,16 @@ export class ResultMap {
 
     window.L.marker([actual.lat, actual.lng], { icon: buildTargetIcon() }).addTo(this.layerGroup);
 
-    const ownGuess = results.find((r) => r.playerId === selfId && r.lat != null && r.lng != null);
+    // Number.isFinite statt nur != null: ein r.lat/lng von NaN waere sonst
+    // "truthy genug" fuer diese Pruefung und wuerde Leaflet mit "Invalid
+    // LatLng (NaN, NaN)" abstuerzen lassen (siehe Kommentar an scoreGuess()
+    // in core/scoring.js, wo das eigentlich schon abgefangen wird - dieser
+    // Guard hier ist die zweite Verteidigungslinie am Rand-Renderer).
+    const hasCoords = (r) => Number.isFinite(r.lat) && Number.isFinite(r.lng);
+    const ownGuess = results.find((r) => r.playerId === selfId && hasCoords(r));
 
     for (const r of results) {
-      if (r.lat == null || r.lng == null) continue;
+      if (!hasCoords(r)) continue;
       const player = players.get(r.playerId);
       const color = player?.color || '#8c99b8';
       const isYou = r.playerId === selfId;
@@ -126,7 +132,7 @@ export class ResultMap {
       });
 
       for (const r of round.results || []) {
-        if (r.lat == null || r.lng == null) continue;
+        if (!Number.isFinite(r.lat) || !Number.isFinite(r.lng)) continue;
         const player = players.get(r.playerId);
         const color = player?.color || '#8c99b8';
         const isYou = r.playerId === selfId;

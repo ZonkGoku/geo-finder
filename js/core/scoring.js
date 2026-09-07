@@ -55,7 +55,13 @@ export function computeStreakBonus(streakAfterRound) {
 }
 
 export function scoreGuess(guess, actual, scaleKm) {
-  if (!guess) {
+  // Number.isFinite statt nur auf !guess zu pruefen: ein Tipp-Objekt mit
+  // fehlerhaften/nicht-numerischen lat/lng (z. B. NaN) waere sonst "truthy"
+  // und wuerde die Distanzberechnung unbemerkt mit NaN weiterrechnen lassen -
+  // das NaN zieht sich dann bis in Leaflet's LatLng durch und crasht die
+  // Ergebnis-/Uebersichtskarte ("Invalid LatLng object: (NaN, NaN)"). Ein
+  // ungueltiger Tipp wird stattdessen wie ein fehlender behandelt.
+  if (!guess || !Number.isFinite(guess.lat) || !Number.isFinite(guess.lng)) {
     return { distanceKm: null, score: 0, noGuess: true };
   }
   const distanceKm = haversineDistanceKm(guess.lat, guess.lng, actual.lat, actual.lng);

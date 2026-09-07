@@ -36,11 +36,17 @@ export function computeMapSetBounds(mapSet) {
   let minLng = Infinity;
   let maxLng = -Infinity;
   for (const p of points) {
+    // Ein einzelner kaputter Punkt (fehlende/nicht-numerische lat/lng) darf
+    // die Ausdehnung des gesamten Kartenpakets nicht verderben - wuerde
+    // sonst als Infinity/NaN an GuessMap.focusOnLocations() durchgereicht
+    // und dort Leaflet abstuerzen lassen.
+    if (!Number.isFinite(p.lat) || !Number.isFinite(p.lng)) continue;
     if (p.lat < minLat) minLat = p.lat;
     if (p.lat > maxLat) maxLat = p.lat;
     if (p.lng < minLng) minLng = p.lng;
     if (p.lng > maxLng) maxLng = p.lng;
   }
+  if (!Number.isFinite(minLat)) return null; // kein einziger gueltiger Punkt im Pool
   return [
     { lat: minLat, lng: minLng },
     { lat: maxLat, lng: maxLng },

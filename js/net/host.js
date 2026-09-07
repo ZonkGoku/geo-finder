@@ -632,8 +632,12 @@ export class HostController {
 
       results.push({
         playerId: player.id,
-        lat: guess?.lat ?? null,
-        lng: guess?.lng ?? null,
+        // Nicht den rohen Tipp uebernehmen, wenn scoreGuess() ihn oben schon
+        // als noGuess verworfen hat (u.a. bei nicht-numerischen lat/lng) -
+        // sonst wuerde hier trotzdem ein NaN durchrutschen und beim Rendern
+        // der Ergebniskarte crashen (siehe Kommentar an scoreGuess()).
+        lat: noGuess ? null : guess.lat,
+        lng: noGuess ? null : guess.lng,
         distanceKm,
         noGuess,
         base: baseScore,
@@ -655,8 +659,12 @@ export class HostController {
     for (const player of state.players.values()) {
       const guess = guesses.get(player.id) || null;
       const flagged = Boolean(guess?.suspicious);
-      const noGuess = !guess;
-      const guessedCountry = guess ? findCountryAtPointSync(guess.lat, guess.lng, features) : null;
+      // Wie in scoreGuess() (net/host.js _scorePointsRound): ein Tipp-Objekt
+      // mit nicht-numerischen lat/lng zaehlt als kein Tipp, statt unbemerkt
+      // als "korrekt getippt" oder mit NaN in den Ergebnissen zu landen.
+      const hasValidCoords = guess != null && Number.isFinite(guess.lat) && Number.isFinite(guess.lng);
+      const noGuess = !hasValidCoords;
+      const guessedCountry = hasValidCoords ? findCountryAtPointSync(guess.lat, guess.lng, features) : null;
       let { correct, score } = scoreCountryGuess(guessedCountry, actualCountry);
       if (flagged) {
         correct = false;
@@ -674,8 +682,8 @@ export class HostController {
 
       results.push({
         playerId: player.id,
-        lat: guess?.lat ?? null,
-        lng: guess?.lng ?? null,
+        lat: hasValidCoords ? guess.lat : null,
+        lng: hasValidCoords ? guess.lng : null,
         noGuess,
         correct,
         guessedCountry,

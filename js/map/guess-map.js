@@ -59,8 +59,11 @@ export class GuessMap {
    * einer Partie erhalten bleibt (siehe reset()).
    */
   focusOnLocations(points, { maxZoom = 13 } = {}) {
+    // Number.isFinite statt nur != null - ein einzelner kaputter Punkt (NaN
+    // lat/lng) wuerde sonst L.latLngBounds() mit "Invalid LatLng (NaN, NaN)"
+    // abstuerzen lassen, statt einfach ignoriert zu werden.
     const coords = (points || [])
-      .filter((p) => p?.lat != null && p?.lng != null)
+      .filter((p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lng))
       .map((p) => [p.lat, p.lng]);
     if (coords.length === 0) return;
 
