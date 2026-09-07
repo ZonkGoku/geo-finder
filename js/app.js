@@ -825,7 +825,27 @@ function wireLobbyControls() {
   };
   wireChoiceRow('choice-rounds', 'roundCount', (v) => Number(v));
   wireChoiceRow('choice-duration', 'timeLimitMs', (v) => (v === 'null' ? null : Number(v)));
-  wireChoiceRow('choice-mode', 'mode', (v) => v);
+
+  // Eigene Wireing statt wireChoiceRow(): der Moduswechsel selbst braucht
+  // einen Seiteneffekt auf eine ANDERE Einstellung (siehe
+  // applyHeatmapModeDefaults() oben) - "unbegrenzte Zeit" als Default beim
+  // Wechsel INS PulseMap hinein (Nutzer-Feedback), nicht nur die
+  // heatmap-eigenen Einstellungen wie heatmapOpponentInfo (dessen Default
+  // schon in state.js selbst auf 'best' steht, da nie von anderen Modi
+  // genutzt).
+  el('choice-mode').querySelectorAll('button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (state.role !== 'host') return;
+      sound.playClick();
+      const newMode = btn.dataset.value;
+      const patch = { mode: newMode };
+      if (newMode === 'heatmap' && state.settings.mode !== 'heatmap') {
+        patch.timeLimitMs = null;
+      }
+      controller.updateSettings(patch);
+      renderLobby();
+    });
+  });
   wireChoiceRow('choice-modifier', 'modifier', (v) => v);
   wireChoiceRow('choice-heatmap-labels', 'heatmapLabels', (v) => v);
   wireChoiceRow('choice-heatmap-opponent-info', 'heatmapOpponentInfo', (v) => v);
@@ -2096,7 +2116,13 @@ function wireGameCarousel() {
     btn.addEventListener('click', () => {
       sound.unlockAudio();
       sound.playClick();
-      state.settings.mode = btn.dataset.mode;
+      const mode = btn.dataset.mode;
+      state.settings.mode = mode;
+      // Gleicher PulseMap-Default wie beim Moduswechsel in der Lobby (siehe
+      // choice-mode-Wiring in wireLobbyControls()) - "Direkt starten" soll
+      // dieselbe unbegrenzte Zeit als Vorgabe bekommen, nicht die zuletzt
+      // fuer einen anderen Modus gewaehlte Rundendauer.
+      if (mode === 'heatmap') state.settings.timeLimitMs = null;
       soloFlow();
     });
   });

@@ -34,7 +34,12 @@ export const state = {
     mutators: { fogOfWar: false, brokenCompass: false, noPan: false },
     // Nur im Heatmap-Modus genutzt (siehe net/host.js _startHeatmapGame()):
     heatmapLabels: 'on', // 'on' | 'off' - Kartenbeschriftungen (String statt Bool, siehe renderChoiceRow() in app.js)
-    heatmapOpponentInfo: 'all', // 'all' | 'best' | 'blind' - wie viel vom Gegner-Live-Feed ankommt
+    // 'all' | 'best' | 'blind' - wie viel vom Gegner-Live-Feed ankommt.
+    // Default 'best' (Nutzer-Feedback) statt 'all' - der volle Live-Feed
+    // jedes einzelnen gegnerischen Tipps wirkte zu ablenkend/prominent;
+    // "nur beste Distanz" haelt trotzdem Wettbewerbsdruck (siehe
+    // renderHeatmapOpponentRecord() in app.js).
+    heatmapOpponentInfo: 'best',
     heatmapTurnMode: 'simultaneous', // 'simultaneous' | 'turns' - gleichzeitig oder reihum tippen
     // 'on' | 'off' - ob ein Tipp auf demselben Kontinent (aber kein
     // Nachbarland) als solcher benannt wird ("Richtiger Kontinent, aber
