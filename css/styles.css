@@ -1148,17 +1148,24 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .heatmap-map{ position:absolute; inset:0; z-index:0; background:radial-gradient(120% 120% at 50% 30%, var(--surface-hi) 0%, var(--surface) 65%); }
 
 /* Eigene Laendername-Beschriftung statt eines externen Kachel-Layers (siehe
-   HeatmapMap._applyLabel() in heatmap-map.js) - Leaflets Standard-Tooltip-
-   Chrome (weisser Hintergrund, Rahmen, Schatten, Richtungspfeil) komplett
-   entfernt zugunsten von reinem Text mit Schlagschatten, der auf jeder
-   Fuellfarbe der Distanz-Skala lesbar bleibt. pointer-events:none, damit das
-   Label nie Hover/Klicks auf dem darunterliegenden Laender-Polygon abfaengt -
-   bleibt als HTML-Text zudem bei jedem Zoom gleich scharf (kein
-   Kachel-Rasterbild). */
+   HeatmapMap._applyLabel() in heatmap-map.js). War frueher permanent:true
+   (immer sichtbarer Text auf jedem Land) - bei 177 dicht gepackten Laendern
+   (Europa, Karibik, Balkan) ueberlappten sich die staendig eingeblendeten
+   Namen zu unlesbarem Gewusel ("Label Collision", Nutzer-Report). Jetzt nur
+   noch ein einzelner Hover-Tooltip (sticky:true in _applyLabel folgt dem
+   Mauszeiger), der Leaflets Standard-Chrome komplett durch unser eigenes
+   Glassmorphismus-Design ersetzt: dunkles, halbtransparentes Pill mit
+   backdrop-filter-Blur statt weissem Kachel-Look, kein Rahmen und kein
+   Richtungspfeil (::before ist Leaflets Pfeil-Dreieck). pointer-events:none
+   auf dem Tooltip selbst, damit er nie den Hover/Klick auf dem
+   darunterliegenden Laender-Polygon abfaengt (das Polygon bekommt den
+   mouseover, nicht der Tooltip). */
 .heatmap-map .leaflet-tooltip.heatmap-country-label{
-  background:none; border:none; box-shadow:none; padding:0; margin:0;
-  color:rgba(255,255,255,0.92); font-family:var(--font-body); font-weight:600;
-  font-size:0.72rem; letter-spacing:0.01em; text-shadow:0 1px 3px rgba(0,0,0,0.85), 0 0 6px rgba(0,0,0,0.5);
+  background:rgba(20,20,26,0.72); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  border:none; box-shadow:0 8px 22px -8px rgba(0,0,0,0.55); border-radius:8px;
+  padding:5px 11px; margin:0;
+  color:#fff; font-family:var(--font-body); font-weight:600;
+  font-size:0.74rem; letter-spacing:0.01em;
   pointer-events:none; opacity:1;
   white-space:nowrap;
 }

@@ -52,19 +52,29 @@ export class HeatmapMap {
   /** Wechselt die Laendername-Beschriftung nachtraeglich (falls die
    * Einstellung sich zwischen zwei Runden nicht aendern kann - hier nur fuer
    * Robustheit, die Lobby-Einstellung steht schon fest bevor die Karte
-   * erzeugt wird). Bindet/loest die permanenten Tooltips aus setCountries()
-   * auf allen bereits vorhandenen Laender-Layern. */
+   * erzeugt wird). Bindet/loest die Hover-Tooltips aus setCountries() auf
+   * allen bereits vorhandenen Laender-Layern. */
   setLabels(labels) {
     this._labelsEnabled = labels;
     this.layerByCountryId.forEach((layer) => this._applyLabel(layer));
   }
 
+  /** Labels sind bewusst NICHT permanent (frueher permanent:true) - bei 177
+   * Laendern ueberlappten sich die staendig sichtbaren Texte in dicht
+   * gepackten Regionen wie Europa oder der Karibik zu unlesbarem Gewusel
+   * (Nutzer-Report: "Label Collision"). Stattdessen nur noch ein
+   * Hover-Tooltip (sticky:true folgt dem Mauszeiger statt an einem festen
+   * Punkt zu kleben) - zeigt immer genau EINEN Namen an, nie mehrere
+   * uebereinander. labelsEnabled=false bindet gar keinen Tooltip (auch nicht
+   * per Hover), damit die "Karten-Label = aus"-Einstellung wie vorgesehen
+   * wirklich jeden Laendernamen unterdrueckt. */
   _applyLabel(layer) {
     const hasTooltip = typeof layer.getTooltip === 'function' && layer.getTooltip();
     if (this._labelsEnabled && !hasTooltip) {
       layer.bindTooltip(layer.feature.properties.displayName, {
-        permanent: true,
-        direction: 'center',
+        sticky: true,
+        direction: 'top',
+        offset: [0, -6],
         className: 'heatmap-country-label',
       });
     } else if (!this._labelsEnabled && hasTooltip) {
