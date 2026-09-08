@@ -733,12 +733,16 @@ function renderMutators() {
   const isHost = state.role === 'host';
   const mutators = state.settings.mutators || {};
   el('mutator-list').querySelectorAll('.mutator-chip').forEach((chip) => {
-    chip.classList.toggle('selected', Boolean(mutators[chip.dataset.mutator]));
+    const active = Boolean(mutators[chip.dataset.mutator]);
+    chip.classList.toggle('selected', active);
+    chip.setAttribute('aria-checked', String(active));
     chip.disabled = !isHost;
   });
 
   const walkToggle = el('walk-beta-toggle');
-  walkToggle.classList.toggle('selected', Boolean(mutators.walkBeta));
+  const walkActive = Boolean(mutators.walkBeta);
+  walkToggle.classList.toggle('selected', walkActive);
+  walkToggle.setAttribute('aria-checked', String(walkActive));
   walkToggle.disabled = !isHost;
 }
 

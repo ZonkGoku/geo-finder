@@ -6,6 +6,14 @@
   --line: #28282f;
   --text: #f5f7fa;
   --text-dim: #97a2b8;
+  /* Eigener, bewusst hellerer Ton NUR fuer den unausgewaehlten Zustand von
+     Segmented-Controls/Mutator-Karten: --text-dim liest sich dort bei den
+     kleinen 0.8rem-Labels direkt neben dem hell-gluehenden Akzent-Thumb
+     optisch dunkler, als seine Kontrastzahl (7.4:1 gegen --surface) vermuten
+     laesst (Nutzer-Report: "unreadable"). Nicht --text-dim selbst aendern -
+     das wuerde ueberall sonst in der App (wo kein Neon-Glow danebensteht)
+     unnoetig auffallen. */
+  --choice-text-inactive: rgba(255,255,255,0.72);
   --text-faint: #5a6478;
   --accent: #ff7a33;
   --accent-ink: #0b0e14;
@@ -47,6 +55,9 @@
   --accent-2: #0b6a94;
   --neon-magenta: #a3116f;
   --danger: #c53a30;
+  /* Hellmodus hat kein Neon-Glow-Problem (siehe Kommentar an der dunklen
+     Definition oben) - hier reicht das normale --text-dim. */
+  --choice-text-inactive: var(--text-dim);
 }
 
 *{ box-sizing:border-box; }
@@ -1002,8 +1013,10 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
    aktiv sein koennen). */
 .mutator-list{ display:flex; flex-direction:column; gap:8px; }
 .mutator-chip{
-  display:flex; flex-direction:column; gap:2px; text-align:left; width:100%;
-  padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface);
+  position:relative; display:flex; flex-direction:column; gap:2px; text-align:left; width:100%;
+  /* padding-right macht Platz fuer den Toggle-Schalter (::before/::after
+     unten), der sonst den Text ueberlappen wuerde. */
+  padding:10px 52px 10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface);
   color:var(--text); cursor:pointer; transition:border-color .15s ease, background .15s ease;
 }
 .mutator-chip:hover{ border-color:var(--accent-2); }
@@ -1011,14 +1024,38 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .mutator-chip.selected{ border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--surface)); }
 .mutator-chip-title{ font-weight:600; font-size:0.86rem; display:flex; align-items:center; gap:6px; }
 .mutator-chip.selected .mutator-chip-title::before{ content:"✓"; color:var(--accent); }
-.mutator-chip-desc{ font-size:0.74rem; color:var(--text-dim); }
+.mutator-chip-desc{ font-size:0.74rem; color:var(--choice-text-inactive); }
+
+/* Eigener Ein/Aus-Schalter statt nur Rahmenfarbe+Haekchen als einzigem
+   Signal (Nutzer-Report: "cards... look static", "clear visual toggle
+   indicator (switch/checkbox icon)") - ::after ist die Schalter-Spur,
+   ::before der Knopf, beide rein dekorativ (aria-checked auf dem Button
+   selbst traegt den semantischen Zustand, siehe renderMutators() in app.js). */
+.mutator-chip::after{
+  content:""; position:absolute; top:50%; right:12px; transform:translateY(-50%);
+  width:34px; height:19px; border-radius:999px;
+  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.16);
+  transition:background .15s ease, border-color .15s ease;
+}
+.mutator-chip::before{
+  content:""; position:absolute; top:50%; right:29px; transform:translateY(-50%) translateX(0);
+  width:15px; height:15px; border-radius:50%; background:#8a93aa; box-shadow:0 1px 3px rgba(0,0,0,0.4);
+  transition:transform .2s cubic-bezier(.34,1.4,.4,1), background .15s ease;
+}
+.mutator-chip.selected::after{ background:var(--accent); border-color:var(--accent); }
+.mutator-chip.selected::before{ background:#fff; transform:translateY(-50%) translateX(15px); }
 
 /* Segmented Control mit gleitendem Thumb: .choice-thumb wird per JS auf die
    Position/Breite des ausgewaehlten Buttons gesetzt (renderChoiceRow) und
    animiert dorthin, statt bei jeder Auswahl neu einzublenden. */
 .choice-row{
   position:relative; display:flex; flex-wrap:wrap; gap:2px;
-  background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:3px;
+  /* Deutlich abgesetzt von der umgebenden Karte statt derselben --surface-
+     Flaeche wie der Kartenhintergrund (Nutzer-Report: Track/Karte kaum zu
+     unterscheiden) - eine sichtbar eingelassene "Rille" per Inset-Shadow. */
+  background:color-mix(in srgb, var(--surface-hi) 45%, var(--surface));
+  border:1px solid var(--line); border-radius:11px; padding:3px;
+  box-shadow:inset 0 1px 4px rgba(0,0,0,0.3);
 }
 /* War ein reiner 2-Stop-Verlauf (--accent -> --accent-2) - bei den meist
    sehr schmalen Buttons (z.B. dem "unendlich"-Symbol) faellt der Uebergang
@@ -1040,9 +1077,14 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
    gleitenden Segmented-Control-Thumb. */
 :root[data-theme="light"] .choice-thumb{ box-shadow:0 0 0 1.5px var(--text); }
 .choice-row button{
-  position:relative; z-index:1; flex:1; min-width:52px; padding:8px 10px; border-radius:8px; border:1px solid transparent;
-  background:transparent; color:var(--text-dim); font-size:0.82rem; font-weight:600; cursor:pointer;
-  font-family:var(--font-mono); transition:color .2s ease;
+  position:relative; z-index:1; flex:1; min-width:52px; padding:8px 10px; border-radius:8px;
+  /* Sichtbarer, wenn auch dezenter Rand+Fuellung selbst im unausgewaehlten
+     Zustand statt border:1px solid transparent - jedes Segment soll schon
+     ohne Hover als eigener Klick-Bereich erkennbar sein (Nutzer-Report:
+     "distinct background pills for each segment to clarify click targets"). */
+  border:1px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.03);
+  color:var(--choice-text-inactive); font-size:0.82rem; font-weight:600; cursor:pointer;
+  font-family:var(--font-mono); transition:color .2s ease, background .15s ease, border-color .15s ease;
   /* overflow:hidden clippt den .btn-ripple-Klick-Impact (attachRipple() in
      app.js, jetzt auch auf allen Lobby-Choice-Buttons statt nur den 3 Menue-
      Action-Cards, Audit Quick-Win #3) an der eigenen border-radius-Rundung -
@@ -1059,8 +1101,9 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
   overflow:hidden;
   overflow-wrap:break-word;
 }
-.choice-row button:hover{ color:var(--text); }
-.choice-row button.selected{ color:var(--accent-ink); }
+.choice-row button:hover{ color:var(--text); border-color:rgba(255,255,255,0.16); background:rgba(255,255,255,0.06); }
+.choice-row button.selected{ color:var(--accent-ink); border-color:transparent; background:transparent; }
+.choice-row button.selected:hover{ color:var(--accent-ink); }
 .choice-row[data-setting="mode"] button.selected,
 .choice-row[data-setting="modifier"] button.selected{ font-family:var(--font-body); }
 .choice-row[data-setting="mode"] button,
