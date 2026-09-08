@@ -30,6 +30,19 @@
   --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
 }
 
+/* Custom-Scrollbar statt der System-Standardleiste in allen scrollbaren
+   Panels (Kartenauswahl-Grid, Regel-Akkordeon, Spielerliste etc.) - eine
+   graue Windows-Balkenleiste mitten in der Neon-Glass-Optik faellt sofort
+   als Fremdkoerper auf. firefox via scrollbar-color/-width (kein Pseudo-
+   Element-Support dort), Chromium/Safari via ::-webkit-scrollbar. Bewusst
+   global auf html statt pro Komponente einzeln - jeder Container, der
+   spaeter overflow:auto bekommt, erbt die Optik automatisch mit. */
+html{ scrollbar-color: var(--line) transparent; scrollbar-width: thin; }
+::-webkit-scrollbar{ width:10px; height:10px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:var(--line); border-radius:999px; border:2px solid transparent; background-clip:padding-box; }
+::-webkit-scrollbar-thumb:hover{ background:var(--text-faint); background-clip:padding-box; }
+
 /* Hellmodus: nur die Menue-/Lobby-/Leaderboard-Oberflaeche (die "App-Chrome").
    Das In-Game-HUD (#screen-hud) liegt ueber echten Panorama-Fotos und bleibt
    bewusst immer dunkel - siehe die hartkodierten rgba(10,15,26,...)-Werte
@@ -927,7 +940,12 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 
 .foot-note{ text-align:center; font-size:0.78rem; color:var(--text-faint); max-width:60ch; }
 
-.toast{ position:fixed; left:50%; bottom:28px; transform:translate3d(-50%,0,0); will-change:transform, opacity; background:var(--surface-hi); border:1px solid var(--line); color:var(--text); padding:11px 18px; border-radius:10px; font-size:0.85rem; box-shadow:0 14px 30px -12px rgba(0,0,0,0.6); z-index:50; }
+.toast{
+  position:fixed; left:50%; bottom:calc(28px + env(safe-area-inset-bottom)); transform:translate3d(-50%,0,0);
+  will-change:transform, opacity; background:var(--surface-hi); border:1px solid var(--line); color:var(--text);
+  padding:11px 18px; border-radius:10px; font-size:0.85rem; box-shadow:0 14px 30px -12px rgba(0,0,0,0.6); z-index:220;
+  max-width:calc(100% - 32px); text-align:center;
+}
 
 /* ===================== CONNECTION STATES ===================== */
 .connection-banner{
@@ -1286,7 +1304,17 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
    Foto-Cover (Picsum, seeded pro Paket-ID) statt der alten wiederholten
    Kategorie-Hausicons. --- */
 .mapset-grid{
-  display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:14px;
+  /* grid-auto-rows:min-content ist Pflicht, nicht Kosmetik: ohne das kollabieren
+     die Reihen in diesem Container (fixe Hoehe via Flex-Parent + overflow-y:auto,
+     Karten selbst mit overflow:hidden -> automatic minimum size 0) auf Bruchteile
+     eines Pixels, sobald genug Karten fuer mehr Reihen als Spalten sorgen -
+     der verfuegbare Raum wird dann gleichmaessig auf ALLE Reihen aufgeteilt statt
+     an den tatsaechlichen Karteninhalt anzupassen (live reproduziert: bei genug
+     Kartenpaketen im Einspalten-Mobile-Layout schrumpften Karten auf ~6px Hoehe,
+     der Inhalt lief unsichtbar ueber die Kartengrenze hinaus). min-content zwingt
+     jede Reihe auf die intrinsische Hoehe ihres Inhalts.
+  */
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); grid-auto-rows:min-content; align-content:start; gap:14px;
 }
 .mapset-card{
   position:relative; text-align:left; padding:0; border-radius:14px; border:1px solid var(--line);
@@ -1378,6 +1406,52 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 }
 @keyframes skeletonShimmer{ from{ background-position:200% 0; } to{ background-position:-200% 0; } }
 @media (prefers-reduced-motion: reduce){ .skeleton-line{ animation:none; } }
+
+/* --- Kartenauswahl-Modal als Bottom-Sheet auf Mobile: der zentrierte
+   Dialog aus .confirm-modal (max-height:85vh, kein Safe-Area/Tastatur-
+   Handling) ist auf schmalen Screens mit Suchfeld + Tastatur ungeeignet -
+   ein Fokus aufs Suchfeld verschiebt/verdeckt sonst Teile des Inhalts
+   hinter der virtuellen Tastatur (iOS Safari aendert die Layout-Viewport-
+   Hoehe beim Einblenden NICHT). Nur #mapset-modal wird umgestellt, andere
+   .confirm-modal-Dialoge (z.B. "Spiel verlassen?") bleiben zentrierte
+   Popups - dafuer hier ausschliesslich per ID statt Klasse selektiert. */
+@media (max-width:768px){
+  #mapset-modal{
+    align-items:flex-end; padding:0;
+    /* Analog zu --heatmap-keyboard-inset (siehe initMapsetModalViewportOffset()
+       in app.js): padding-bottom auf dem flex-zentrierenden Overlay schiebt
+       die am unteren Rand ausgerichtete Karte um genau die Tastaturhoehe
+       nach oben, statt dass sie dahinter verschwindet. */
+    padding-bottom:var(--mapset-keyboard-inset, 0px);
+  }
+  #mapset-modal .mapset-modal-card{
+    width:100%; max-width:100%; max-height:88dvh;
+    border-radius:20px 20px 0 0; margin:0;
+    padding-bottom:calc(18px + env(safe-area-inset-bottom));
+    animation:mapsetSheetSlideUp .28s cubic-bezier(.2,.8,.2,1);
+  }
+  /* Drag-Handle-Balken als reines Gestaltungselement (kein echtes Swipe-
+     to-dismiss - der X-Button oben bleibt der verlaessliche Schliessweg),
+     signalisiert aber sofort "Bottom Sheet" statt "zentrierter Dialog". */
+  #mapset-modal .mapset-modal-card::before{
+    content:""; display:block; width:36px; height:4px; border-radius:999px;
+    background:rgba(255,255,255,0.22); margin:0 auto 14px;
+  }
+  #mapset-modal .mapset-modal-card .mapset-grid{ max-height:none; }
+  @media (prefers-reduced-motion: reduce){ #mapset-modal .mapset-modal-card{ animation:none; } }
+
+  /* Suchfeld/Filter-Chips: Touch-Target-Mindestgroesse (48px), Chips
+     horizontal scrollbar statt umbrechend (Nutzer-Vorgabe), damit die
+     Toolbar auf schmalen Screens nicht zwei/drei Zeilen hoch wird. */
+  #mapset-modal .mapset-search input{ padding:13px 0; font-size:0.95rem; }
+  #mapset-modal .mapset-search{ min-height:48px; }
+  #mapset-modal .mapset-chips{
+    flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
+  }
+  #mapset-modal .mapset-chips::-webkit-scrollbar{ display:none; }
+  #mapset-modal .mapset-chip{ flex:0 0 auto; min-height:48px; display:flex; align-items:center; }
+}
+@keyframes mapsetSheetSlideUp{ from{ opacity:0; transform:translateY(100%); } to{ opacity:1; transform:translateY(0); } }
 
 /* ===================== HP-Duell ===================== */
 .hp-bars{ position:relative; z-index:2; display:flex; flex-direction:column; gap:6px; padding:10px 26px 0; }

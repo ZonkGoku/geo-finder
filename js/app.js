@@ -1852,6 +1852,27 @@ function initHeatmapSearchViewportOffset() {
   update();
 }
 
+// Gleiches Problem/gleiche Loesung wie initHeatmapSearchViewportOffset() oben:
+// #mapset-modal wird auf Mobile zum Bottom-Sheet (siehe styles.css,
+// @media max-width:768px), dessen Suchfeld beim Fokussieren sonst hinter der
+// virtuellen Tastatur verschwinden wuerde, weil iOS Safari die Layout-
+// Viewport-Hoehe beim Tastatur-Einblenden NICHT veraendert. Bewusst als
+// eigene Funktion (nicht wiederverwendet) - eigene CSS-Variable, eigenes
+// Panel-Element, keine gemeinsame Abhaengigkeit.
+function initMapsetModalViewportOffset() {
+  if (!window.visualViewport) return;
+  const modal = el('mapset-modal');
+  if (!modal) return;
+  const update = () => {
+    const vv = window.visualViewport;
+    const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    modal.style.setProperty('--mapset-keyboard-inset', `${Math.round(inset)}px`);
+  };
+  window.visualViewport.addEventListener('resize', update);
+  window.visualViewport.addEventListener('scroll', update);
+  update();
+}
+
 function wireHeatmapControls() {
   const input = el('heatmap-search-input');
   // Mobile Bottom-Sheet: .expanded (siehe styles.css) laesst die
@@ -2989,7 +3010,7 @@ async function startChallengeFromLink(raw) {
     showToast(
       entry
         ? `„${entry.name}“ braucht einen eigenen Mapillary-Zugangstoken, um diese Challenge zu spielen.`
-        : 'Dieses Kartenpaket ist nicht mehr verfügbar.'
+        : 'Diese Karte ist nicht mehr verfügbar.'
     );
     return;
   }
@@ -3112,7 +3133,7 @@ function wireBusEvents() {
   bus.on('ui:map-resolving', renderLoadProgress);
   bus.on('ui:map-resolve-failed', () => {
     hideLoadProgress();
-    showToast('Für dieses Kartenpaket wurden keine Bilder gefunden.');
+    showToast('Für diese Karte wurden keine Bilder gefunden.');
     renderLobby();
   });
   bus.on('ui:round-buffering', () => {
@@ -3123,7 +3144,7 @@ function wireBusEvents() {
     el('btn-advance-round').hidden = true;
   });
   bus.on('ui:round-cap-adjusted', ({ roundCount }) => {
-    showToast('Kartenpaket erschöpft. Spiel endet nach dieser Runde.');
+    showToast('Karte erschöpft. Spiel endet nach dieser Runde.');
     el('hud-round-total').textContent = String(roundCount).padStart(2, '0');
     renderRoundProgress();
   });
@@ -3243,6 +3264,7 @@ async function boot() {
   wireHudControls();
   wireHeatmapControls();
   initHeatmapSearchViewportOffset();
+  initMapsetModalViewportOffset();
   wireResultControls();
   wireLeaderboardControls();
   wireBusEvents();
