@@ -1083,6 +1083,60 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .overview-map{ height:280px; }
 
 /* ===================== LOBBY: settings & map-set picker ===================== */
+/* --- Preset-Schnellauswahl --- */
+.preset-row{ display:flex; flex-direction:column; gap:8px; }
+.preset-chip{
+  display:flex; flex-direction:column; gap:2px; text-align:left; width:100%;
+  padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface);
+  color:var(--text); cursor:pointer; transition:border-color .15s ease, background .15s ease;
+}
+.preset-chip:hover{ border-color:var(--accent-2); background:rgba(255,255,255,0.03); }
+.preset-chip.active{ border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.preset-chip-title{ font-weight:600; font-size:0.86rem; display:flex; align-items:center; gap:6px; }
+.preset-chip.active .preset-chip-title::before{ content:"✓"; color:var(--accent); }
+.preset-chip-desc{ font-size:0.74rem; color:var(--choice-text-inactive); }
+
+/* --- "Weitere Regeln"-Klappe: Runden/Dauer/Panorama/Mutatoren stehen nicht
+   mehr alle standardmaessig offen (Nutzer-Report: "overwhelming users with
+   15+ settings at once"), nur Preset+Modus bleiben immer sichtbar. --- */
+.rules-accordion{ border-top:1px solid var(--line); margin-top:4px; padding-top:4px; }
+.rules-accordion-toggle{
+  display:flex; align-items:center; justify-content:space-between; width:100%;
+  background:none; border:none; padding:10px 2px; cursor:pointer;
+  color:var(--text); font-size:0.86rem; font-weight:600; font-family:var(--font-body);
+}
+.rules-accordion-toggle svg{ width:16px; height:16px; color:var(--choice-text-inactive); transition:transform .2s ease; }
+.rules-accordion.collapsed .rules-accordion-toggle svg{ transform:rotate(-90deg); }
+/* max-height-Transition statt grid-template-rows - dieselbe Technik wie das
+   bestehende Mobile-Settings-Akkordeon (siehe .setting-group.collapsed
+   weiter unten), hier nur auf allen Viewports statt nur mobil aktiv. Fester
+   oberer Richtwert (2000px) reicht bequem fuer alle enthaltenen Regel-
+   Gruppen, auch wenn PulseMap-Einstellungen mit eingeblendet sind. */
+.rules-accordion-body{
+  max-height:2000px; overflow:hidden; transition:max-height .3s ease, opacity .2s ease, visibility 0s linear; opacity:1; visibility:visible;
+}
+/* visibility:hidden (statt nur max-height:0) entfernt den eingeklappten
+   Inhalt auch aus Tab-Reihenfolge/Klick-Hittest - ohne das blieben Mutator-
+   Toggles &Co. per Tab erreichbar UND (gefunden via Playwright-Regressionstest)
+   konnten Klicks von aussenliegenden Elementen an genau dieser Stelle
+   abgefangen werden, obwohl der Bereich optisch unsichtbar war. transition-
+   delay verzoegert nur das Verstecken (nicht das Zeigen), damit die Hoehen-
+   Animation beim Einklappen noch sichtbar ablaeuft, bevor der Inhalt ganz
+   verschwindet. */
+.rules-accordion.collapsed .rules-accordion-body{ max-height:0; opacity:0; visibility:hidden; transition-delay:0s, 0s, .3s; }
+@media (prefers-reduced-motion: reduce){ .rules-accordion-body{ transition:none; } }
+
+.change-mappack-btn{ display:flex; align-items:center; gap:8px; margin-top:10px; width:100%; justify-content:center; }
+.change-mappack-btn svg{ width:15px; height:15px; }
+
+.mapset-modal-card{ max-width:900px; width:calc(100% - 32px); max-height:85vh; text-align:left; align-items:stretch; }
+.mapset-modal-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.mapset-modal-header h3{ margin:0; }
+.mapset-modal-close{ color:var(--choice-text-inactive); }
+.mapset-modal-close:hover{ color:var(--text); }
+.mapset-modal-close svg{ width:18px; height:18px; }
+.mapset-modal-card .mapset-grid{ overflow-y:auto; max-height:calc(85vh - 170px); padding-right:4px; }
+
 .setting-group{ padding:10px 0; border-bottom:1px solid var(--line); }
 .setting-group:last-child{ border-bottom:none; }
 .setting-group-label{ font-size:0.78rem; color:var(--text-dim); margin-bottom:8px; }
@@ -1284,7 +1338,20 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 
 .mapset-card-body{ padding:12px 14px 14px; display:flex; flex-direction:column; gap:6px; }
 .mapset-card-name{ font-weight:600; font-size:0.92rem; }
-.mapset-card-desc{ font-size:0.76rem; color:var(--text-dim); line-height:1.4; }
+.mapset-card-desc{ font-size:0.76rem; color:var(--choice-text-inactive); line-height:1.4; }
+/* "SELECT MAP"-Overlay bei Hover (zusaetzlich zum Play-Icon) - Nutzer-
+   Vorgabe: Kartenpaket-Karten sollen bei Hover klar als "hier klicken, um
+   dieses Paket zu waehlen" lesbar sein, nicht nur der dezente Rand-Glow. */
+.mapset-card-select-label{
+  position:absolute; left:50%; bottom:12px; z-index:1; transform:translate(-50%, 10px);
+  font-size:0.68rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+  color:#0b0e14; background:linear-gradient(135deg, var(--accent), var(--neon-magenta));
+  padding:7px 14px; border-radius:999px; white-space:nowrap; opacity:0;
+  box-shadow:0 6px 18px -4px rgba(255,31,176,0.6);
+  transition:transform .25s cubic-bezier(.2,.8,.2,1), opacity .2s ease;
+}
+.mapset-card:hover:not(:disabled) .mapset-card-select-label{ transform:translate(-50%, 0); opacity:1; }
+.mapset-card:hover:not(:disabled) .mapset-card-play{ opacity:0; }
 /* Wrapper statt align-self:flex-start direkt auf .mapset-card-badge, seit
    der Abwechslungs-Anzeige (.mapset-card-variety) daneben - beide sollen in
    einer Zeile sitzen, ohne dass .mapset-card-body's eigenes column-Flex sie

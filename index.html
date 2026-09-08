@@ -402,28 +402,34 @@
             <div class="panel" id="lobby-settings-panel">
               <h3 data-i18n="settingsHeading">Spielregeln</h3>
 
+              <!-- Schritt 1: Preset-Schnellauswahl - setzt mehrere Einstellungen
+                   auf einmal (siehe PRESETS/wirePresets() in app.js). Rein
+                   optisch/als Startpunkt gedacht: ein Preset-Klick aendert
+                   die Einstellungen unten sofort mit, "aktiv" markiert wird
+                   das Preset nur, dessen Werte GENAU zu den aktuellen
+                   Einstellungen passen (nicht als eigener State gespeichert). -->
               <div class="setting-group">
-                <div class="setting-group-label" data-i18n="settingRounds">Runden</div>
-                <div class="choice-row" id="choice-rounds" data-setting="roundCount">
-                  <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="3">3</button>
-                  <button type="button" data-value="5">5</button>
-                  <button type="button" data-value="10">10</button>
+                <div class="setting-group-label" data-i18n="settingPresets">Schnellstart</div>
+                <div class="preset-row" id="preset-row">
+                  <button type="button" class="preset-chip" data-preset="classic">
+                    <span class="preset-chip-title" data-i18n="presetClassicTitle">Classic Match</span>
+                    <span class="preset-chip-desc" data-i18n="presetClassicDesc">5 Runden &middot; 90s &middot; Punkte-Duell</span>
+                  </button>
+                  <button type="button" class="preset-chip" data-preset="speed">
+                    <span class="preset-chip-title" data-i18n="presetSpeedTitle">Speed Round</span>
+                    <span class="preset-chip-desc" data-i18n="presetSpeedDesc">3 Runden &middot; 30s &middot; Punkte-Duell</span>
+                  </button>
+                  <button type="button" class="preset-chip" data-preset="marathon">
+                    <span class="preset-chip-title" data-i18n="presetMarathonTitle">Marathon</span>
+                    <span class="preset-chip-desc" data-i18n="presetMarathonDesc">10 Runden &middot; 180s &middot; Punkte-Duell</span>
+                  </button>
                 </div>
               </div>
 
-              <div class="setting-group">
-                <div class="setting-group-label" data-i18n="settingDuration">Rundendauer</div>
-                <div class="choice-row" id="choice-duration" data-setting="timeLimitMs">
-                  <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="30000">30s</button>
-                  <button type="button" data-value="60000">60s</button>
-                  <button type="button" data-value="90000">90s</button>
-                  <button type="button" data-value="180000">180s</button>
-                  <button type="button" data-value="null">&#8734;</button>
-                </div>
-              </div>
-
+              <!-- Schritt 2: Modus (Kartenpaket-Auswahl passiert rechts in der
+                   Buehne/im Modal, siehe #mapset-modal weiter unten). Bewusst
+                   AUSSERHALB der "Weitere Regeln"-Klappe: das ist die
+                   wichtigste Einstellung, sie soll nie versteckt sein. -->
               <div class="setting-group">
                 <div class="setting-group-label" data-i18n="settingMode">Modus</div>
                 <div class="choice-row" id="choice-mode" data-setting="mode">
@@ -444,80 +450,117 @@
                 Nach jeder Runde scheidet der schlechteste Tipp aus - die Rundenzahl ergibt sich automatisch aus der Spielerzahl (immer einer weniger), bis nur noch ein Champion übrig bleibt. Braucht mindestens 2 Spieler.
               </p>
 
-              <div class="setting-group heatmap-only hidden" id="heatmap-settings-group">
-                <div class="setting-group-label" data-i18n="settingLabels">Karten-Labels</div>
-                <div class="choice-row" id="choice-heatmap-labels" data-setting="heatmapLabels">
-                  <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="on" data-i18n="labelsOn">An</button>
-                  <button type="button" data-value="off" data-i18n="labelsOff">Aus</button>
-                </div>
+              <!-- Schritt 3: "Weitere Regeln" - Runden/Dauer/Panorama-Steuerung/
+                   Mutatoren/PulseMap-Feinschliff, standardmaessig eingeklappt
+                   (siehe .rules-accordion in styles.css / initRulesAccordion()
+                   in app.js) statt alle 15+ Regler auf einen Schlag zu zeigen. -->
+              <div class="rules-accordion collapsed" id="rules-accordion">
+                <button type="button" class="rules-accordion-toggle" id="rules-accordion-toggle" aria-expanded="false">
+                  <span data-i18n="customRulesLabel">Weitere Regeln</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="rules-accordion-body">
 
-                <div class="setting-group-label" style="margin-top:14px;" data-i18n="settingOpponentInfo">Gegner-Info</div>
-                <div class="choice-row" id="choice-heatmap-opponent-info" data-setting="heatmapOpponentInfo">
-                  <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="best" data-i18n="opponentInfoBest">Nur beste Distanz</button>
-                  <button type="button" data-value="all" data-i18n="opponentInfoAll">Alle Tipps</button>
-                  <button type="button" data-value="blind" data-i18n="opponentInfoBlind">Blind</button>
-                </div>
+                  <div class="setting-group">
+                    <div class="setting-group-label" data-i18n="settingRounds">Runden</div>
+                    <div class="choice-row" id="choice-rounds" data-setting="roundCount">
+                      <div class="choice-thumb" aria-hidden="true"></div>
+                      <button type="button" data-value="3">3</button>
+                      <button type="button" data-value="5">5</button>
+                      <button type="button" data-value="10">10</button>
+                    </div>
+                  </div>
 
-                <div class="setting-group-label" style="margin-top:14px;" data-i18n="settingFlow">Spielablauf</div>
-                <div class="choice-row" id="choice-heatmap-turn-mode" data-setting="heatmapTurnMode">
-                  <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="efficiency" data-i18n="turnModeEfficiency">Gleichzeitig (Wenigste Tipps)</button>
-                  <button type="button" data-value="simultaneous" data-i18n="turnModeRace">Gleichzeitig (Rennen)</button>
-                  <button type="button" data-value="turns" data-i18n="turnModeTurns">Abwechselnd (Taktik)</button>
-                </div>
-                <p class="heatmap-turnmode-note" id="heatmap-turnmode-note"></p>
+                  <div class="setting-group">
+                    <div class="setting-group-label" data-i18n="settingDuration">Rundendauer</div>
+                    <div class="choice-row" id="choice-duration" data-setting="timeLimitMs">
+                      <div class="choice-thumb" aria-hidden="true"></div>
+                      <button type="button" data-value="30000">30s</button>
+                      <button type="button" data-value="60000">60s</button>
+                      <button type="button" data-value="90000">90s</button>
+                      <button type="button" data-value="180000">180s</button>
+                      <button type="button" data-value="null">&#8734;</button>
+                    </div>
+                  </div>
 
-                <div class="setting-group-label" style="margin-top:14px;" data-i18n="settingContinentHint">Kontinent-Hinweis (Easy Mode)</div>
-                <div class="choice-row" id="choice-heatmap-continent-hint" data-setting="heatmapContinentHint">
-                  <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="off" data-i18n="continentHintOff">Aus</button>
-                  <button type="button" data-value="on" data-i18n="continentHintOn">An</button>
-                </div>
-              </div>
+                  <div class="setting-group heatmap-only hidden" id="heatmap-settings-group">
+                    <div class="setting-group-label" data-i18n="settingLabels">Karten-Labels</div>
+                    <div class="choice-row" id="choice-heatmap-labels" data-setting="heatmapLabels">
+                      <div class="choice-thumb" aria-hidden="true"></div>
+                      <button type="button" data-value="on" data-i18n="labelsOn">An</button>
+                      <button type="button" data-value="off" data-i18n="labelsOff">Aus</button>
+                    </div>
 
-              <div class="setting-group" id="panorama-controls-group">
-                <div class="setting-group-label" data-i18n="panoramaControlsLabel">Panorama-Steuerung</div>
-                <div class="choice-row" id="choice-modifier" data-setting="modifier">
-                  <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="free" data-i18n="modifierFree">Frei (Zoom erlaubt)</button>
-                  <button type="button" data-value="no-zoom" data-i18n="modifierNoZoom">Zoom gesperrt</button>
-                </div>
-              </div>
+                    <div class="setting-group-label" style="margin-top:14px;" data-i18n="settingOpponentInfo">Gegner-Info</div>
+                    <div class="choice-row" id="choice-heatmap-opponent-info" data-setting="heatmapOpponentInfo">
+                      <div class="choice-thumb" aria-hidden="true"></div>
+                      <button type="button" data-value="best" data-i18n="opponentInfoBest">Nur beste Distanz</button>
+                      <button type="button" data-value="all" data-i18n="opponentInfoAll">Alle Tipps</button>
+                      <button type="button" data-value="blind" data-i18n="opponentInfoBlind">Blind</button>
+                    </div>
 
-              <div class="setting-group" id="mutator-settings-group">
-                <div class="setting-group-label" data-i18n="mutatorsLabel">Mutatoren</div>
-                <div class="mutator-list" id="mutator-list">
-                  <button type="button" class="mutator-chip" data-mutator="fogOfWar" role="switch" aria-checked="false">
-                    <span class="mutator-chip-title">Fog of War</span>
-                    <span class="mutator-chip-desc" data-i18n="mutatorFogDesc">Panorama startet verschwommen, klart über 15s auf</span>
-                  </button>
-                  <button type="button" class="mutator-chip" data-mutator="brokenCompass" role="switch" aria-checked="false">
-                    <span class="mutator-chip-title">Broken Compass</span>
-                    <span class="mutator-chip-desc" data-i18n="mutatorCompassDesc">Blick startet in eine zufällige Richtung</span>
-                  </button>
-                  <button type="button" class="mutator-chip" data-mutator="noPan" role="switch" aria-checked="false">
-                    <span class="mutator-chip-title">No-Pan (Hardcore)</span>
-                    <span class="mutator-chip-desc" data-i18n="mutatorNoPanDesc">Panorama fest, kein Umsehen/Zoomen</span>
-                  </button>
-                </div>
-              </div>
+                    <div class="setting-group-label" style="margin-top:14px;" data-i18n="settingFlow">Spielablauf</div>
+                    <div class="choice-row" id="choice-heatmap-turn-mode" data-setting="heatmapTurnMode">
+                      <div class="choice-thumb" aria-hidden="true"></div>
+                      <button type="button" data-value="efficiency" data-i18n="turnModeEfficiency">Gleichzeitig (Wenigste Tipps)</button>
+                      <button type="button" data-value="simultaneous" data-i18n="turnModeRace">Gleichzeitig (Rennen)</button>
+                      <button type="button" data-value="turns" data-i18n="turnModeTurns">Abwechselnd (Taktik)</button>
+                    </div>
+                    <p class="heatmap-turnmode-note" id="heatmap-turnmode-note"></p>
 
-              <!-- Nur bei den paar Kartenpaketen mit dichter Mapillary-
-                   Bildabdeckung sichtbar (siehe WALK_BETA_MAPSETS in app.js) -
-                   sonst wuerden die meisten Klicks auf "Weiterlaufen" ins
-                   Leere laufen. Wirkt sich zudem NUR auf den Host selbst aus
-                   (state.round.walkMeta wird nie an Mitspieler gebroadcastet,
-                   siehe net/host.js), daher bewusst als eigene, per Klick
-                   umschaltbare Gruppe statt als normaler Mutator. -->
-              <div class="setting-group hidden" id="walk-beta-group">
-                <div class="setting-group-label">Experimentell</div>
-                <div class="mutator-list">
-                  <button type="button" class="mutator-chip" id="walk-beta-toggle" role="switch" aria-checked="false">
-                    <span class="mutator-chip-title">Weiterlaufen <span class="beta-tag">BETA</span></span>
-                    <span class="mutator-chip-desc">Panorama-zu-Panorama laufen, wo Mapillary-Sequenzen es hergeben - nur auf deinem eigenen Bildschirm, wirkt sich nicht auf die Wertung aus</span>
-                  </button>
+                    <div class="setting-group-label" style="margin-top:14px;" data-i18n="settingContinentHint">Kontinent-Hinweis (Easy Mode)</div>
+                    <div class="choice-row" id="choice-heatmap-continent-hint" data-setting="heatmapContinentHint">
+                      <div class="choice-thumb" aria-hidden="true"></div>
+                      <button type="button" data-value="off" data-i18n="continentHintOff">Aus</button>
+                      <button type="button" data-value="on" data-i18n="continentHintOn">An</button>
+                    </div>
+                  </div>
+
+                  <div class="setting-group" id="panorama-controls-group">
+                    <div class="setting-group-label" data-i18n="panoramaControlsLabel">Panorama-Steuerung</div>
+                    <div class="choice-row" id="choice-modifier" data-setting="modifier">
+                      <div class="choice-thumb" aria-hidden="true"></div>
+                      <button type="button" data-value="free" data-i18n="modifierFree">Frei (Zoom erlaubt)</button>
+                      <button type="button" data-value="no-zoom" data-i18n="modifierNoZoom">Zoom gesperrt</button>
+                    </div>
+                  </div>
+
+                  <div class="setting-group" id="mutator-settings-group">
+                    <div class="setting-group-label" data-i18n="mutatorsLabel">Mutatoren</div>
+                    <div class="mutator-list" id="mutator-list">
+                      <button type="button" class="mutator-chip" data-mutator="fogOfWar" role="switch" aria-checked="false">
+                        <span class="mutator-chip-title">Fog of War</span>
+                        <span class="mutator-chip-desc" data-i18n="mutatorFogDesc">Panorama startet verschwommen, klart über 15s auf</span>
+                      </button>
+                      <button type="button" class="mutator-chip" data-mutator="brokenCompass" role="switch" aria-checked="false">
+                        <span class="mutator-chip-title">Broken Compass</span>
+                        <span class="mutator-chip-desc" data-i18n="mutatorCompassDesc">Blick startet in eine zufällige Richtung</span>
+                      </button>
+                      <button type="button" class="mutator-chip" data-mutator="noPan" role="switch" aria-checked="false">
+                        <span class="mutator-chip-title">No-Pan (Hardcore)</span>
+                        <span class="mutator-chip-desc" data-i18n="mutatorNoPanDesc">Panorama fest, kein Umsehen/Zoomen</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Nur bei den paar Kartenpaketen mit dichter Mapillary-
+                       Bildabdeckung sichtbar (siehe WALK_BETA_MAPSETS in
+                       app.js) - sonst wuerden die meisten Klicks auf
+                       "Weiterlaufen" ins Leere laufen. Wirkt sich zudem NUR
+                       auf den Host selbst aus (state.round.walkMeta wird nie
+                       an Mitspieler gebroadcastet, siehe net/host.js), daher
+                       bewusst als eigene, per Klick umschaltbare Gruppe statt
+                       als normaler Mutator. -->
+                  <div class="setting-group hidden" id="walk-beta-group">
+                    <div class="setting-group-label">Experimentell</div>
+                    <div class="mutator-list">
+                      <button type="button" class="mutator-chip" id="walk-beta-toggle" role="switch" aria-checked="false">
+                        <span class="mutator-chip-title">Weiterlaufen <span class="beta-tag">BETA</span></span>
+                        <span class="mutator-chip-desc">Panorama-zu-Panorama laufen, wo Mapillary-Sequenzen es hergeben - nur auf deinem eigenen Bildschirm, wirkt sich nicht auf die Wertung aus</span>
+                      </button>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -547,6 +590,10 @@
                   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.7 6.6 7.1.6-5.4 4.6 1.7 6.9L12 17l-6.1 3.7 1.7-6.9-5.4-4.6 7.1-.6z"/></svg>
                   <span id="lobby-stage-best-text"></span>
                 </div>
+                <button type="button" class="btn btn-ghost change-mappack-btn" id="btn-change-mappack">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
+                  <span data-i18n="changeMapPackBtn">Kartenpaket &auml;ndern</span>
+                </button>
               </div>
               <div class="lobby-cta">
                 <button class="btn btn-primary" id="btn-ready-toggle" data-i18n="readyBtn">Bereit</button>
@@ -564,8 +611,21 @@
           </div>
         </div>
 
-        <div class="panel" id="lobby-mapset-panel">
-          <h3 data-i18n="mapsetPanelHeading">Kartenpaket</h3>
+      </section>
+
+      <!-- Kartenpaket-Auswahl als eigenstaendiges Vollbild-Modal statt einer
+           endlosen, immer sichtbaren Liste unter der Lobby (Nutzer-Report:
+           "Replace the endless scrolling grid with a clean Modal / Full-
+           screen Picker") - geoeffnet ueber #btn-change-mappack in der
+           Buehne, siehe showMapSetModal()/hideMapSetModal() in app.js. -->
+      <div class="confirm-modal hidden" id="mapset-modal" role="dialog" aria-modal="true" aria-labelledby="mapset-modal-title">
+        <div class="confirm-modal-card mapset-modal-card">
+          <div class="mapset-modal-header">
+            <h3 id="mapset-modal-title" data-i18n="mapsetPanelHeading">Kartenpaket</h3>
+            <button type="button" class="chrome-icon-btn mapset-modal-close" id="mapset-modal-close" aria-label="Schließen">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
           <div class="mapset-toolbar">
             <div class="mapset-search">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -581,7 +641,7 @@
           <div class="mapset-grid" id="mapset-grid"></div>
           <p class="mapset-empty hidden" id="mapset-empty" data-i18n="mapsetEmpty">Keine Kartenpakete gefunden.</p>
         </div>
-      </section>
+      </div>
 
       <!-- ===================== HUD ===================== -->
       <section class="screen" id="screen-hud">

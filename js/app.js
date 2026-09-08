@@ -250,6 +250,81 @@ function initJoinModal() {
   });
 }
 
+// ---------------------------------------------------------------- Kartenpaket-Modal
+
+function showMapSetModal() {
+  el('mapset-modal').classList.remove('hidden');
+  el('mapset-search-input').focus();
+}
+
+function hideMapSetModal() {
+  el('mapset-modal').classList.add('hidden');
+}
+
+function initMapSetModal() {
+  el('btn-change-mappack').addEventListener('click', () => {
+    sound.playClick();
+    showMapSetModal();
+  });
+  el('mapset-modal-close').addEventListener('click', () => {
+    sound.playClick();
+    hideMapSetModal();
+  });
+  el('mapset-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'mapset-modal') hideMapSetModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !el('mapset-modal').classList.contains('hidden')) hideMapSetModal();
+  });
+}
+
+// ---------------------------------------------------------------- "Weitere Regeln"-Klappe
+
+function initRulesAccordion() {
+  const accordion = el('rules-accordion');
+  const toggle = el('rules-accordion-toggle');
+  toggle.addEventListener('click', () => {
+    sound.playClick();
+    const collapsed = accordion.classList.toggle('collapsed');
+    toggle.setAttribute('aria-expanded', String(!collapsed));
+  });
+}
+
+// ---------------------------------------------------------------- Preset-Schnellauswahl
+
+// Jedes Preset patcht mehrere Einstellungen auf einmal - "Modus" bleibt
+// bewusst bei allen dreien 'points', da die Presets laut Vorgabe nur
+// Runden/Dauer variieren sollen ("5 rounds/90s/Points Duel" usw.), nicht den
+// Spielmodus selbst durcheinanderwuerfeln.
+const PRESETS = {
+  classic: { roundCount: 5, timeLimitMs: 90000, mode: 'points' },
+  speed: { roundCount: 3, timeLimitMs: 30000, mode: 'points' },
+  marathon: { roundCount: 10, timeLimitMs: 180000, mode: 'points' },
+};
+
+function wirePresets() {
+  el('preset-row').querySelectorAll('.preset-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      if (state.role !== 'host') return;
+      sound.playClick();
+      controller.updateSettings(PRESETS[chip.dataset.preset]);
+      renderLobby();
+    });
+  });
+}
+
+// Markiert das Preset als "aktiv", dessen Werte GENAU zu den aktuellen
+// Einstellungen passen - reiner Anzeige-Abgleich, kein eigener State (siehe
+// Kommentar an #preset-row in index.html).
+function renderPresetRow() {
+  const s = state.settings;
+  el('preset-row').querySelectorAll('.preset-chip').forEach((chip) => {
+    const p = PRESETS[chip.dataset.preset];
+    const matches = p.roundCount === s.roundCount && p.timeLimitMs === s.timeLimitMs && p.mode === s.mode;
+    chip.classList.toggle('active', matches);
+  });
+}
+
 // ---------------------------------------------------------------- QR-Modal
 
 function showQrModal(link) {
@@ -741,6 +816,7 @@ function renderMapSetGrid() {
       <div class="mapset-card-cover ${coverClass}">
         <span class="mapset-card-icon">${icon}</span>
         <div class="mapset-card-play">${MAPSET_PLAY_ICON}</div>
+        <span class="mapset-card-select-label">${escapeHtml(t('selectMapBtn'))}</span>
       </div>
       <div class="mapset-card-body">
         <div class="mapset-card-badge-row">
@@ -756,6 +832,7 @@ function renderMapSetGrid() {
       sound.playClick();
       controller.updateSettings({ mapSetId: entry.id });
       renderMapSetGrid();
+      hideMapSetModal();
 
       // Klick aufs Cover-Bild (wo der Play-Pfeil sitzt) startet direkt -
       // vorher war der Pfeil rein dekorativ und tat nichts eigenes.
@@ -943,6 +1020,7 @@ function renderLobby() {
     }
   }
 
+  renderPresetRow();
   renderChoiceRow('choice-rounds', state.settings.roundCount);
   renderChoiceRow('choice-duration', state.settings.timeLimitMs);
   renderChoiceRow('choice-mode', state.settings.mode);
@@ -957,7 +1035,11 @@ function renderLobby() {
   // Spielablauf) und ein kurzer Hinweistext statt der Kartenpaket-Auswahl.
   const isHeatmap = state.settings.mode === 'heatmap';
   const isBattleRoyale = state.settings.mode === 'battle-royale';
-  el('lobby-mapset-panel').classList.toggle('hidden', isHeatmap);
+  // Kartenpaket-Auswahl lebt jetzt in einem eigenen Modal (#mapset-modal,
+  // siehe showMapSetModal()) statt einem permanenten Panel unter der Lobby -
+  // im Heatmap-Modus (keine Panoramen, kein Kartenpaket noetig) einfach den
+  // Aufruf-Button ausblenden statt eines ganzen Panels.
+  el('btn-change-mappack').classList.toggle('hidden', isHeatmap);
   el('heatmap-mode-note').classList.toggle('hidden', !isHeatmap);
   el('heatmap-settings-group').classList.toggle('hidden', !isHeatmap);
   el('panorama-controls-group').classList.toggle('hidden', isHeatmap);
@@ -1212,11 +1294,17 @@ function wireLobbyControls() {
  * renderLobby() (das bei jeder Einstellungsaenderung erneut laeuft) gesetzt,
  * sonst wuerde eine gerade vom Spieler aufgeklappte Gruppe beim naechsten
  * Tipp in einer ANDEREN Gruppe wieder eingeklappt. */
+// Betrifft seit der Wizard-Umstrukturierung nur noch die zwei direkten
+// Kind-Gruppen von #lobby-settings-panel (Presets, Modus) - Runden/Dauer/
+// Panorama/Mutatoren stecken jetzt in #rules-accordion, das selbst schon per
+// Default eingeklappt ist (siehe initRulesAccordion()). Kein zusaetzliches
+// Auto-Einklappen der Presets/Modus-Gruppe mehr auf Mobile (frueher hier
+// noetig, um die Seitenhoehe zu begrenzen - der urspruengliche Grund dafuer
+// ist mit der Regel-Klappe + dem Kartenpaket-Modal (statt einer immer
+// sichtbaren Liste) bereits geloest). Der manuelle Klick-zum-Einklappen-
+// Mechanismus selbst bleibt fuer diese zwei Gruppen erhalten.
 function initSettingsAccordion() {
   const groups = el('lobby-settings-panel').querySelectorAll(':scope > .setting-group');
-  if (window.matchMedia('(max-width: 768px)').matches) {
-    groups.forEach((g) => g.classList.add('collapsed'));
-  }
   groups.forEach((group) => {
     group.querySelectorAll(':scope > .setting-group-label').forEach((label) => {
       label.addEventListener('click', () => {
@@ -3138,6 +3226,9 @@ async function boot() {
   initJoinModal();
   initQrModal();
   initInviteCard();
+  initMapSetModal();
+  initRulesAccordion();
+  wirePresets();
   initVisibilityWatch();
   wireMenuControls();
   wireGameCarousel();
