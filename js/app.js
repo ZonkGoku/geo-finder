@@ -3086,6 +3086,13 @@ function wireBusEvents() {
     enterLobby();
   });
   bus.on('ui:game-started', () => {
+    // Zaehlt separat vom automatischen Seitenaufruf-Tracking (siehe Skript-
+    // Tag in index.html), wie oft tatsaechlich eine Partie gestartet wurde -
+    // aussagekraeftiger als reine Seitenaufrufe fuer "wurde das Spiel
+    // wirklich gespielt". window.goatcounter fehlt lokal/offline (Skript
+    // blockiert oder noch nicht geladen) - optional verketten statt hart
+    // vorauszusetzen.
+    window.goatcounter?.count({ path: `game-started-${state.settings.mode}`, event: true });
     // Mitspieler (nicht der Host) fragen hier bewusst NICHT mehr die volle
     // Kartenpaket-Datei ab - das war eine Sicherheitsluecke: die Datei
     // enthaelt die echten Koordinaten aller moeglichen Standorte, im

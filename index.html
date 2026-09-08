@@ -32,6 +32,19 @@
 <link rel="stylesheet" href="./lib/leaflet/leaflet.css">
 <link rel="stylesheet" href="./lib/pannellum/pannellum.css">
 <link rel="stylesheet" href="./css/styles.css">
+<!-- Minimaler, Cookie-loser Besucherzaehler (GoatCounter, kostenlos, DSGVO-
+     freundlich) - einzige Ausnahme von "keine Server-Calls außer Mapillary",
+     bewusst dafuer in Kauf genommen, weil sich sonst nirgends ablesen liesse,
+     ob/wie oft das Spiel ueberhaupt aufgerufen wird. MUSS vor dem ersten
+     echten Einsatz durch den eigenen GoatCounter-Code ersetzt werden (Konto
+     unter https://www.goatcounter.com/ anlegen, kostenlos, keine Kreditkarte) -
+     "YOUR-CODE" ist nur ein Platzhalter, ohne echten Code zaehlt das Skript
+     schlicht nichts. Das zusaetzliche "game-started"-Event (siehe
+     bus.on('ui:game-started', ...) in app.js) zaehlt separat, wie oft
+     tatsaechlich eine Partie gestartet wurde statt nur die Seite geladen -
+     aussagekraeftiger als ein reiner Seitenaufruf-Zaehler fuer "wurde das
+     Spiel wirklich gespielt". -->
+<script data-goatcounter="https://YOUR-CODE.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 
