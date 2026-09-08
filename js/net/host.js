@@ -453,6 +453,18 @@ export class HostController {
       guessedPlayerIds: new Set(),
       myGuess: null,
       lastSwitchAwayAt: new Map(), // peerId -> Zeitstempel, fuer die Verdachtspruefung in _handleGuess()
+      // "Weiterlaufen"-Beta: bewusst NUR lokaler State, siehe unten im
+      // MSG.ROUND_START-Payload - taucht dort absichtlich NICHT auf. Ein
+      // Mitspieler-Client baut sein state.round ausschliesslich aus dieser
+      // Broadcast-Nachricht auf, hat also nie ein walkMeta - nur der Host
+      // selbst (der location oben schon lokal mit allen Koordinaten vorliegen
+      // hat) darf laufen. Verhindert, dass die rohe Mapillary-Bild-ID (mit
+      // der man die exakte Position direkt bei Mapillary nachschlagen
+      // koennte) an Mitspieler durchsickert.
+      walkMeta:
+        state.settings.mutators?.walkBeta && location.sequenceId && location.mapillaryImageId
+          ? { sequenceId: location.sequenceId, imageId: location.mapillaryImageId, sequenceImageIds: null }
+          : null,
     };
 
     // hint/vaov sind bewusst die einzigen Vorab-Informationen zum aktuellen

@@ -71,6 +71,14 @@ function buildLocationFromDetail(detail, regionMeta) {
     attribution: 'Mapillary-Mitwirkende',
     attributionUrl: 'https://www.mapillary.com/',
     coordSource: 'mapillary-live',
+    // Nur fuer den "Weiterlaufen"-Beta-Modus gebraucht (siehe unten) - roh,
+    // unpraefigiert, damit findNeighborImageId()/fetchSequenceImageIds()
+    // direkt mit den IDs arbeiten koennen, die Mapillarys /image_ids-
+    // Endpunkt liefert. NIE an Mitspieler senden (siehe net/host.js) - die
+    // rohe Bild-ID erlaubt jedem, der sie kennt, eine direkte Mapillary-
+    // Abfrage nach der exakten geometry (= der gesuchten Antwort).
+    mapillaryImageId: detail.id ?? null,
+    sequenceId: detail.sequence_id ?? null,
   };
 }
 
@@ -86,7 +94,7 @@ function buildLocationFromDetail(detail, regionMeta) {
 export async function fetchPanoramaById(id, regionMeta) {
   const detailParams = new URLSearchParams({
     access_token: MAPILLARY_ACCESS_TOKEN,
-    fields: 'id,is_pano,geometry,thumb_2048_url',
+    fields: 'id,is_pano,geometry,thumb_2048_url,sequence_id',
   });
   try {
     const detail = await fetchJson(`${API_BASE}/${id}?${detailParams.toString()}`, regionMeta.name);
@@ -147,4 +155,55 @@ export async function fetchPanoramaForRegion(region, rand = Math.random) {
   }
 
   return null;
+}
+
+// Ab hier: nur fuer den "Weiterlaufen"-Beta-Modus (siehe state.settings.
+// mutators.walkBeta, net/host.js _startRound(), app.js syncWalkControls()).
+// Bleibt bewusst getrennt von der obigen Runden-Aufloesung - anders als dort
+// braucht "Weiterlaufen" die GESAMTE, geordnete Bilderliste einer Sequenz
+// (nicht nur ein einzelnes zufaelliges Bild daraus), um vor/zurueck laufen zu
+// koennen.
+
+// sequenceId -> Promise<string[]> (geordnete Bild-IDs) - eine Sequenz aendert
+// sich waehrend einer laufenden Partie nicht, ein zweiter Abruf derselben
+// Sequenz (z. B. beim Zurücklaufen zu einem schon besuchten Abschnitt) waere
+// reine Verschwendung.
+const sequenceCache = new Map();
+
+/**
+ * Liefert die geordnete Liste aller Bild-IDs einer Mapillary-Sequenz. Wird
+ * lazy beim ersten Klick auf "Weiterlaufen"/"Zurücklaufen" einer Runde
+ * geladen, nicht schon beim Runden-Start - die meisten Spieler laufen nie,
+ * der Abruf waere in den meisten Runden verschwendete Bandbreite/Latenz.
+ */
+export async function fetchSequenceImageIds(sequenceId) {
+  if (!sequenceId) return [];
+  if (sequenceCache.has(sequenceId)) return sequenceCache.get(sequenceId);
+
+  const promise = (async () => {
+    const params = new URLSearchParams({ access_token: MAPILLARY_ACCESS_TOKEN, sequence_id: sequenceId });
+    const json = await fetchJson(`${API_BASE}/image_ids?${params.toString()}`);
+    return (json?.data || []).map((d) => d.id);
+  })();
+
+  sequenceCache.set(sequenceId, promise);
+  try {
+    return await promise;
+  } catch (err) {
+    sequenceCache.delete(sequenceId); // fehlgeschlagener Abruf soll beim naechsten Klick erneut versucht werden
+    throw err;
+  }
+}
+
+/**
+ * Reine Array-Logik, kein Netzwerk: findet die Nachbar-Bild-ID in Lauf-
+ * richtung. null, wenn das aktuelle Bild nicht in der Liste vorkommt (sollte
+ * nicht passieren) oder am Ende/Anfang der Sequenz - dann ist einfach Schluss
+ * mit Weiterlaufen in diese Richtung.
+ */
+export function findNeighborImageId(sequenceImageIds, currentImageId, direction) {
+  const index = sequenceImageIds.indexOf(currentImageId);
+  if (index === -1) return null;
+  const neighborIndex = direction === 'forward' ? index + 1 : index - 1;
+  return sequenceImageIds[neighborIndex] ?? null;
 }

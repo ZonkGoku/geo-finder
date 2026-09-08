@@ -31,7 +31,13 @@ export const state = {
     mapSetId: 'weltweit',
     mode: 'points', // 'points' | 'hp' | 'country-streak' | 'heatmap' | 'battle-royale'
     modifier: 'free', // 'free' | 'no-zoom'
-    mutators: { fogOfWar: false, brokenCompass: false, noPan: false },
+    // walkBeta: experimentelles "Weiterlaufen" zwischen verbundenen Mapillary-
+    // Panoramen (siehe net/host.js _startRound() / app.js syncWalkControls()).
+    // Wirkt nur beim Host selbst, kein Netzwerk-Broadcast der Bild-IDs an
+    // Mitspieler - deshalb technisch trotzdem als "Mutator" behandelt (nutzt
+    // dieselbe Sync-/Toggle-Infrastruktur), obwohl es keine Spielschwierigkeit
+    // veraendert.
+    mutators: { fogOfWar: false, brokenCompass: false, noPan: false, walkBeta: false },
     // Nur im Heatmap-Modus genutzt (siehe net/host.js _startHeatmapGame()):
     heatmapLabels: 'on', // 'on' | 'off' - Kartenbeschriftungen (String statt Bool, siehe renderChoiceRow() in app.js)
     // 'all' | 'best' | 'blind' - wie viel vom Gegner-Live-Feed ankommt.

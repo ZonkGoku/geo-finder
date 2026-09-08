@@ -436,6 +436,23 @@
                   </button>
                 </div>
               </div>
+
+              <!-- Nur bei den paar Kartenpaketen mit dichter Mapillary-
+                   Bildabdeckung sichtbar (siehe WALK_BETA_MAPSETS in app.js) -
+                   sonst wuerden die meisten Klicks auf "Weiterlaufen" ins
+                   Leere laufen. Wirkt sich zudem NUR auf den Host selbst aus
+                   (state.round.walkMeta wird nie an Mitspieler gebroadcastet,
+                   siehe net/host.js), daher bewusst als eigene, per Klick
+                   umschaltbare Gruppe statt als normaler Mutator. -->
+              <div class="setting-group hidden" id="walk-beta-group">
+                <div class="setting-group-label">Experimentell</div>
+                <div class="mutator-list">
+                  <button type="button" class="mutator-chip" id="walk-beta-toggle">
+                    <span class="mutator-chip-title">Weiterlaufen <span class="beta-tag">BETA</span></span>
+                    <span class="mutator-chip-desc">Panorama-zu-Panorama laufen, wo Mapillary-Sequenzen es hergeben - nur auf deinem eigenen Bildschirm, wirkt sich nicht auf die Wertung aus</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -539,6 +556,22 @@
           </button>
           <button class="pano-ctrl-btn" id="btn-fullscreen" title="Vollbild" aria-label="Vollbild">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
+          </button>
+        </div>
+
+        <!-- Nur sichtbar, wenn state.round.walkMeta gesetzt ist (siehe
+             syncWalkControls() in app.js) - das ist NUR beim Host selbst der
+             Fall, nie bei einem beigetretenen Mitspieler (walkMeta wird
+             absichtlich nie gebroadcastet, um keine Bild-IDs/Koordinaten an
+             Mitspieler durchsickern zu lassen, ueber die man sonst direkt bei
+             Mapillary die exakte Position nachschlagen koennte). -->
+        <div class="pano-walk-controls hidden" id="pano-walk-controls">
+          <button class="pano-walk-btn" id="btn-walk-back" title="Zurück laufen" aria-label="Zurück laufen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <span class="pano-walk-label">Weiterlaufen <span class="beta-tag">BETA</span></span>
+          <button class="pano-walk-btn" id="btn-walk-forward" title="Weiter laufen" aria-label="Weiter laufen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
 

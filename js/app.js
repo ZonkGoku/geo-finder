@@ -6,6 +6,7 @@ import { GuessMap } from './map/guess-map.js';
 import { ResultMap } from './map/result-map.js';
 import { HeatmapMap } from './map/heatmap-map.js';
 import { PanoViewer } from './panorama/pano-viewer.js';
+import { fetchSequenceImageIds, findNeighborImageId, fetchPanoramaById } from './panorama/mapillary-source.js';
 import { ensureCountryStore, searchCountries, findCountryByName } from './core/country-store.js';
 import { getColorForDistance, getDistanceLevel } from './core/heatmap-color.js';
 import { proximityLabel } from './core/heatmap-proximity.js';
@@ -634,6 +635,7 @@ function renderMapSetGrid() {
     grid.appendChild(card);
   }
   renderLobbyStage();
+  syncWalkBetaVisibility();
 }
 
 // "Die Buehne" - rechte Spalte der Desktop-Lobby. Zeigt eine grosse Vorschau
@@ -720,6 +722,13 @@ function renderChoiceRow(rowId, currentValue) {
   }
 }
 
+// Nur diese Kartenpakete haben (laut Diskussion/Machbarkeitstest-Skript,
+// siehe scripts/mapillary-walk-feasibility.mjs) dicht genug verbundene
+// Mapillary-Bildsequenzen, damit "Weiterlaufen" nicht staendig nach 1-2
+// Schritten in eine Sackgasse laeuft - dieselben Pakete, die schon beim
+// Location-Pool-Ausbau als "dichte Stadt-Pakete" identifiziert wurden.
+const WALK_BETA_MAPSETS = ['berlin', 'hamburg', 'paris', 'london', 'new-york'];
+
 function renderMutators() {
   const isHost = state.role === 'host';
   const mutators = state.settings.mutators || {};
@@ -727,6 +736,21 @@ function renderMutators() {
     chip.classList.toggle('selected', Boolean(mutators[chip.dataset.mutator]));
     chip.disabled = !isHost;
   });
+
+  const walkToggle = el('walk-beta-toggle');
+  walkToggle.classList.toggle('selected', Boolean(mutators.walkBeta));
+  walkToggle.disabled = !isHost;
+}
+
+// Eigene Funktion statt nur Teil von renderMutators()/renderLobby(): die
+// Sichtbarkeit haengt vom AKTUELLEN Kartenpaket ab, das aber auch alleine per
+// renderMapSetGrid() (Klick auf eine Kartenpaket-Karte) wechseln kann, ohne
+// dass danach ein volles renderLobby() laeuft - ohne diesen zweiten Aufrufer
+// bliebe die Gruppe nach einem Kartenpaket-Wechsel auf ihrem alten
+// Sichtbarkeitsstand haengen.
+function syncWalkBetaVisibility() {
+  const isHeatmap = state.settings.mode === 'heatmap';
+  el('walk-beta-group').classList.toggle('hidden', isHeatmap || !WALK_BETA_MAPSETS.includes(state.settings.mapSetId));
 }
 
 function renderLobby() {
@@ -793,6 +817,7 @@ function renderLobby() {
   // kartenbasierten PulseMap-Modus gibt es keinen Panorama-Viewer, die
   // gesamte "Mutatoren"-Gruppe waere dort nur verwirrende, wirkungslose UI.
   el('mutator-settings-group').classList.toggle('hidden', isHeatmap);
+  syncWalkBetaVisibility();
   el('battle-royale-mode-note').classList.toggle('hidden', !isBattleRoyale);
   // Die Rundenzahl ergibt sich in diesem Modus automatisch aus der
   // Spielerzahl (siehe net/host.js startGame()) - der Runden-Wahlschalter
@@ -1012,6 +1037,14 @@ function wireLobbyControls() {
       controller.updateSettings({ mutators: { ...current, [key]: !current[key] } });
       renderLobby();
     });
+  });
+
+  el('walk-beta-toggle').addEventListener('click', () => {
+    if (state.role !== 'host') return;
+    sound.playClick();
+    const current = state.settings.mutators || {};
+    controller.updateSettings({ mutators: { ...current, walkBeta: !current.walkBeta } });
+    renderLobby();
   });
 
   el('mapset-search-input').addEventListener('input', (e) => {
@@ -1683,6 +1716,70 @@ function transitionPanorama() {
   }, PANO_FADE_MS);
 }
 
+// "Weiterlaufen"-Beta: siehe state.round.walkMeta (net/host.js _startRound())
+// und WALK_BETA_MAPSETS oben. Re-Entrancy-Guard nach demselben Muster wie
+// menuActionInFlight - ohne ihn wuerde schnelles Mehrfachklicken auf
+// "Weiter" mehrere ueberlappende Mapillary-Abrufe lostreten, die in falscher
+// Reihenfolge zurueckkommen koennen und dann den Sequenz-Zeiger durcheinanderbringen.
+let walkStepInFlight = false;
+
+function syncWalkControls() {
+  const wrap = el('pano-walk-controls');
+  wrap.classList.toggle('hidden', !state.round.walkMeta);
+}
+
+async function handleWalkStep(direction) {
+  const walkMeta = state.round.walkMeta;
+  if (!walkMeta || walkStepInFlight) return;
+  walkStepInFlight = true;
+  sound.playClick();
+  const forwardBtn = el('btn-walk-forward');
+  const backBtn = el('btn-walk-back');
+  forwardBtn.disabled = true;
+  backBtn.disabled = true;
+
+  try {
+    if (!walkMeta.sequenceImageIds) {
+      walkMeta.sequenceImageIds = await fetchSequenceImageIds(walkMeta.sequenceId);
+    }
+    const neighborId = findNeighborImageId(walkMeta.sequenceImageIds, walkMeta.imageId, direction);
+    if (!neighborId) {
+      showToast('Ende der Sequenz erreicht');
+      return;
+    }
+    const location = await fetchPanoramaById(neighborId, { name: '', lat: 0, lng: 0 });
+    if (!location) {
+      showToast('Dieses Bild ist nicht mehr verfügbar');
+      return;
+    }
+    walkMeta.imageId = neighborId;
+    // Bewusst NUR die lokal angezeigte Panorama-URL - state.round.actual
+    // (die tatsaechliche Zielkoordinate fuer die Wertung) bleibt unveraendert
+    // der urspruengliche Spawn-Punkt der Runde, genau wie beim "Move"-Modus
+    // im echten GeoGuessr: der Pin sitzt weiter am Startpunkt, egal wie weit
+    // man laeuft.
+    state.round.panoramaUrl = location.panoramaUrl;
+    await new Promise((resolve) => {
+      el('pano-loading').classList.remove('hidden');
+      panoViewer.load(location.panoramaUrl, {
+        modifier: state.settings.modifier,
+        mutators: state.settings.mutators,
+        onLoad: () => {
+          el('pano-loading').classList.add('hidden');
+          resolve();
+        },
+      });
+    });
+  } catch (err) {
+    console.error('Weiterlaufen fehlgeschlagen:', err);
+    showToast('Weiterlaufen fehlgeschlagen');
+  } finally {
+    walkStepInFlight = false;
+    forwardBtn.disabled = false;
+    backBtn.disabled = false;
+  }
+}
+
 function renderRoundStart() {
   showScreen('hud');
   ensureHudWidgets();
@@ -1730,6 +1827,7 @@ function renderRoundStart() {
   // Runde zufaellig (siehe PanoViewer.load()), der Button waere also
   // irrefuehrend und wird ausgeblendet.
   el('btn-compass').classList.toggle('hidden', Boolean(mutators.brokenCompass));
+  syncWalkControls();
 
   transitionPanorama();
 
@@ -1934,6 +2032,9 @@ function wireHudControls() {
     sound.playClick();
     panoViewer?.toggleFullscreen();
   });
+
+  el('btn-walk-forward').addEventListener('click', () => handleWalkStep('forward'));
+  el('btn-walk-back').addEventListener('click', () => handleWalkStep('backward'));
 
   // Erschwert zumindest die triviale Rechtsklick-Bildersuche auf dem Panorama.
   el('pano-container').addEventListener('contextmenu', (e) => e.preventDefault());
