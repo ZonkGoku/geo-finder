@@ -74,6 +74,35 @@
     </div>
   </div>
 
+  <!-- QR-Code-Modal fuer die Einladungskarte (siehe wireInviteCard() in
+       app.js) - erzeugt den Code per js/ui/qrcode.js, kein externer Dienst. -->
+  <div class="confirm-modal hidden" id="qr-modal" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title">
+    <div class="confirm-modal-card qr-modal-card">
+      <h3 id="qr-modal-title" data-i18n="qrModalTitle">Mit dem Handy beitreten</h3>
+      <div class="qr-code-wrap" id="qr-code-wrap"></div>
+      <p data-i18n="qrModalHint">Kamera drauf halten &mdash; landet direkt in dieser Lobby.</p>
+      <div class="confirm-modal-actions">
+        <button class="btn btn-ghost" id="qr-modal-close" data-i18n="closeBtn">Schlie&szlig;en</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Beitreten-Modal (ersetzt das fruehere Inline-Panel unter "Beitreten" -
+       siehe wireJoinModal() in app.js). Wird auch beim automatischen Beitritt
+       per Deep-Link kurz mit vorausgefuelltem Code gezeigt, falls der Nutzer
+       noch keinen Namen gesetzt hat (siehe handleDeepLink()). -->
+  <div class="confirm-modal hidden" id="join-modal" role="dialog" aria-modal="true" aria-labelledby="join-modal-title">
+    <div class="confirm-modal-card join-modal-card">
+      <h3 id="join-modal-title" data-i18n="joinModalTitle">Einem Spiel beitreten</h3>
+      <input class="input join-modal-input" id="join-code-input" data-i18n="joinModalPlaceholder" data-i18n-attr="placeholder" placeholder="6-stelliger Code oder ganzer Link" autocomplete="off">
+      <p class="menu-error hidden" id="join-modal-error"></p>
+      <div class="confirm-modal-actions">
+        <button class="btn btn-ghost" id="join-modal-cancel" data-i18n="cancelBtn">Abbrechen</button>
+        <button class="btn btn-primary" id="btn-join-confirm" data-i18n="joinModalConfirm">Beitreten</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== MENU ===================== -->
   <!-- Bewusst AUSSERHALB von .device: .device hat backdrop-filter, was einen
        neuen Containing Block fuer position:fixed-Nachfahren erzeugt (wie
@@ -124,10 +153,6 @@
                 <div class="action-sub" data-i18n="actionJoinSub">Code oder Link einf&uuml;gen</div>
               </span>
             </button>
-            <div class="join-panel hidden" id="join-panel">
-              <input class="input" id="join-code-input" placeholder="z. B. AB3F9K oder ganzer Link" autocomplete="off">
-              <button class="btn btn-primary btn-sm" id="btn-join-confirm">Verbinden</button>
-            </div>
 
             <button class="action-card" id="btn-solo">
               <span class="action-icon">
@@ -321,10 +346,52 @@
           </div>
         </div>
 
-        <div class="share-row" id="lobby-share-row">
-          <div class="share-link" id="lobby-share-link">&mdash;</div>
-          <button class="btn btn-primary" id="copy-link-btn" data-i18n="copyLinkBtn">Link kopieren</button>
+        <!-- Einladungskarte: Link + Kopieren-Feedback + QR-Code-Option (siehe
+             renderLobby()/wireInviteCard() in app.js). Sichtbarkeit folgt
+             derselben isSolo-Bedingung wie zuvor lobby-share-row. -->
+        <div class="invite-card hidden" id="lobby-invite-card">
+          <div class="invite-card-row">
+            <div class="invite-card-link" id="lobby-share-link">&mdash;</div>
+            <button class="btn btn-primary invite-copy-btn" id="copy-link-btn" type="button">
+              <svg class="invite-copy-icon-default" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <svg class="invite-copy-icon-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true" hidden><path d="M4 12l5 5L20 6"/></svg>
+              <span class="invite-copy-label" id="copy-link-btn-label" data-i18n="copyLinkBtn">Link kopieren</span>
+            </button>
+          </div>
+          <button class="invite-qr-toggle" id="btn-show-qr" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM19 14v3M14 19h3M18.5 18.5h2.5v2.5"/></svg>
+            <span data-i18n="showQrBtn">QR-Code f&uuml;r Handy anzeigen</span>
+          </button>
         </div>
+
+        <!-- Onboarding: 3-Schritt-Anleitung fuer neue Hosts, siehe
+             renderOnboardingBanner() in app.js. Solo blendet sie (wie die
+             Einladungskarte) komplett aus - es gibt niemanden einzuladen. -->
+        <div class="onboarding-banner hidden" id="lobby-onboarding">
+          <div class="onboarding-step" id="onboarding-step-1">
+            <span class="onboarding-step-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <svg class="onboarding-step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+            </span>
+            <span class="onboarding-step-label" data-i18n="onboardingStep1">Copy room link</span>
+          </div>
+          <svg class="onboarding-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <div class="onboarding-step" id="onboarding-step-2">
+            <span class="onboarding-step-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
+              <svg class="onboarding-step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+            </span>
+            <span class="onboarding-step-label" data-i18n="onboardingStep2">Send to friends</span>
+          </div>
+          <svg class="onboarding-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <div class="onboarding-step" id="onboarding-step-3">
+            <span class="onboarding-step-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+            <span class="onboarding-step-label" data-i18n="onboardingStep3">Start the match!</span>
+          </div>
+        </div>
+        <p class="onboarding-subtext" id="lobby-onboarding-subtext"></p>
 
         <div class="lobby-main">
           <div class="lobby-main-left">

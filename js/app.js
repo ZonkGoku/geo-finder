@@ -7,6 +7,7 @@ import { ResultMap } from './map/result-map.js';
 import { HeatmapMap } from './map/heatmap-map.js';
 import { PanoViewer } from './panorama/pano-viewer.js';
 import { fetchSequenceImageIds, findNeighborImageId, fetchPanoramaById } from './panorama/mapillary-source.js';
+import { generateQrMatrix, matrixToSvg } from './ui/qrcode.js';
 import { ensureCountryStore, searchCountries, findCountryByName } from './core/country-store.js';
 import { getColorForDistance, getDistanceLevel } from './core/heatmap-color.js';
 import { proximityLabel } from './core/heatmap-proximity.js';
@@ -218,6 +219,127 @@ function hideConfirmLeaveModal() {
   el('confirm-leave-modal').classList.add('hidden');
 }
 
+// ---------------------------------------------------------------- join modal
+
+function showJoinModal(prefillCode) {
+  el('join-modal-error').classList.add('hidden');
+  const input = el('join-code-input');
+  if (prefillCode) input.value = prefillCode;
+  el('join-modal').classList.remove('hidden');
+  input.focus();
+}
+
+function hideJoinModal() {
+  el('join-modal').classList.add('hidden');
+}
+
+function initJoinModal() {
+  el('btn-join-confirm').addEventListener('click', () => joinFlow(el('join-code-input').value));
+  el('join-code-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') joinFlow(el('join-code-input').value);
+  });
+  el('join-modal-cancel').addEventListener('click', () => {
+    sound.playClick();
+    hideJoinModal();
+  });
+  el('join-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'join-modal') hideJoinModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !el('join-modal').classList.contains('hidden')) hideJoinModal();
+  });
+}
+
+// ---------------------------------------------------------------- QR-Modal
+
+function showQrModal(link) {
+  const wrap = el('qr-code-wrap');
+  wrap.innerHTML = '';
+  wrap.classList.remove('qr-error');
+  const matrix = generateQrMatrix(link);
+  if (!matrix) {
+    // Extrem lange Links (weit ueber der 412-Byte-Grenze von Version 15,
+    // siehe js/ui/qrcode.js) sind praktisch ausgeschlossen bei einem Origin+
+    // 6-stelligem Raum-Code, aber ein sauberer Fallback statt eines leeren
+    // Quadrats ist trotzdem billig.
+    wrap.classList.add('qr-error');
+    wrap.textContent = t('qrModalUnavailable');
+  } else {
+    wrap.innerHTML = matrixToSvg(matrix, { moduleColor: '#14181f' });
+  }
+  el('qr-modal').classList.remove('hidden');
+}
+
+function hideQrModal() {
+  el('qr-modal').classList.add('hidden');
+}
+
+function initQrModal() {
+  el('btn-show-qr').addEventListener('click', () => {
+    sound.playClick();
+    showQrModal(el('lobby-share-link').textContent);
+  });
+  el('qr-modal-close').addEventListener('click', () => {
+    sound.playClick();
+    hideQrModal();
+  });
+  el('qr-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'qr-modal') hideQrModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !el('qr-modal').classList.contains('hidden')) hideQrModal();
+  });
+}
+
+// ---------------------------------------------------------------- Einladungskarte / Copy-Feedback
+
+let copyFeedbackTimer = null;
+
+// playerCount===1: nur der Host selbst ist da - Schritte 1+2 (Link kopieren/
+// teilen) sind das, was jetzt zu tun ist, Schritt 3 wartet noch.
+// playerCount>1: mindestens ein Mitspieler ist beigetreten - 1+2 gelten als
+// erledigt (sonst waere niemand da), Schritt 3 (Match starten) ist dran.
+function renderOnboardingBanner(playerCount) {
+  const step1 = el('onboarding-step-1');
+  const step2 = el('onboarding-step-2');
+  const step3 = el('onboarding-step-3');
+  const hasJoined = playerCount > 1;
+
+  step1.classList.toggle('done', hasJoined);
+  step1.classList.toggle('active', !hasJoined);
+  step2.classList.toggle('done', hasJoined);
+  step2.classList.toggle('active', !hasJoined);
+  step3.classList.toggle('done', false);
+  step3.classList.toggle('active', hasJoined);
+
+  el('lobby-onboarding-subtext').textContent = hasJoined ? t('onboardingSubtextReady') : t('onboardingSubtextInvite');
+}
+
+function initInviteCard() {
+  el('copy-link-btn').addEventListener('click', async () => {
+    sound.playClick();
+    const text = el('lobby-share-link').textContent;
+    const btn = el('copy-link-btn');
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      showToast(t('toastCopyFailed') + ': ' + text);
+      return;
+    }
+    btn.classList.add('copied');
+    btn.querySelector('.invite-copy-icon-default').hidden = true;
+    btn.querySelector('.invite-copy-icon-done').hidden = false;
+    el('copy-link-btn-label').textContent = t('copyLinkBtnCopied');
+    clearTimeout(copyFeedbackTimer);
+    copyFeedbackTimer = setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.querySelector('.invite-copy-icon-default').hidden = false;
+      btn.querySelector('.invite-copy-icon-done').hidden = true;
+      el('copy-link-btn-label').textContent = t('copyLinkBtn');
+    }, 1600);
+  });
+}
+
 function initBrandHomeLink() {
   const goHome = () => {
     if (isRoundInProgress()) {
@@ -331,7 +453,19 @@ function updateConnectionBanner() {
 
 // ---------------------------------------------------------------- menu
 
+// Fehler landen im Beitreten-Modal, solange es offen ist (ungueltiger Code,
+// Verbindung fehlgeschlagen), sonst im generischen Menuefehler-Feld (z. B.
+// hostFlow()-Fehler, oder ein Beitritts-Fehler NACHDEM resetToMenu() das
+// Modal schon geschlossen hat - dann faellt der Nutzer ohnehin schon auf dem
+// Hauptmenue an, wo #menu-error sichtbar ist).
 function showMenuError(message) {
+  const joinModal = el('join-modal');
+  if (!joinModal.classList.contains('hidden')) {
+    const errorEl = el('join-modal-error');
+    errorEl.textContent = message;
+    errorEl.classList.remove('hidden');
+    return;
+  }
   const errorEl = el('menu-error');
   errorEl.textContent = message;
   errorEl.hidden = false;
@@ -339,6 +473,7 @@ function showMenuError(message) {
 
 function clearMenuError() {
   el('menu-error').hidden = true;
+  el('join-modal-error').classList.add('hidden');
 }
 
 function createSoloPeerManager() {
@@ -711,12 +846,19 @@ function renderChoiceRow(rowId, currentValue) {
     if (isSelected) selectedBtn = btn;
   });
 
-  // Gleitenden Thumb hinter den ausgewaehlten Button positionieren.
+  // Gleitenden Thumb hinter den ausgewaehlten Button positionieren. translateY
+  // + dynamische Hoehe (statt nur translateX + fixer 100%-Hoehe per CSS) sind
+  // noetig, seit #choice-mode ein 2-spaltiges CSS-Grid ist (Bugfix: 5 Modus-
+  // Buttons ueberlappten sich vorher in einer einzeiligen Flex-Reihe, siehe
+  // .choice-row#choice-mode in styles.css) - bei den weiterhin einzeiligen
+  // Flex-Reihen bleibt offsetTop fuer jeden Button gleich, translateY ist
+  // dort also ein Null-Op.
   const thumb = row.querySelector('.choice-thumb');
   if (thumb && selectedBtn) {
     thumb.style.opacity = '1';
-    thumb.style.transform = `translateX(${selectedBtn.offsetLeft - 3}px)`;
+    thumb.style.transform = `translate(${selectedBtn.offsetLeft - 3}px, ${selectedBtn.offsetTop - 3}px)`;
     thumb.style.width = `${selectedBtn.offsetWidth}px`;
+    thumb.style.height = `${selectedBtn.offsetHeight}px`;
   } else if (thumb) {
     thumb.style.opacity = '0';
   }
@@ -771,14 +913,17 @@ function renderLobby() {
   }
 
   el('lobby-heading').textContent = isSolo ? t('lobbyHeadingSolo') : t('lobbyHeadingWaiting');
-  el('lobby-share-row').classList.toggle('hidden', isSolo);
+  el('lobby-invite-card').classList.toggle('hidden', isSolo);
   el('lobby-room-code-row').classList.toggle('hidden', isSolo);
   el('lobby-players-panel').classList.toggle('hidden', isSolo);
+  el('lobby-onboarding').classList.toggle('hidden', isSolo);
+  el('lobby-onboarding-subtext').classList.toggle('hidden', isSolo);
 
   if (!isSolo) {
     el('lobby-room-code').textContent = state.roomCode || '—';
     const shareLink = `${location.origin}${location.pathname}#room=${state.roomCode}`;
     el('lobby-share-link').textContent = shareLink;
+    renderOnboardingBanner(players.length);
 
     el('lobby-player-count').textContent = String(players.length);
     const listEl = el('lobby-player-list');
@@ -948,17 +1093,6 @@ async function startGameFromLobby(seed) {
 }
 
 function wireLobbyControls() {
-  el('copy-link-btn').addEventListener('click', async () => {
-    sound.playClick();
-    const text = el('lobby-share-link').textContent;
-    try {
-      await navigator.clipboard.writeText(text);
-      showToast(t('toastLinkCopied'));
-    } catch {
-      showToast(t('toastCopyFailed'));
-    }
-  });
-
   el('btn-ready-toggle').addEventListener('click', () => {
     sound.playClick();
     const me = state.players.get(state.self.id);
@@ -2535,13 +2669,7 @@ function wireMenuControls() {
   el('btn-join-toggle').addEventListener('click', () => {
     sound.unlockAudio();
     sound.playClick();
-    el('join-panel').classList.toggle('hidden');
-    if (!el('join-panel').classList.contains('hidden')) el('join-code-input').focus();
-  });
-
-  el('btn-join-confirm').addEventListener('click', () => joinFlow(el('join-code-input').value));
-  el('join-code-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') joinFlow(el('join-code-input').value);
+    showJoinModal();
   });
 
   attachRipple(el('btn-daily-challenge'));
@@ -2652,6 +2780,7 @@ function resetToMenu() {
   clearHeatmapTimer();
   sound.stopRoundAmbience();
   hideStateOverlay();
+  hideJoinModal();
   el('connection-banner').classList.add('hidden');
   panoViewer?.destroy();
   panoViewer = null;
@@ -2734,9 +2863,23 @@ function handleDeepLink() {
   }
   const match = location.hash.match(/room=([A-Za-z0-9]+)/);
   if (!match) return;
-  el('join-panel').classList.remove('hidden');
-  el('join-code-input').value = match[1].toUpperCase();
-  if (!state.self.name) el('player-name-input').focus();
+  const code = match[1].toUpperCase();
+  autoJoinFromDeepLink(code);
+}
+
+// Direkter Beitritts-Link: sofort verbinden statt erst das Hauptmenue mit
+// vorausgefuelltem Modal zu zeigen - getName() liefert immer einen nutzbaren
+// Namen (gespeicherter oder Default), ein Gast muss also nichts eingeben,
+// bevor es losgeht (siehe joinFlow()/getName()). joinFlow() selbst wartet
+// den Verbindungsversuch (Erfolg wie Fehlschlag) vollstaendig ab, bevor sein
+// Promise aufloest - das await hier ist also entweder schon "Client-
+// Controller registriert, ROOM_JOIN_ACCEPTED kommt gleich per WebRTC nach"
+// oder "Fehler bereits per showMenuError() gemeldet" (landet mangels
+// offenem Beitreten-Modal automatisch im #menu-error-Feld).
+async function autoJoinFromDeepLink(code) {
+  showStateOverlay({ title: t('connectingToRoom'), message: '' });
+  await joinFlow(code);
+  hideStateOverlay();
 }
 
 // Startet direkt eine Solo-Session mit den im Link kodierten Einstellungen
@@ -2992,6 +3135,9 @@ async function boot() {
   initSoundToggle();
   initLeaveGameButton();
   initBrandHomeLink();
+  initJoinModal();
+  initQrModal();
+  initInviteCard();
   initVisibilityWatch();
   wireMenuControls();
   wireGameCarousel();

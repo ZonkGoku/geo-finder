@@ -462,6 +462,85 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .room-code b{ color:var(--accent); letter-spacing:0.08em; font-size:0.95rem; }
 .share-row{ display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
 .share-link{ flex:1; min-width:220px; background:var(--surface-raised); border:1px solid var(--line); border-radius:10px; padding:11px 14px; font-family:var(--font-mono); font-size:0.78rem; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* --- Einladungskarte (ersetzt .share-row/.share-link als eigenstaendige
+   Sektion) --- */
+.invite-card{
+  margin-top:14px; background:var(--surface-raised); border:1px solid var(--line);
+  border-radius:14px; padding:14px;
+}
+.invite-card-row{ display:flex; gap:8px; flex-wrap:wrap; }
+.invite-card-link{
+  flex:1; min-width:220px; background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  padding:11px 14px; font-family:var(--font-mono); font-size:0.78rem; color:var(--text-dim);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:flex; align-items:center;
+}
+.invite-copy-btn{ display:flex; align-items:center; gap:7px; white-space:nowrap; transition:background .2s ease, color .2s ease; }
+.invite-copy-btn svg{ width:15px; height:15px; flex:none; }
+.invite-copy-icon-done{ color:inherit; }
+/* .copied setzt Gruen + Haekchen-Icon fuer ~1.6s (siehe wireInviteCard() in
+   app.js) statt den Button dauerhaft umzufaerben - klare, kurze Bestaetigung
+   statt eines stillen Zustandswechsels ohne Feedback. */
+.invite-copy-btn.copied{ background:#1fae66; color:#fff; }
+.invite-qr-toggle{
+  display:flex; align-items:center; gap:8px; margin-top:10px; padding:9px 12px;
+  background:transparent; border:1px dashed var(--line); border-radius:10px;
+  color:var(--choice-text-inactive); font-size:0.82rem; font-weight:600; cursor:pointer;
+  width:100%; justify-content:center; transition:border-color .15s ease, color .15s ease, background .15s ease;
+}
+.invite-qr-toggle svg{ width:16px; height:16px; flex:none; }
+.invite-qr-toggle:hover{ border-color:var(--accent-2); color:var(--text); background:rgba(255,255,255,0.04); }
+
+.qr-modal-card{ gap:14px; }
+.qr-code-wrap{
+  width:200px; height:200px; background:#fff; border-radius:12px; padding:12px;
+  display:flex; align-items:center; justify-content:center;
+}
+.qr-code-wrap svg{ width:100%; height:100%; display:block; }
+.qr-code-wrap.qr-error{ color:#14181f; font-size:0.8rem; text-align:center; padding:20px; }
+
+.join-modal-card{ gap:14px; }
+.join-modal-input{ text-align:center; font-family:var(--font-mono); letter-spacing:0.04em; font-size:0.95rem; }
+#join-modal-error{ margin-top:0; }
+
+/* --- Onboarding-Banner: 3-Schritt-Anleitung fuer neue Hosts --- */
+.onboarding-banner{
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  margin-top:14px; padding:12px 10px; background:var(--surface-raised);
+  border:1px solid var(--line); border-radius:14px; flex-wrap:wrap;
+}
+.onboarding-step{
+  display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center;
+  min-width:78px; padding:4px 6px; border-radius:10px; transition:background .2s ease;
+}
+.onboarding-step-icon{
+  position:relative; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:var(--surface); border:1px solid var(--line); color:var(--choice-text-inactive);
+  transition:border-color .2s ease, color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.onboarding-step-icon svg:not(.onboarding-step-check){ width:16px; height:16px; }
+.onboarding-step-label{ font-size:0.72rem; color:var(--choice-text-inactive); font-weight:600; }
+.onboarding-step-check{
+  position:absolute; inset:0; width:100%; height:100%; padding:9px; border-radius:50%;
+  background:#1fae66; color:#fff; opacity:0; transform:scale(0.6); transition:opacity .2s ease, transform .2s ease;
+}
+.onboarding-arrow{ width:16px; height:16px; color:var(--line); flex:none; }
+/* .active: Schritt, den der Host jetzt tun soll - Puls-Glow zieht den Blick. */
+.onboarding-step.active .onboarding-step-icon{
+  border-color:var(--accent); color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  animation:onboardingPulse 1.8s ease-in-out infinite;
+}
+.onboarding-step.active .onboarding-step-label{ color:var(--text); }
+/* .done: bereits erledigter Schritt - gruenes Haekchen ueberdeckt das Icon. */
+.onboarding-step.done .onboarding-step-icon{ border-color:#1fae66; }
+.onboarding-step.done .onboarding-step-check{ opacity:1; transform:scale(1); }
+.onboarding-step.done .onboarding-step-label{ color:var(--choice-text-inactive); }
+@keyframes onboardingPulse{
+  0%, 100%{ box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+  50%{ box-shadow:0 0 0 6px color-mix(in srgb, var(--accent) 10%, transparent); }
+}
+@media (prefers-reduced-motion: reduce){ .onboarding-step.active .onboarding-step-icon{ animation:none; } }
+.onboarding-subtext{ text-align:center; font-size:0.78rem; color:var(--choice-text-inactive); margin:8px 0 0; }
 .lobby-main{ display:grid; grid-template-columns:1.05fr 0.95fr; gap:24px; margin-top:28px; align-items:start; }
 .lobby-main-left{ display:flex; flex-direction:column; gap:24px; min-width:0; }
 
@@ -1108,6 +1187,22 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 .choice-row[data-setting="modifier"] button.selected{ font-family:var(--font-body); }
 .choice-row[data-setting="mode"] button,
 .choice-row[data-setting="modifier"] button{ font-family:var(--font-body); font-size:0.8rem; }
+
+/* Bugfix: 5 Modus-Buttons ("Punkte-Duell"/"HP-Duell (6000 HP)"/"Country-
+   Streak"/"PulseMap"/"Battle Royale") in der bisherigen einzeiligen Flex-
+   Reihe quetschten sich je nach Panel-Breite so eng zusammen, dass laengere
+   Labels sich sichtbar ueberlappten (Nutzer-Report: "Battle Royale overlaps
+   with PulseMap"). Festes 2-Spalten-Grid statt flex-wrap: jeder Button
+   bekommt garantiert seine eigene Zelle, kein Ueberlappen mehr moeglich,
+   und der gleitende Thumb funktioniert unveraendert weiter (siehe
+   renderChoiceRow() in app.js - liest jetzt zusaetzlich offsetTop/Hoehe,
+   nicht mehr nur offsetLeft/Breite). */
+#choice-mode{
+  display:grid; grid-template-columns:repeat(2, 1fr); flex-wrap:unset;
+}
+@media (min-width: 560px){
+  #choice-mode{ grid-template-columns:repeat(3, 1fr); }
+}
 
 /* --- Kartenpaket-Toolbar: Suche + Filter-Chips --- */
 .mapset-toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
