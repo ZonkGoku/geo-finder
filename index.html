@@ -438,7 +438,39 @@
                    die Einstellungen unten sofort mit, "aktiv" markiert wird
                    das Preset nur, dessen Werte GENAU zu den aktuellen
                    Einstellungen passen (nicht als eigener State gespeichert). -->
+              <!-- Schritt 1: Modus - die grundlegende Entscheidung, daher jetzt
+                   ZUERST (vorher stand "Schnellstart" davor, obwohl jedes
+                   Preset stillschweigend mode:'points' erzwingt, siehe
+                   PRESETS in app.js - ein Preset-Klick auf HP-Duell/Country-
+                   Streak/PulseMap wechselte den Modus unbemerkt zurueck auf
+                   Punkte-Duell). Bewusst AUSSERHALB der "Weitere Regeln"-
+                   Klappe: das ist die wichtigste Einstellung, sie soll nie
+                   versteckt sein. Icon-Zusammenfassung darunter (#mode-summary)
+                   ersetzt die vorher getrennten heatmap-mode-note/battle-
+                   royale-mode-note-Absaetze - jetzt fuer ALLE 5 Modi statt nur
+                   fuer zwei, siehe renderModeSummary() in app.js. -->
               <div class="setting-group">
+                <div class="setting-group-label" data-i18n="settingMode">Modus</div>
+                <div class="choice-row" id="choice-mode" data-setting="mode">
+                  <div class="choice-thumb" aria-hidden="true"></div>
+                  <button type="button" data-value="points" data-i18n="modePoints">Punkte-Duell</button>
+                  <button type="button" data-value="hp" data-i18n="modeHp">HP-Duell (6000 HP)</button>
+                  <button type="button" data-value="country-streak" data-i18n="modeCountryStreak">Country-Streak</button>
+                  <button type="button" data-value="heatmap" data-i18n="pulsemapModeLabel">PulseMap</button>
+                  <button type="button" data-value="battle-royale" data-i18n="modeBattleRoyale">Battle Royale</button>
+                </div>
+                <div class="mode-summary" id="mode-summary">
+                  <span class="mode-summary-icon" id="mode-summary-icon" aria-hidden="true"></span>
+                  <p id="mode-summary-text"></p>
+                </div>
+              </div>
+
+              <!-- Schritt 2: Schnellstart - nur fuer Punkte-Duell sinnvoll
+                   (siehe PRESETS-Kommentar oben), daher jetzt NACH der Modus-
+                   Wahl und nur sichtbar, wenn Punkte-Duell aktiv ist (siehe
+                   renderLobby() in app.js: #preset-group.hidden ausserhalb
+                   davon) - kein stiller Moduswechsel mehr per Preset-Klick. -->
+              <div class="setting-group" id="preset-group">
                 <div class="setting-group-label" data-i18n="settingPresets">Schnellstart</div>
                 <div class="preset-row" id="preset-row">
                   <button type="button" class="preset-chip" data-preset="classic">
@@ -455,30 +487,6 @@
                   </button>
                 </div>
               </div>
-
-              <!-- Schritt 2: Modus (Kartenpaket-Auswahl passiert rechts in der
-                   Buehne/im Modal, siehe #mapset-modal weiter unten). Bewusst
-                   AUSSERHALB der "Weitere Regeln"-Klappe: das ist die
-                   wichtigste Einstellung, sie soll nie versteckt sein. -->
-              <div class="setting-group">
-                <div class="setting-group-label" data-i18n="settingMode">Modus</div>
-                <div class="choice-row" id="choice-mode" data-setting="mode">
-                  <div class="choice-thumb" aria-hidden="true"></div>
-                  <button type="button" data-value="points" data-i18n="modePoints">Punkte-Duell</button>
-                  <button type="button" data-value="hp" data-i18n="modeHp">HP-Duell (6000 HP)</button>
-                  <button type="button" data-value="country-streak" data-i18n="modeCountryStreak">Country-Streak</button>
-                  <button type="button" data-value="heatmap" data-i18n="pulsemapModeLabel">PulseMap</button>
-                  <button type="button" data-value="battle-royale" data-i18n="modeBattleRoyale">Battle Royale</button>
-                </div>
-              </div>
-
-              <p class="heatmap-mode-note hidden" id="heatmap-mode-note" data-i18n="pulsemapModeNote">
-                Kein Kartenpaket n&ouml;tig: tippe im Spiel Landesnamen, die Weltkarte f&auml;rbt sich nach Entfernung zum Zielland ein.
-              </p>
-
-              <p class="battle-royale-mode-note hidden" id="battle-royale-mode-note" data-i18n="battleRoyaleModeNote">
-                Nach jeder Runde scheidet der schlechteste Tipp aus - die Rundenzahl ergibt sich automatisch aus der Spielerzahl (immer einer weniger), bis nur noch ein Champion übrig bleibt. Braucht mindestens 2 Spieler.
-              </p>
 
               <!-- Schritt 3: "Weitere Regeln" - Runden/Dauer/Panorama-Steuerung/
                    Mutatoren/PulseMap-Feinschliff, standardmaessig eingeklappt

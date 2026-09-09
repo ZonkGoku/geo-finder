@@ -151,6 +151,9 @@ const DICT = {
     modeHp: 'HP duel (6000 HP)',
     modeCountryStreak: 'Country streak',
     modeBattleRoyale: 'Battle Royale',
+    modePointsNote: 'Guess as close as possible - score by distance to the real spot, with speed and streak bonuses.',
+    modeHpNote: 'Both start with 6000 HP - the worse guess each round loses the point gap as HP. First to zero loses.',
+    modeCountryStreakNote: "Only the country matters - click anywhere inside the right border to score, the exact pin doesn't matter.",
     battleRoyaleModeNote:
       'The worst guess is eliminated after each round - the round count is derived automatically from the player count (always one fewer), until only one champion remains. Needs at least 2 players.',
     panoramaControlsLabel: 'Panorama controls',
@@ -294,6 +297,9 @@ const DICT = {
     modeHp: 'HP-Duell (6000 HP)',
     modeCountryStreak: 'Country-Streak',
     modeBattleRoyale: 'Battle Royale',
+    modePointsNote: 'Tippe so nah wie möglich an den echten Ort - Punkte nach Entfernung, plus Speed- und Streak-Bonus.',
+    modeHpNote: 'Beide starten mit 6000 HP - der schlechtere Tipp pro Runde verliert die Punktedifferenz als HP. Bei 0 HP verliert man.',
+    modeCountryStreakNote: 'Nur das Land zählt - ein Klick irgendwo innerhalb der richtigen Grenze reicht, der exakte Pin ist egal.',
     battleRoyaleModeNote:
       'Nach jeder Runde scheidet der schlechteste Tipp aus - die Rundenzahl ergibt sich automatisch aus der Spielerzahl (immer einer weniger), bis nur noch ein Champion übrig bleibt. Braucht mindestens 2 Spieler.',
     panoramaControlsLabel: 'Panorama-Steuerung',

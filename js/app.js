@@ -325,6 +325,25 @@ function renderPresetRow() {
   });
 }
 
+// Icon + i18n-Key pro Modus fuer #mode-summary (siehe index.html) - ersetzt
+// die vorher getrennten heatmap-mode-note/battle-royale-mode-note-Absaetze,
+// die nur zwei der fuenf Modi ueberhaupt erklaerten. Emoji statt SVG, gleiche
+// Optik wie das bestehende Emote-Rad im HUD - kein neues Icon-System noetig.
+const MODE_SUMMARY = {
+  points: { icon: '🎯', key: 'modePointsNote' },
+  hp: { icon: '💔', key: 'modeHpNote' },
+  'country-streak': { icon: '🚩', key: 'modeCountryStreakNote' },
+  heatmap: { icon: '🗺️', key: 'pulsemapModeNote' },
+  'battle-royale': { icon: '⚔️', key: 'battleRoyaleModeNote' },
+};
+
+function renderModeSummary() {
+  const summary = MODE_SUMMARY[state.settings.mode];
+  if (!summary) return;
+  el('mode-summary-icon').textContent = summary.icon;
+  el('mode-summary-text').textContent = t(summary.key);
+}
+
 // ---------------------------------------------------------------- QR-Modal
 
 function showQrModal(link) {
@@ -1041,7 +1060,6 @@ function renderLobby() {
   // im Heatmap-Modus (keine Panoramen, kein Kartenpaket noetig) einfach den
   // Aufruf-Button ausblenden statt eines ganzen Panels.
   el('btn-change-mappack').classList.toggle('hidden', isHeatmap);
-  el('heatmap-mode-note').classList.toggle('hidden', !isHeatmap);
   el('heatmap-settings-group').classList.toggle('hidden', !isHeatmap);
   el('panorama-controls-group').classList.toggle('hidden', isHeatmap);
   // Fog of War/Broken Compass/No-Pan sind reine Panorama-Mutatoren (steuern
@@ -1050,7 +1068,11 @@ function renderLobby() {
   // gesamte "Mutatoren"-Gruppe waere dort nur verwirrende, wirkungslose UI.
   el('mutator-settings-group').classList.toggle('hidden', isHeatmap);
   syncWalkBetaVisibility();
-  el('battle-royale-mode-note').classList.toggle('hidden', !isBattleRoyale);
+  renderModeSummary();
+  // PRESETS (siehe dort) setzen alle stillschweigend mode:'points' -
+  // ausserhalb von Punkte-Duell waere ein Preset-Klick ein unbemerkter
+  // Moduswechsel. Schnellstart daher nur zeigen, wenn Punkte-Duell aktiv ist.
+  el('preset-group').classList.toggle('hidden', state.settings.mode !== 'points');
   // Die Rundenzahl ergibt sich in diesem Modus automatisch aus der
   // Spielerzahl (siehe net/host.js startGame()) - der Runden-Wahlschalter
   // waere hier nur irrefuehrend.

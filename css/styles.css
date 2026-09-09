@@ -1763,20 +1763,20 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
 .heatmap-share-btn{ margin-top:14px; padding:8px 20px; font-size:0.82rem; }
 .heatmap-share-btn.hidden{ display:none; }
 
-/* Kleiner Hinweistext in der Lobby, wenn Heatmap-Modus gewaehlt ist - ersetzt
-   die (fuer diesen Modus irrelevante) Kartenpaket-Auswahl. */
-.heatmap-mode-note{
-  margin-top:14px; padding:12px 16px; border-radius:10px; font-size:0.82rem; color:var(--text-dim);
+/* Icon-Zusammenfassung fuer den aktuell gewaehlten Modus (renderModeSummary()
+   in app.js) - ersetzt die vorher getrennten .heatmap-mode-note/.battle-
+   royale-mode-note-Regeln, die nur zwei der fuenf Modi ueberhaupt erklaerten.
+   Ein Element statt fuenf, Icon+Text statt reinem Fliesstext - Nutzer sollen
+   auf einen Blick verstehen, WIE der gewaehlte Modus gespielt wird, nicht
+   erst einen Absatz lesen muessen. */
+.mode-summary{
+  margin-top:14px; padding:12px 16px; border-radius:10px; display:flex; align-items:flex-start; gap:10px;
   background:color-mix(in srgb, var(--surface-raised) 60%, transparent); border:1px solid var(--line);
 }
-.heatmap-mode-note.hidden{ display:none; }
+.mode-summary-icon{ font-size:1.15rem; line-height:1.4; flex:none; }
+.mode-summary p{ margin:0; font-size:0.82rem; color:var(--text-dim); line-height:1.45; }
 .heatmap-only.hidden{ display:none; }
 .heatmap-turnmode-note{ margin:6px 2px 0; font-size:0.76rem; color:var(--text-faint); }
-.battle-royale-mode-note{
-  margin-top:14px; padding:12px 16px; border-radius:10px; font-size:0.82rem; color:var(--text-dim);
-  background:color-mix(in srgb, var(--surface-raised) 60%, transparent); border:1px solid var(--line);
-}
-.battle-royale-mode-note.hidden{ display:none; }
 
 /* "Deine Top 3 Tipps" - kompaktes Panel am linken Rand, damit man bei vielen
    Tipps nicht nur auf die (bei dichten Laendergrenzen schwer lesbaren)
