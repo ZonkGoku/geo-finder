@@ -2071,6 +2071,28 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
   .minimap.expanded .minimap-close-btn{ top:14px; right:14px; }
   @media (prefers-reduced-motion: reduce){ .minimap.expanded{ transition:none; } }
 
+  /* --- Tipp-Bestaetigen-Button bleibt erreichbar, waehrend die Minimap zum
+     Vollbild-Bottom-Sheet expandiert ist: .minimap.expanded reicht bis
+     bottom:0 (siehe oben) und liegt im DOM NACH .hud-bottom - bei gleichem
+     z-index:3 gewinnt es den Ueberlappungs-Bereich komplett, der Button war
+     dadurch unsichtbar UND nicht klickbar (an seiner Position lag
+     stattdessen der Emote-Toggle obenauf, siehe .emote-wrap{z-index:4}).
+     Live reproduziert: elementFromPoint() an der Button-Mitte lieferte
+     #btn-emote-toggle statt #btn-confirm-guess zurueck. Nutzer mussten die
+     Karte zuerst wieder schliessen, um ueberhaupt tippen zu koennen - genau
+     das widerspricht dem Zweck der Vollbild-Karte (praezise Pin-Platzierung
+     UND sofortiges Bestaetigen sollen zusammen moeglich sein). Rueckt daher
+     waehrend .expanded zentriert UND ueber den Emote-Button (der sonst an
+     derselben Bildschirmmitte-unten-Position sitzt) - schwebt so direkt
+     ueber dem Karten-Viewport, exakt wo der Nutzer gerade seinen Pin
+     gesetzt hat, statt komplett zu verschwinden. */
+  body:has(#minimap.expanded) .hud-bottom{
+    left:50%; right:auto; transform:translateX(-50%);
+    width:calc(100% - 32px); max-width:340px;
+    bottom:calc(80px + env(safe-area-inset-bottom));
+    z-index:5;
+  }
+
   /* --- Floating Bottom Search Sheet (Apple/Google-Maps-Stil): das Suchfeld
      verlaesst seine feste obere Position und wird zu einer Leiste in der
      Daumenzone ganz unten. War vorher bewusst OBEN verankert, weil die
