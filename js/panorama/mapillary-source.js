@@ -59,6 +59,29 @@ function shuffle(arr, rand = Math.random) {
   return copy;
 }
 
+// id -> Promise<json|null> - dedupliziert Detail-Abfragen INNERHALB einer
+// Session: resolveRoundLocations() in pool-loader.js probiert bei knapper
+// Kartenpaket-Abdeckung denselben Regionen-Pool mehrfach durch (zweite
+// Welle, siehe dortiger Kommentar), und Mapillarys 100er-Kandidatenliste
+// pro Region ueberschneidet sich zwischen zwei Versuchen an derselben
+// Stelle stark - ohne das wuerde dieselbe Bild-ID unnoetig ein zweites Mal
+// per HTTP abgefragt. Bewusst NICHT ueber Regionen/Sessions hinweg
+// persistiert (kein localStorage): thumb_2048_url-Links laufen ab (siehe
+// Kommentar bei fetchPanoramaById), ein alter gecachter Wert waere nach
+// einer Weile schlicht falsch.
+const detailCache = new Map();
+
+function fetchDetailCached(id, params, label) {
+  if (detailCache.has(id)) return detailCache.get(id);
+  const promise = fetchJson(`${API_BASE}/${id}?${params.toString()}`, label);
+  detailCache.set(id, promise);
+  // Ein fehlgeschlagener Abruf soll beim naechsten Mal (anderer Wave-
+  // Durchlauf, anderes Kartenpaket-Detail) erneut versucht werden koennen,
+  // statt fuer den Rest der Session als "kaputt" gecacht zu bleiben.
+  promise.catch(() => detailCache.delete(id));
+  return promise;
+}
+
 function buildLocationFromDetail(detail, regionMeta) {
   if (!detail?.is_pano || !detail?.thumb_2048_url) return null;
   const [lng, lat] = detail.geometry?.coordinates || [regionMeta.lng, regionMeta.lat];
@@ -92,14 +115,36 @@ function buildLocationFromDetail(detail, regionMeta) {
  * wenn die ID nicht mehr existiert oder kein Pano (mehr) ist.
  */
 export async function fetchPanoramaById(id, regionMeta) {
-  const detailParams = new URLSearchParams({
-    access_token: MAPILLARY_ACCESS_TOKEN,
-    fields: 'id,is_pano,geometry,thumb_2048_url,sequence_id',
-  });
+  const fieldsWithSequence = 'id,is_pano,geometry,thumb_2048_url,sequence_id';
+  const detailParams = new URLSearchParams({ access_token: MAPILLARY_ACCESS_TOKEN, fields: fieldsWithSequence });
   try {
     const detail = await fetchJson(`${API_BASE}/${id}?${detailParams.toString()}`, regionMeta.name);
     return buildLocationFromDetail(detail, regionMeta);
   } catch (err) {
+    // Live beobachtet: Mapillary lehnt "sequence_id" inzwischen als Feld auf
+    // diesem Entity-Endpunkt komplett ab ("Tried accessing nonexisting field
+    // (sequence_id)", code 100) - vermutlich ein API-seitiger Schema-Wechsel.
+    // sequence_id wird NUR fuers optionale "Weiterlaufen"-Beta gebraucht
+    // (siehe net/host.js), darf also nie die ganze Runden-Aufloesung ueber
+    // den Verified-Image-Cache-Pfad zum Scheitern bringen - einmal ohne das
+    // Feld erneut versuchen, statt das Bild komplett zu verwerfen. Simple
+    // String-Pruefung statt eines Fehlercode-Vergleichs, weil Mapillary
+    // denselben Fehlercode (100) auch fuer andere "ungueltige Anfrage"-Faelle
+    // nutzt - nur bei DIESER spezifischen Meldung ist "ohne sequence_id
+    // nochmal versuchen" die richtige Reaktion.
+    if (/nonexisting field.*sequence_id/i.test(err.message)) {
+      const fallbackParams = new URLSearchParams({
+        access_token: MAPILLARY_ACCESS_TOKEN,
+        fields: 'id,is_pano,geometry,thumb_2048_url',
+      });
+      try {
+        const detail = await fetchJson(`${API_BASE}/${id}?${fallbackParams.toString()}`, regionMeta.name);
+        return buildLocationFromDetail(detail, regionMeta);
+      } catch (fallbackErr) {
+        console.error('Verified-Image-Cache: Bild nicht mehr abrufbar:', fallbackErr);
+        return null;
+      }
+    }
     console.error('Verified-Image-Cache: Bild nicht mehr abrufbar:', err);
     return null;
   }
@@ -145,7 +190,7 @@ export async function fetchPanoramaForRegion(region, rand = Math.random) {
   // Kartenpakete wie Hamburg spuerbar verlangsamt.
   const candidateIds = ids.slice(0, MAX_DETAIL_ATTEMPTS);
   const details = await Promise.allSettled(
-    candidateIds.map((id) => fetchJson(`${API_BASE}/${id}?${detailParams.toString()}`, region.name))
+    candidateIds.map((id) => fetchDetailCached(id, detailParams, region.name))
   );
 
   for (const result of details) {
