@@ -151,6 +151,25 @@ export class HeatmapMap {
     }
   }
 
+  /** Fliegt die Karte zum getippten Land (Nutzer-Wunsch: nach jedem eigenen
+   * Tipp soll die Karte automatisch dorthin schwenken statt stehen zu
+   * bleiben, wo man vorher gerade hingezoomt/-gepannt hatte). Nutzt die
+   * echte Polygon-Bounding-Box des Landes (layer.getBounds(), von Leaflets
+   * GeoJSON-Layer eingebaut) statt nur des Centroid-Punkts - ein Punkt allein
+   * wuerde bei laenglichen/grossen Laendern (z.B. Chile, Russland) keinen
+   * sinnvollen Zoom-Level ergeben. maxZoom deckelt das Heranzoomen bei sehr
+   * kleinen Laendern (Stadtstaaten/Inseln) - komplett auf das Land zu
+   * zoomen wuerde dort den geografischen Kontext (Nachbarlaender/Kontinent)
+   * verlieren, der fuer die naechste Runde noch hilfreich ist. Nur fuer den
+   * EIGENEN Tipp aufgerufen (siehe handleHeatmapGuessPick() in app.js) -
+   * bei jedem eingehenden Tipp eines Mitspielers mitzuschwenken waere
+   * eine staendig wegruckende Kamera waehrend man selbst noch ueberlegt. */
+  focusOnCountry(countryId) {
+    const layer = this.layerByCountryId.get(String(countryId));
+    if (!layer) return;
+    this.map.flyToBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 5, duration: 0.8 });
+  }
+
   /** Container-relative Pixelposition eines Punkts - fuer an die Karte
    * angeheftete Effekte (Konfetti-/Radar-Ping-Ursprung, siehe app.js
    * renderHeatmapRoundResult()). */

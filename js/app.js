@@ -1849,6 +1849,7 @@ function handleHeatmapGuessPick(countryId) {
   if (!countryId || heatmapGuessedThisRound.has(countryId)) return;
   heatmapGuessedThisRound.add(countryId);
   sound.playClick();
+  heatmapMap?.focusOnCountry(countryId);
   if (state.role === 'host') controller.submitLocalHeatmapGuess(countryId);
   else controller.submitHeatmapGuess(countryId);
   el('heatmap-search-input').value = '';
