@@ -214,6 +214,22 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
 }
 .chrome-left{ display:flex; align-items:center; gap:8px; }
 .chrome-left svg{ width:14px; height:14px; color:var(--accent-2); }
+
+/* Kompakter Marken-Link in der Chrome-Leiste - nur sichtbar, wenn .page-head
+   (die eigentliche Logo-Quelle, ganz oben ueber .device) gerade ausgeblendet
+   ist. Bewusst per default:none + gezielten Ausnahmen statt umgekehrt, damit
+   niemals BEIDE Logos gleichzeitig sichtbar sind. Deckt exakt dieselben
+   Faelle ab, in denen .page-head verschwindet (siehe dortige Regeln): Lobby
+   auf allen Breiten (volles Full-Bleed-Dashboard, kein Platz mehr darueber),
+   HUD/Heatmap nur auf Mobile (dort bleibt .page-head auf Desktop normal
+   sichtbar, siehe die @media-Regel dafuer weiter unten in dieser Datei). */
+.brand-link-chrome{
+  display:none; background:none; border:none; padding:0; cursor:pointer; flex:none;
+  align-items:center; justify-content:center;
+}
+.brand-link-chrome svg{ width:20px; height:20px; }
+.brand-link-chrome:hover{ filter:brightness(1.25); }
+body:has(#screen-lobby.active) .brand-link-chrome{ display:flex; }
 .chrome-right{ display:flex; align-items:center; gap:12px; }
 .chrome-icon-btn{ background:none; border:none; color:var(--text-dim); cursor:pointer; padding:2px; display:flex; align-items:center; }
 .chrome-icon-btn:hover{ color:var(--text); }
@@ -2015,6 +2031,12 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
   body:has(#screen-heatmap.active) .screen{ min-height:min(600px, 88dvh); }
   body:has(#screen-hud.active) .page-head,
   body:has(#screen-heatmap.active) .page-head{ display:none; }
+  /* Mobile Kehrseite von .page-head{display:none} oben - dasselbe Prinzip
+     wie die Lobby-Regel bei .brand-link-chrome weiter oben, hier nur auf
+     Mobile begrenzt, weil .page-head auf HUD/Heatmap-Desktop normal sichtbar
+     bleibt (siehe die max-width-freie Basis-Sichtbarkeit dort). */
+  body:has(#screen-hud.active) .brand-link-chrome,
+  body:has(#screen-heatmap.active) .brand-link-chrome{ display:flex; }
   body:has(#screen-hud.active) .device-chrome,
   body:has(#screen-heatmap.active) .device-chrome{ padding:6px 14px; }
 

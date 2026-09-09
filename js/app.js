@@ -426,6 +426,7 @@ function initBrandHomeLink() {
   };
   el('brand-home-link').addEventListener('click', goHome);
   el('brand-home-link-hero').addEventListener('click', goHome);
+  el('brand-home-link-chrome').addEventListener('click', goHome);
 
   el('confirm-leave-cancel').addEventListener('click', () => {
     sound.playClick();
