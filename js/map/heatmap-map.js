@@ -173,19 +173,21 @@ export class HeatmapMap {
    * Tipp soll die Karte automatisch dorthin schwenken statt stehen zu
    * bleiben, wo man vorher gerade hingezoomt/-gepannt hatte). Nutzt die
    * echte Polygon-Bounding-Box des Landes (layer.getBounds(), von Leaflets
-   * GeoJSON-Layer eingebaut) statt nur des Centroid-Punkts - ein Punkt allein
-   * wuerde bei laenglichen/grossen Laendern (z.B. Chile, Russland) keinen
-   * sinnvollen Zoom-Level ergeben. maxZoom deckelt das Heranzoomen bei sehr
-   * kleinen Laendern (Stadtstaaten/Inseln) - komplett auf das Land zu
-   * zoomen wuerde dort den geografischen Kontext (Nachbarlaender/Kontinent)
-   * verlieren, der fuer die naechste Runde noch hilfreich ist. Nur fuer den
-   * EIGENEN Tipp aufgerufen (siehe handleHeatmapGuessPick() in app.js) -
-   * bei jedem eingehenden Tipp eines Mitspielers mitzuschwenken waere
-   * eine staendig wegruckende Kamera waehrend man selbst noch ueberlegt. */
+   * GeoJSON-Layer eingebaut) statt nur des Centroid-Punkts, weil deren
+   * Mittelpunkt (getCenter()) bei laenglichen/grossen Laendern (z.B. Chile,
+   * Russland) naeher an der geografischen Mitte liegt als ein simpler
+   * Punkt-Tipp. War zuerst flyToBounds() (schwenkt UND zoomt auf die
+   * Laender-Bounding-Box) - Nutzer-Feedback: das Reinzoomen war nicht
+   * gewuenscht, nur die Kamera-Bewegung zum Land. flyTo() mit dem aktuellen
+   * Zoom-Level haelt den Zoom deshalb unveraendert, bewegt nur den
+   * Kartenausschnitt. Nur fuer den EIGENEN Tipp aufgerufen (siehe
+   * handleHeatmapGuessPick() in app.js) - bei jedem eingehenden Tipp eines
+   * Mitspielers mitzuschwenken waere eine staendig wegruckende Kamera
+   * waehrend man selbst noch ueberlegt. */
   focusOnCountry(countryId) {
     const layer = this.layerByCountryId.get(String(countryId));
     if (!layer) return;
-    this.map.flyToBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 5, duration: 0.8 });
+    this.map.flyTo(layer.getBounds().getCenter(), this.map.getZoom(), { duration: 0.8 });
   }
 
   /** Container-relative Pixelposition eines Punkts - fuer an die Karte
