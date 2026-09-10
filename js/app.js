@@ -325,53 +325,32 @@ function renderPresetRow() {
   });
 }
 
-// Icon + i18n-Key pro Modus fuer #mode-summary (siehe index.html) - ersetzt
-// die vorher getrennten heatmap-mode-note/battle-royale-mode-note-Absaetze,
-// die nur zwei der fuenf Modi ueberhaupt erklaerten. Emoji statt SVG, gleiche
-// Optik wie das bestehende Emote-Rad im HUD - kein neues Icon-System noetig.
-// rulesKeys: die vier i18n-Keys fuer die ausfuehrliche "Wie funktioniert
-// das?"-Regelliste (siehe #mode-rules-modal, showModeRulesModal() unten) -
-// derselbe Modus-Index wie der kurze summary-Einzeiler oben, nur mit mehr
-// Detail fuer Leute, die es genauer wissen wollen statt nur zu ueberfliegen.
-const MODE_LABEL_KEYS = {
-  points: 'modePoints',
-  hp: 'modeHp',
-  'country-streak': 'modeCountryStreak',
-  heatmap: 'pulsemapModeLabel',
-  'battle-royale': 'modeBattleRoyale',
-};
-// ruleIcons: ein Icon pro Kachel im Rules-Modal (siehe showModeRulesModal()
-// unten) - eigenes Icon statt des einen Modus-Icons ueberall, damit jede
-// Kachel auf den ersten Blick fuer sich steht (Nutzer-Vorgabe: "kleine
-// Kacheln, die das Spiel super kurz erklaeren" statt Fliesstext-Saetze).
+// #mode-summary (siehe index.html) zeigt fuer den gewaehlten Modus ein
+// 2x2-Kachelraster - Icon + 3-5 Woerter pro Kachel statt eines Fliesstext-
+// Satzes, IMMER sichtbar (kein Klick/Modal noetig). War zuerst ein einzelner
+// Satz, dann ein Satz+Button-zu-Modal - Nutzer-Vorgabe war ausdruecklich
+// "statt der Beschreibung einfach kleine Kacheln", also ersetzt #mode-summary
+// jetzt direkt die Beschreibung selbst statt sie hinter einem Klick zu
+// verstecken. rulesKeys/ruleIcons decken alle 5 Modi ab (vorher gab es nur
+// fuer 2 der 5 Modi ueberhaupt eine Erklaerung).
 const MODE_SUMMARY = {
   points: {
-    icon: '🎯',
-    key: 'modePointsNote',
     rulesKeys: ['rulesPoints1', 'rulesPoints2', 'rulesPoints3', 'rulesPoints4'],
     ruleIcons: ['📸', '📍', '📏', '🏆'],
   },
   hp: {
-    icon: '💔',
-    key: 'modeHpNote',
     rulesKeys: ['rulesHp1', 'rulesHp2', 'rulesHp3', 'rulesHp4'],
     ruleIcons: ['❤️', '📍', '💔', '☠️'],
   },
   'country-streak': {
-    icon: '🚩',
-    key: 'modeCountryStreakNote',
     rulesKeys: ['rulesCountryStreak1', 'rulesCountryStreak2', 'rulesCountryStreak3', 'rulesCountryStreak4'],
     ruleIcons: ['📸', '🌍', '✅', '🏆'],
   },
   heatmap: {
-    icon: '🗺️',
-    key: 'pulsemapModeNote',
     rulesKeys: ['rulesHeatmap1', 'rulesHeatmap2', 'rulesHeatmap3', 'rulesHeatmap4'],
     ruleIcons: ['⌨️', '🌡️', '🔥', '🏆'],
   },
   'battle-royale': {
-    icon: '⚔️',
-    key: 'battleRoyaleModeNote',
     rulesKeys: ['rulesBattleRoyale1', 'rulesBattleRoyale2', 'rulesBattleRoyale3', 'rulesBattleRoyale4'],
     ruleIcons: ['👥', '📍', '❌', '👑'],
   },
@@ -380,16 +359,7 @@ const MODE_SUMMARY = {
 function renderModeSummary() {
   const summary = MODE_SUMMARY[state.settings.mode];
   if (!summary) return;
-  el('mode-summary-icon').textContent = summary.icon;
-  el('mode-summary-text').textContent = t(summary.key);
-}
-
-function showModeRulesModal() {
-  const summary = MODE_SUMMARY[state.settings.mode];
-  if (!summary) return;
-  el('mode-rules-modal-icon').textContent = summary.icon;
-  el('mode-rules-modal-title').textContent = `${t('modeRulesTitle')}: ${t(MODE_LABEL_KEYS[state.settings.mode])}`;
-  el('mode-rules-list').innerHTML = summary.rulesKeys
+  el('mode-summary').innerHTML = summary.rulesKeys
     .map(
       (key, i) => `
         <div class="mode-rules-tile">
@@ -399,28 +369,6 @@ function showModeRulesModal() {
       `
     )
     .join('');
-  el('mode-rules-modal').classList.remove('hidden');
-}
-
-function hideModeRulesModal() {
-  el('mode-rules-modal').classList.add('hidden');
-}
-
-function initModeRulesModal() {
-  el('mode-rules-cta').addEventListener('click', () => {
-    sound.playClick();
-    showModeRulesModal();
-  });
-  el('mode-rules-modal-close').addEventListener('click', () => {
-    sound.playClick();
-    hideModeRulesModal();
-  });
-  el('mode-rules-modal').addEventListener('click', (e) => {
-    if (e.target.id === 'mode-rules-modal') hideModeRulesModal();
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !el('mode-rules-modal').classList.contains('hidden')) hideModeRulesModal();
-  });
 }
 
 // ---------------------------------------------------------------- QR-Modal
@@ -3356,7 +3304,6 @@ async function boot() {
   initBrandHomeLink();
   initJoinModal();
   initQrModal();
-  initModeRulesModal();
   initInviteCard();
   initMapSetModal();
   initRulesAccordion();

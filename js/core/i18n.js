@@ -151,20 +151,13 @@ const DICT = {
     modeHp: 'HP duel (6000 HP)',
     modeCountryStreak: 'Country streak',
     modeBattleRoyale: 'Battle Royale',
-    modePointsNote: 'Guess as close as possible - score by distance to the real spot, with speed and streak bonuses.',
-    modeHpNote: 'Both start with 6000 HP - the worse guess each round loses the point gap as HP. First to zero loses.',
-    modeCountryStreakNote: "Only the country matters - click anywhere inside the right border to score, the exact pin doesn't matter.",
-    battleRoyaleModeNote:
-      'The worst guess is eliminated after each round - the round count is derived automatically from the player count (always one fewer), until only one champion remains. Needs at least 2 players.',
 
-    // Kurz-Kacheln pro Modus (siehe #mode-rules-modal in index.html,
-    // showModeRulesModal() in app.js) - ersetzt die anfangs vollstaendigen
-    // Erklaersaetze. Nutzer-Feedback nach dem ersten Wurf: lieber kleine
-    // Kacheln statt Fliesstext-Beschreibung, auf einen Blick erfassbar statt
-    // gelesen werden zu muessen ("super kurz erklaeren"). Je 3-5 Woerter pro
-    // Kachel, Icon macht den Rest (siehe MODE_TILE_ICONS in app.js).
-    modeRulesTitle: 'How to play',
-    modeRulesCta: 'How does this work?',
+    // Kurz-Kacheln pro Modus (siehe #mode-summary in index.html,
+    // renderModeSummary() in app.js) - IMMER sichtbares 2x2-Icon-Raster statt
+    // eines Fliesstext-Satzes. Nutzer-Vorgabe: "statt der Beschreibung
+    // einfach kleine Kacheln", auf einen Blick erfassbar statt gelesen
+    // werden zu muessen. Je 3-5 Woerter pro Kachel, Icon macht den Rest
+    // (siehe MODE_SUMMARY.ruleIcons in app.js).
     rulesPoints1: 'See a 360° photo',
     rulesPoints2: 'Drop a pin on the map',
     rulesPoints3: 'Closer pin = more points',
@@ -225,7 +218,6 @@ const DICT = {
     reconnectSuccessToast: 'Reconnected.',
 
     pulsemapModeLabel: 'PulseMap',
-    pulsemapModeNote: 'No map selection needed: type country names during the game — the world map colors in by distance to the target country.',
     settingRounds: 'Rounds',
     settingDuration: 'Round duration',
     settingMode: 'Mode',
@@ -326,14 +318,6 @@ const DICT = {
     modeHp: 'HP-Duell (6000 HP)',
     modeCountryStreak: 'Country-Streak',
     modeBattleRoyale: 'Battle Royale',
-    modePointsNote: 'Tippe so nah wie möglich an den echten Ort - Punkte nach Entfernung, plus Speed- und Streak-Bonus.',
-    modeHpNote: 'Beide starten mit 6000 HP - der schlechtere Tipp pro Runde verliert die Punktedifferenz als HP. Bei 0 HP verliert man.',
-    modeCountryStreakNote: 'Nur das Land zählt - ein Klick irgendwo innerhalb der richtigen Grenze reicht, der exakte Pin ist egal.',
-    battleRoyaleModeNote:
-      'Nach jeder Runde scheidet der schlechteste Tipp aus - die Rundenzahl ergibt sich automatisch aus der Spielerzahl (immer einer weniger), bis nur noch ein Champion übrig bleibt. Braucht mindestens 2 Spieler.',
-
-    modeRulesTitle: 'So wird gespielt',
-    modeRulesCta: 'Wie funktioniert das?',
     rulesPoints1: '360°-Foto ansehen',
     rulesPoints2: 'Pin auf Karte setzen',
     rulesPoints3: 'Näher dran = mehr Punkte',
@@ -394,7 +378,6 @@ const DICT = {
     reconnectSuccessToast: 'Wieder verbunden.',
 
     pulsemapModeLabel: 'PulseMap',
-    pulsemapModeNote: 'Keine Kartenauswahl nötig: tippe im Spiel Landesnamen, die Weltkarte färbt sich nach Entfernung zum Zielland ein.',
     settingRounds: 'Runden',
     settingDuration: 'Rundendauer',
     settingMode: 'Modus',
