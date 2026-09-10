@@ -96,6 +96,23 @@
     </div>
   </div>
 
+  <!-- "Wie funktioniert das?"-Modal fuer den jeweils gewaehlten Spielmodus
+       (siehe MODE_SUMMARY/showModeRulesModal() in app.js) - Inhalt wird rein
+       per JS befuellt (Icon/Titel/Regelliste), das Markup hier ist nur die
+       leere Huelle, wiederverwendet fuer alle 5 Modi statt 5 eigener Modals. -->
+  <div class="confirm-modal hidden" id="mode-rules-modal" role="dialog" aria-modal="true" aria-labelledby="mode-rules-modal-title">
+    <div class="confirm-modal-card mode-rules-modal-card">
+      <div class="mode-rules-modal-head">
+        <span class="mode-rules-modal-icon" id="mode-rules-modal-icon" aria-hidden="true"></span>
+        <h3 id="mode-rules-modal-title"></h3>
+      </div>
+      <ol class="mode-rules-list" id="mode-rules-list"></ol>
+      <div class="confirm-modal-actions">
+        <button class="btn btn-primary" id="mode-rules-modal-close" data-i18n="closeBtn">Schlie&szlig;en</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Beitreten-Modal (ersetzt das fruehere Inline-Panel unter "Beitreten" -
        siehe wireJoinModal() in app.js). Wird auch beim automatischen Beitritt
        per Deep-Link kurz mit vorausgefuelltem Code gezeigt, falls der Nutzer
@@ -462,6 +479,7 @@
                 <div class="mode-summary" id="mode-summary">
                   <span class="mode-summary-icon" id="mode-summary-icon" aria-hidden="true"></span>
                   <p id="mode-summary-text"></p>
+                  <button type="button" class="mode-rules-cta" id="mode-rules-cta" data-i18n="modeRulesCta">Wie funktioniert das?</button>
                 </div>
               </div>
 

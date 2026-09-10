@@ -1794,13 +1794,47 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
    auf einen Blick verstehen, WIE der gewaehlte Modus gespielt wird, nicht
    erst einen Absatz lesen muessen. */
 .mode-summary{
-  margin-top:14px; padding:12px 16px; border-radius:10px; display:flex; align-items:flex-start; gap:10px;
+  margin-top:14px; padding:12px 16px; border-radius:10px; display:flex; flex-wrap:wrap; align-items:flex-start; gap:10px;
   background:color-mix(in srgb, var(--surface-raised) 60%, transparent); border:1px solid var(--line);
 }
 .mode-summary-icon{ font-size:1.15rem; line-height:1.4; flex:none; }
-.mode-summary p{ margin:0; font-size:0.82rem; color:var(--text-dim); line-height:1.45; }
+.mode-summary p{ margin:0; font-size:0.82rem; color:var(--text-dim); line-height:1.45; flex:1 1 200px; }
+/* "Wie funktioniert das?" - bewusst als eigener kleiner Pill-Button statt
+   z.B. Fliesstext-Link, damit er auf Anhieb als klickbar erkennbar ist
+   (Nutzer-Vorgabe: "super einfach, damit jeder Idiot es versteht" - ein
+   Link mittendrin im Absatz haette genau das Gegenteil erreicht). Bricht per
+   flex-wrap auf schmalen Breiten in eine eigene Zeile um, statt Icon/Text zu
+   verdraengen. */
+.mode-rules-cta{
+  flex:none; align-self:center; margin-left:auto;
+  font-family:var(--font-mono); font-size:0.7rem; font-weight:600; letter-spacing:0.02em; white-space:nowrap;
+  color:var(--accent-2); background:none; border:1px solid var(--accent-2); border-radius:999px; padding:6px 12px;
+  cursor:pointer; transition:background .15s ease, color .15s ease;
+}
+.mode-rules-cta:hover{ background:var(--accent-2); color:var(--accent-ink); }
 .heatmap-only.hidden{ display:none; }
 .heatmap-turnmode-note{ margin:6px 2px 0; font-size:0.76rem; color:var(--text-faint); }
+
+/* "Wie funktioniert das?"-Modal (siehe showModeRulesModal() in app.js) -
+   wiederverwendet .confirm-modal/-card, aber linksbuendig statt zentriert:
+   eine nummerierte Schritt-Liste liest sich zentriert deutlich schlechter. */
+.mode-rules-modal-card{ max-width:420px; align-items:stretch; text-align:left; }
+.mode-rules-modal-head{ display:flex; align-items:center; gap:12px; }
+.mode-rules-modal-icon{ font-size:1.8rem; flex:none; }
+.mode-rules-modal-card h3{ margin:0; }
+.mode-rules-list{
+  margin:4px 0 0; padding-left:0; list-style:none; counter-reset:mode-rules-step;
+  display:flex; flex-direction:column; gap:10px;
+}
+.mode-rules-list li{
+  counter-increment:mode-rules-step; display:flex; align-items:flex-start; gap:10px;
+  font-size:0.88rem; color:var(--text); line-height:1.4;
+}
+.mode-rules-list li::before{
+  content:counter(mode-rules-step); flex:none; width:22px; height:22px; border-radius:50%;
+  background:var(--accent-2); color:var(--accent-ink); font-family:var(--font-mono); font-size:0.74rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center; margin-top:1px;
+}
 
 /* "Deine Top 3 Tipps" - kompaktes Panel am linken Rand, damit man bei vielen
    Tipps nicht nur auf die (bei dichten Laendergrenzen schwer lesbaren)
