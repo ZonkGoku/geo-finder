@@ -8,6 +8,20 @@ export function isMapillaryConfigured() {
   return Boolean(MAPILLARY_ACCESS_TOKEN) && !MAPILLARY_ACCESS_TOKEN.startsWith('PASTE_');
 }
 
+// Cloudflare-Worker-Proxy (siehe net/host.js getProxiedPanoramaUrl()): mintet
+// pro Runde ein verschluesseltes Token statt Mitspielern die rohe Mapillary-
+// Bild-URL zu schicken - sonst koennte jeder ueber den Network-Tab die Bild-ID
+// herausziehen und direkt bei Mapillary selbst (mit einem beliebigen
+// oeffentlichen Client-Token) die exakten Koordinaten nachschlagen, noch
+// waehrend die Runde laeuft. Leer lassen = Feature bleibt aus, Mitspieler
+// bekommen wie bisher die direkte Mapillary-URL (kein Absturz, nur ohne
+// diesen zusaetzlichen Schutz) - siehe isProxyConfigured().
+export const PROXY_WORKER_URL = 'https://geofinder-proxy.philipd-behrend.workers.dev';
+
+export function isProxyConfigured() {
+  return Boolean(PROXY_WORKER_URL);
+}
+
 // TURN-Server für WebRTC-Verbindungen zwischen Geräten in unterschiedlichen
 // Netzwerken (z. B. Handy im Mobilfunknetz + Laptop im WLAN). Reines STUN
 // (der PeerJS-Standard ohne diese Konfiguration) findet nur die öffentliche

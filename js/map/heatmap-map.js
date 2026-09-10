@@ -22,7 +22,25 @@ import { HEATMAP_COLORS } from '../core/heatmap-color.js';
 // Land, damit die Landmassen-Formen sofort erkennbar sind, auch bevor
 // ueberhaupt getippt wurde. Die "heisse" Einfaerbung nach einem Tipp bleibt
 // bei GUESSED_FILL_OPACITY deutlich kraeftiger, damit sie klar heraussticht.
-const BORDER_COLOR = 'rgba(255,255,255,0.6)';
+// Bewusst NICHT dieselbe Begruendung wie beim dunkel-fixierten .minimap-
+// Leaflet-Host (der liegt ueber echten Fotos, siehe Kommentar dort) - die
+// PulseMap-Weltkarte ist reine UI ohne Foto-Hintergrund und folgt darum dem
+// Theme (.heatmap-map{ background: var(--surface-hi)/var(--surface) } in
+// styles.css). BORDER_COLOR/unguessed-Fuellung standen hier trotzdem als
+// fixe Hell-Werte (rgba(255,255,255,..)/'#ffffff'), auf Dunkelmodus
+// zugeschnitten - im Hellmodus damit weiss auf weiss: die Weltkarte war
+// praktisch unsichtbar (Live-Screenshot bestaetigt: nur noch eine
+// schemenhafte, kaum erkennbare Kuestenlinie). isLightTheme() liest denselben
+// data-theme-Attributwert wie initThemeToggle() in app.js.
+function isLightTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'light';
+}
+function getBorderColor() {
+  return isLightTheme() ? 'rgba(20,24,31,0.55)' : 'rgba(255,255,255,0.6)';
+}
+function getUnguessedFillColor() {
+  return isLightTheme() ? '#14181f' : HEATMAP_COLORS.unguessed;
+}
 const BORDER_WEIGHT = 1.4;
 const UNGUESSED_FILL_OPACITY = 0.1;
 const GUESSED_FILL_OPACITY = 0.82;
@@ -100,9 +118,9 @@ export class HeatmapMap {
 
     this.layer = window.L.geoJSON(features, {
       style: () => ({
-        color: BORDER_COLOR,
+        color: getBorderColor(),
         weight: BORDER_WEIGHT,
-        fillColor: HEATMAP_COLORS.unguessed,
+        fillColor: getUnguessedFillColor(),
         fillOpacity: UNGUESSED_FILL_OPACITY,
       }),
     }).addTo(this.map);
@@ -125,7 +143,7 @@ export class HeatmapMap {
   colorCountry(countryId, color, proximity = null) {
     const layer = this.layerByCountryId.get(String(countryId));
     if (!layer) return;
-    const isUnguessed = color === HEATMAP_COLORS.unguessed;
+    const isUnguessed = color === getUnguessedFillColor();
     layer.setStyle({ fillColor: color, fillOpacity: isUnguessed ? UNGUESSED_FILL_OPACITY : GUESSED_FILL_OPACITY });
     layer.bringToFront();
 
@@ -182,7 +200,7 @@ export class HeatmapMap {
   /** Alle Faerbungen zuruecksetzen - vor jeder neuen Runde. */
   reset() {
     this.layerByCountryId.forEach((layer) => {
-      layer.setStyle({ fillColor: HEATMAP_COLORS.unguessed, fillOpacity: UNGUESSED_FILL_OPACITY });
+      layer.setStyle({ fillColor: getUnguessedFillColor(), fillOpacity: UNGUESSED_FILL_OPACITY });
       layer.getElement?.()?.classList.remove('proximity-exact', 'proximity-neighbor');
     });
   }
