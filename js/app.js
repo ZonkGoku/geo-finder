@@ -340,19 +340,40 @@ const MODE_LABEL_KEYS = {
   heatmap: 'pulsemapModeLabel',
   'battle-royale': 'modeBattleRoyale',
 };
+// ruleIcons: ein Icon pro Kachel im Rules-Modal (siehe showModeRulesModal()
+// unten) - eigenes Icon statt des einen Modus-Icons ueberall, damit jede
+// Kachel auf den ersten Blick fuer sich steht (Nutzer-Vorgabe: "kleine
+// Kacheln, die das Spiel super kurz erklaeren" statt Fliesstext-Saetze).
 const MODE_SUMMARY = {
-  points: { icon: '🎯', key: 'modePointsNote', rulesKeys: ['rulesPoints1', 'rulesPoints2', 'rulesPoints3', 'rulesPoints4'] },
-  hp: { icon: '💔', key: 'modeHpNote', rulesKeys: ['rulesHp1', 'rulesHp2', 'rulesHp3', 'rulesHp4'] },
+  points: {
+    icon: '🎯',
+    key: 'modePointsNote',
+    rulesKeys: ['rulesPoints1', 'rulesPoints2', 'rulesPoints3', 'rulesPoints4'],
+    ruleIcons: ['📸', '📍', '📏', '🏆'],
+  },
+  hp: {
+    icon: '💔',
+    key: 'modeHpNote',
+    rulesKeys: ['rulesHp1', 'rulesHp2', 'rulesHp3', 'rulesHp4'],
+    ruleIcons: ['❤️', '📍', '💔', '☠️'],
+  },
   'country-streak': {
     icon: '🚩',
     key: 'modeCountryStreakNote',
     rulesKeys: ['rulesCountryStreak1', 'rulesCountryStreak2', 'rulesCountryStreak3', 'rulesCountryStreak4'],
+    ruleIcons: ['📸', '🌍', '✅', '🏆'],
   },
-  heatmap: { icon: '🗺️', key: 'pulsemapModeNote', rulesKeys: ['rulesHeatmap1', 'rulesHeatmap2', 'rulesHeatmap3', 'rulesHeatmap4'] },
+  heatmap: {
+    icon: '🗺️',
+    key: 'pulsemapModeNote',
+    rulesKeys: ['rulesHeatmap1', 'rulesHeatmap2', 'rulesHeatmap3', 'rulesHeatmap4'],
+    ruleIcons: ['⌨️', '🌡️', '🔥', '🏆'],
+  },
   'battle-royale': {
     icon: '⚔️',
     key: 'battleRoyaleModeNote',
     rulesKeys: ['rulesBattleRoyale1', 'rulesBattleRoyale2', 'rulesBattleRoyale3', 'rulesBattleRoyale4'],
+    ruleIcons: ['👥', '📍', '❌', '👑'],
   },
 };
 
@@ -368,7 +389,16 @@ function showModeRulesModal() {
   if (!summary) return;
   el('mode-rules-modal-icon').textContent = summary.icon;
   el('mode-rules-modal-title').textContent = `${t('modeRulesTitle')}: ${t(MODE_LABEL_KEYS[state.settings.mode])}`;
-  el('mode-rules-list').innerHTML = summary.rulesKeys.map((key) => `<li>${escapeHtml(t(key))}</li>`).join('');
+  el('mode-rules-list').innerHTML = summary.rulesKeys
+    .map(
+      (key, i) => `
+        <div class="mode-rules-tile">
+          <span class="mode-rules-tile-icon" aria-hidden="true">${summary.ruleIcons[i]}</span>
+          <span class="mode-rules-tile-text">${escapeHtml(t(key))}</span>
+        </div>
+      `
+    )
+    .join('');
   el('mode-rules-modal').classList.remove('hidden');
 }
 

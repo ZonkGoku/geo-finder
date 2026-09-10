@@ -1816,25 +1816,27 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
 .heatmap-turnmode-note{ margin:6px 2px 0; font-size:0.76rem; color:var(--text-faint); }
 
 /* "Wie funktioniert das?"-Modal (siehe showModeRulesModal() in app.js) -
-   wiederverwendet .confirm-modal/-card, aber linksbuendig statt zentriert:
-   eine nummerierte Schritt-Liste liest sich zentriert deutlich schlechter. */
+   wiederverwendet .confirm-modal/-card, aber linksbuendig statt zentriert.
+   War zuerst eine nummerierte Satz-Liste - Nutzer-Feedback: lieber kleine
+   Kacheln statt Beschreibung, auf einen Blick erfassbar statt gelesen
+   werden zu muessen. 2x2-Icon-Raster statt Fliesstext, jede Kachel steht
+   fuer sich (grosses Icon traegt die Bedeutung, Text ist nur noch 3-5
+   Woerter Beschriftung statt ganzer Saetze). */
 .mode-rules-modal-card{ max-width:420px; align-items:stretch; text-align:left; }
 .mode-rules-modal-head{ display:flex; align-items:center; gap:12px; }
 .mode-rules-modal-icon{ font-size:1.8rem; flex:none; }
 .mode-rules-modal-card h3{ margin:0; }
 .mode-rules-list{
-  margin:4px 0 0; padding-left:0; list-style:none; counter-reset:mode-rules-step;
-  display:flex; flex-direction:column; gap:10px;
+  margin:4px 0 0; display:grid; grid-template-columns:1fr 1fr; gap:10px;
 }
-.mode-rules-list li{
-  counter-increment:mode-rules-step; display:flex; align-items:flex-start; gap:10px;
-  font-size:0.88rem; color:var(--text); line-height:1.4;
+.mode-rules-tile{
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px;
+  padding:16px 10px; border-radius:12px; border:1px solid var(--line);
+  background:color-mix(in srgb, var(--surface-hi) 55%, transparent);
 }
-.mode-rules-list li::before{
-  content:counter(mode-rules-step); flex:none; width:22px; height:22px; border-radius:50%;
-  background:var(--accent-2); color:var(--accent-ink); font-family:var(--font-mono); font-size:0.74rem; font-weight:700;
-  display:flex; align-items:center; justify-content:center; margin-top:1px;
-}
+.mode-rules-tile-icon{ font-size:1.7rem; line-height:1; }
+.mode-rules-tile-text{ font-size:0.8rem; font-weight:600; color:var(--text); line-height:1.35; }
+@media (max-width:420px){ .mode-rules-list{ grid-template-columns:1fr; } }
 
 /* "Deine Top 3 Tipps" - kompaktes Panel am linken Rand, damit man bei vielen
    Tipps nicht nur auf die (bei dichten Laendergrenzen schwer lesbaren)
