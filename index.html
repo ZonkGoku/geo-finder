@@ -96,6 +96,19 @@
     </div>
   </div>
 
+  <!-- Erfolge-Uebersicht (siehe core/achievements.js, renderAchievementsModal()
+       in app.js) - Inhalt wird komplett per JS aus ACHIEVEMENTS befuellt,
+       das Markup hier ist nur die leere Huelle. -->
+  <div class="confirm-modal hidden" id="achievements-modal" role="dialog" aria-modal="true" aria-labelledby="achievements-modal-title">
+    <div class="confirm-modal-card achievements-modal-card">
+      <h3 id="achievements-modal-title" data-i18n="achievementsModalTitle">Erfolge</h3>
+      <div class="achievements-grid" id="achievements-grid"></div>
+      <div class="confirm-modal-actions">
+        <button class="btn btn-primary" id="achievements-modal-close" data-i18n="closeBtn">Schlie&szlig;en</button>
+      </div>
+    </div>
+  </div>
+
 <!-- Beitreten-Modal (ersetzt das fruehere Inline-Panel unter "Beitreten" -
        siehe wireJoinModal() in app.js). Wird auch beim automatischen Beitritt
        per Deep-Link kurz mit vorausgefuelltem Code gezeigt, falls der Nutzer
@@ -219,6 +232,27 @@
             </div>
           </div>
           <p class="heatmap-dropoff-hint hidden" id="heatmap-dropoff-hint"></p>
+
+          <!-- Modus-uebergreifende Fortschrittsanzeige (Rang-Tier + Daily-
+               Streak, siehe core/rank-tier.js/core/profile.js) - anders als
+               die beiden Stats-Panels oben NICHT modusgebunden, deshalb
+               immer sichtbar sobald ueberhaupt schon einmal gespielt wurde
+               (renderProfileSummary() in app.js), unabhaengig davon ob die
+               letzte Partie klassisch oder PulseMap war. -->
+          <div class="profile-summary-panel hidden" id="profile-summary-panel">
+            <button type="button" class="rank-badge" id="rank-badge" aria-haspopup="dialog">
+              <span class="rank-badge-icon" id="rank-badge-icon" aria-hidden="true"></span>
+              <span class="rank-badge-text">
+                <span class="rank-badge-name" id="rank-badge-name"></span>
+                <span class="rank-badge-next" id="rank-badge-next"></span>
+              </span>
+            </button>
+            <div class="streak-badge" id="streak-badge" hidden>
+              <span aria-hidden="true">🔥</span>
+              <span id="streak-badge-count">0</span>
+            </div>
+            <button type="button" class="achievements-cta" id="achievements-cta" data-i18n="achievementsCta">Erfolge</button>
+          </div>
 
           <div class="profile-box">
             <div>

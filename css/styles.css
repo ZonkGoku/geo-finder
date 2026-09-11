@@ -385,6 +385,55 @@ body:has(#screen-lobby.active) .brand-link-chrome{ display:flex; }
 .menu-stat-lbl{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); }
 .heatmap-dropoff-hint{ font-size:0.76rem; color:var(--text-faint); margin:8px 0 0; max-width:440px; }
 .heatmap-dropoff-hint.hidden{ display:none; }
+
+/* Modus-uebergreifende Fortschrittsanzeige (Rang-Tier + Daily-Streak, siehe
+   core/rank-tier.js/core/profile.js, renderProfileSummary() in app.js). */
+.profile-summary-panel{ display:flex; align-items:center; gap:10px; margin-top:10px; width:100%; max-width:440px; }
+.profile-summary-panel.hidden{ display:none; }
+.rank-badge{
+  flex:1; display:flex; align-items:center; gap:10px; min-width:0; text-align:left; cursor:pointer;
+  background:color-mix(in srgb, var(--surface-raised) 60%, transparent);
+  border:1px solid var(--line); border-radius:11px; padding:8px 12px;
+  font:inherit; color:inherit; transition:border-color .15s ease;
+}
+.rank-badge:hover{ border-color:var(--accent-2); }
+.rank-badge-icon{ font-size:1.3rem; flex:none; }
+.rank-badge-text{ display:flex; flex-direction:column; min-width:0; }
+.rank-badge-name{ font-weight:700; font-size:0.82rem; }
+.rank-badge-next{ font-size:0.66rem; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* Dezent unterschiedliche Randfarbe pro Tier - genug, um auf einen Blick zu
+   unterscheiden, ohne die restliche neutrale Panel-Optik zu sprengen. */
+.rank-badge.rank-silver{ border-color:#9aa4b8; }
+.rank-badge.rank-gold{ border-color:#d4a017; }
+.rank-badge.rank-geo-master{ border-color:var(--accent); }
+.streak-badge{
+  flex:none; display:flex; align-items:center; gap:5px; font-family:var(--font-mono); font-weight:700; font-size:0.9rem;
+  background:color-mix(in srgb, var(--surface-raised) 60%, transparent);
+  border:1px solid var(--line); border-radius:11px; padding:8px 12px;
+}
+.achievements-cta{
+  flex:none; font-family:var(--font-mono); font-size:0.7rem; font-weight:600; letter-spacing:0.02em;
+  color:var(--accent-2); background:none; border:1px solid var(--accent-2); border-radius:999px; padding:8px 14px;
+  cursor:pointer; transition:background .15s ease, color .15s ease;
+}
+.achievements-cta:hover{ background:var(--accent-2); color:var(--accent-ink); }
+
+/* Erfolge-Modal (siehe showAchievementsModal() in app.js) - Karten-Grid,
+   gesperrte Erfolge in Graustufen statt komplett zu verstecken (Nutzer soll
+   sehen, WAS es noch zu holen gibt, nicht nur was schon erreicht ist). */
+.achievements-modal-card{ max-width:480px; align-items:stretch; text-align:left; max-height:85vh; overflow-y:auto; }
+.achievements-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px; }
+.achievement-tile{
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:4px;
+  padding:14px 8px; border-radius:12px; border:1px solid var(--line);
+  background:color-mix(in srgb, var(--surface-raised) 50%, transparent);
+  filter:grayscale(1); opacity:0.5;
+}
+.achievement-tile.unlocked{ filter:none; opacity:1; border-color:var(--accent-2); }
+.achievement-tile-icon{ font-size:1.6rem; line-height:1; }
+.achievement-tile-name{ font-size:0.78rem; font-weight:700; color:var(--text); }
+.achievement-tile-desc{ font-size:0.66rem; color:var(--text-dim); line-height:1.3; }
+@media (max-width:420px){ .achievements-grid{ grid-template-columns:1fr; } }
 .join-panel{ display:flex; gap:8px; padding:0 4px; }
 .join-panel.hidden{ display:none; }
 .menu-error{ color:var(--danger); font-size:0.85rem; margin-top:14px; }

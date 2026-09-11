@@ -18,7 +18,9 @@ import * as haptics from './ui/haptics.js';
 import { loadMapSetIndex, loadMapSetDetail } from './core/pool-loader.js';
 import { getHighScore, recordScoreIfBest } from './core/high-scores.js';
 import { getPlayerStats, averageScore, recordGamePlayed } from './core/player-stats.js';
-import { recordDailyPlay } from './core/profile.js';
+import { recordDailyPlay, getAggregatedStats, getProfile } from './core/profile.js';
+import { getRankTier } from './core/rank-tier.js';
+import { checkAchievements, getAchievementsWithStatus } from './core/achievements.js';
 import {
   getHeatmapStats,
   averageAttempts,
@@ -2689,6 +2691,7 @@ function renderLeaderboard({ finalScores }) {
     recordHeatmapGameCompleted();
     recordDailyPlay();
   }
+  announceNewAchievements();
 
   // Challenge-Link teilen ist bewusst nur fuer Solo-Partien: der geteilte
   // Link startet direkt eine neue Solo-Session beim Empfaenger, ein
@@ -2976,6 +2979,7 @@ function resetToMenu() {
   renderDailyChallengeCard();
   renderMenuStats();
   renderHeatmapMenuStats();
+  renderProfileSummary();
 }
 
 // Klick-Impact-Ripple fuer die neuen Neo-Brutalism-CTAs (.cta-mega,
@@ -3152,6 +3156,83 @@ function renderHeatmapMenuStats() {
   }
 }
 
+// Modus-uebergreifende Fortschrittsanzeige (Rang-Tier + Daily-Streak, siehe
+// core/rank-tier.js/core/profile.js) - anders als renderMenuStats()/
+// renderHeatmapMenuStats() oben nicht an einen einzelnen Modus gebunden,
+// deshalb ein eigenes Panel statt in eines der beiden bestehenden gequetscht.
+function renderProfileSummary() {
+  const aggregated = getAggregatedStats();
+  const panel = el('profile-summary-panel');
+  panel.classList.toggle('hidden', aggregated.totalGamesPlayed === 0);
+  if (aggregated.totalGamesPlayed === 0) return;
+
+  const tier = getRankTier(aggregated.totalGamesPlayed);
+  el('rank-badge').className = `rank-badge rank-${tier.id}`;
+  el('rank-badge-icon').textContent = tier.icon;
+  el('rank-badge-name').textContent = t(tier.nameKey);
+  el('rank-badge-next').textContent = tier.next ? t('rankTierNext', { count: tier.next.gamesNeeded, name: t(tier.next.nameKey) }) : t('rankTierMax');
+
+  const streak = getProfile().dailyStreak;
+  const streakBadge = el('streak-badge');
+  streakBadge.hidden = streak.current < 2; // ab 1 Tag noch keine "Straehne" - erst ab dem zweiten Tag in Folge sichtbar
+  el('streak-badge-count').textContent = String(streak.current);
+}
+
+// ---------------------------------------------------------------- Erfolge
+
+function renderAchievementsModal() {
+  const grid = el('achievements-grid');
+  grid.innerHTML = getAchievementsWithStatus()
+    .map(
+      (a) => `
+        <div class="achievement-tile${a.unlocked ? ' unlocked' : ''}">
+          <span class="achievement-tile-icon" aria-hidden="true">${a.unlocked ? a.icon : '🔒'}</span>
+          <span class="achievement-tile-name">${escapeHtml(t(a.nameKey))}</span>
+          <span class="achievement-tile-desc">${escapeHtml(t(a.descKey))}</span>
+        </div>
+      `
+    )
+    .join('');
+}
+
+function showAchievementsModal() {
+  renderAchievementsModal();
+  el('achievements-modal').classList.remove('hidden');
+}
+
+function hideAchievementsModal() {
+  el('achievements-modal').classList.add('hidden');
+}
+
+function initAchievementsModal() {
+  el('achievements-cta').addEventListener('click', () => {
+    sound.playClick();
+    showAchievementsModal();
+  });
+  el('achievements-modal-close').addEventListener('click', () => {
+    sound.playClick();
+    hideAchievementsModal();
+  });
+  el('achievements-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'achievements-modal') hideAchievementsModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !el('achievements-modal').classList.contains('hidden')) hideAchievementsModal();
+  });
+}
+
+/** Nach jeder beendeten Partie aufrufen (siehe renderLeaderboard()) -
+ * zeigt fuer jedes neu freigeschaltete Achievement einen eigenen Toast,
+ * leicht zeitversetzt (statt alle auf einmal uebereinander), falls
+ * mehrere in derselben Partie gleichzeitig faellig wurden (z.B. "erste
+ * Partie" + "3-Tage-Straehne" am selben Tag). */
+function announceNewAchievements() {
+  const unlocked = checkAchievements();
+  unlocked.forEach((a, i) => {
+    setTimeout(() => showToast(`${a.icon} ${t('achievementUnlockedToast', { name: t(a.nameKey) })}`, 4000), i * 1200);
+  });
+}
+
 function wireBusEvents() {
   bus.on('ui:lobby-updated', renderLobby);
   bus.on('ui:lobby-joined', () => {
@@ -3304,6 +3385,7 @@ async function boot() {
   initBrandHomeLink();
   initJoinModal();
   initQrModal();
+  initAchievementsModal();
   initInviteCard();
   initMapSetModal();
   initRulesAccordion();
@@ -3322,6 +3404,7 @@ async function boot() {
   renderDailyChallengeCard();
   renderMenuStats();
   renderHeatmapMenuStats();
+  renderProfileSummary();
   handleDeepLink();
   ensureMapSetIndex().catch((err) => console.error('Kartenpaket-Index konnte nicht geladen werden', err));
 }
