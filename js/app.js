@@ -178,6 +178,7 @@ function initLangToggle() {
     // ausserhalb der Lobby ist renderLobby() ein guenstiger No-Op auf
     // verstecktem Markup, kein Sonderfall noetig.
     if (state.role) renderLobby();
+    refreshDynamicI18n();
   });
 }
 
@@ -571,7 +572,7 @@ function updateConnectionBanner() {
   }
   const lost = [...state.players.values()].find((p) => !p.isHost && !p.connected);
   if (lost) {
-    banner.textContent = `${lost.name} hat die Verbindung verloren — wartet auf Rückkehr…`;
+    banner.textContent = t('toastPeerLost', { name: lost.name });
     banner.classList.remove('hidden');
   } else {
     banner.classList.add('hidden');
@@ -958,7 +959,7 @@ function renderLobbyStage() {
   const best = getHighScore(entry.id, state.settings.mode);
   el('lobby-stage-best').classList.toggle('hidden', best == null);
   if (best != null) {
-    el('lobby-stage-best-text').textContent = `Persönlicher Bestwert: ${best.toLocaleString('de-DE')} Punkte`;
+    el('lobby-stage-best-text').textContent = `Persönlicher Bestwert: ${best.toLocaleString(numberLocale())} Punkte`;
   }
 }
 
@@ -1376,7 +1377,11 @@ function initSettingsAccordion() {
 // Zeigt jeweils den Stil, in den ein Klick wechseln WUERDE (wie z.B. bei
 // Google Maps ueblich), nicht den gerade aktiven.
 function updateMapStyleLabel(labelId, currentStyle) {
-  el(labelId).textContent = currentStyle === 'satellite' ? 'Karte' : 'Satellit';
+  const label = el(labelId);
+  // Stil am Element hinterlegen, damit refreshDynamicI18n() das Label nach
+  // einem Sprachwechsel neu beschriften kann, ohne die Karte selbst zu kennen.
+  label.dataset.style = currentStyle;
+  label.textContent = currentStyle === 'satellite' ? t('mapStyleMap') : t('mapStyleSatellite');
 }
 
 // Battle Royale: ausgeschiedene Spieler sind reine Zuschauer - der Host
@@ -1646,7 +1651,7 @@ function renderHeatmapTop3() {
   list.innerHTML = top3
     .map(
       (g, i) =>
-        `<li><span class="rank">${i + 1}.</span><span class="name">${escapeHtml(g.name)}</span><span class="dist">${Math.round(g.distanceKm).toLocaleString('de-DE')} km</span>${g.proximity === 'neighbor' ? `<span class="proximity-badge neighbor">${escapeHtml(t('neighborBadge'))}</span>` : ''}</li>`
+        `<li><span class="rank">${i + 1}.</span><span class="name">${escapeHtml(g.name)}</span><span class="dist">${Math.round(g.distanceKm).toLocaleString(numberLocale())} km</span>${g.proximity === 'neighbor' ? `<span class="proximity-badge neighbor">${escapeHtml(t('neighborBadge'))}</span>` : ''}</li>`
     )
     .join('');
 }
@@ -1656,7 +1661,7 @@ function renderHeatmapOpponentRecord(recordKm) {
   heatmapOpponentRecordKm = recordKm;
   const widget = el('heatmap-opponent-record');
   widget.classList.remove('hidden');
-  el('heatmap-opponent-record-text').textContent = `Gegner-Rekord: ${Math.round(recordKm).toLocaleString('de-DE')} km`;
+  el('heatmap-opponent-record-text').textContent = `Gegner-Rekord: ${Math.round(recordKm).toLocaleString(numberLocale())} km`;
 }
 
 /** heatmapTurnMode==='turns': sperrt/entsperrt das Suchfeld je nachdem, wer dran ist. */
@@ -1720,11 +1725,11 @@ function renderHeatmapGuessResult({ countryId, distanceKm, exact, proximity }) {
   if (exact) {
     heatmapActivityLine(`Volltreffer! ${name} war richtig.`, 'exact');
   } else if (proximity === 'neighbor') {
-    heatmapActivityLine(`${name}: ${proximityLabel('neighbor')} (${Math.round(distanceKm).toLocaleString('de-DE')} km)`, 'neighbor');
+    heatmapActivityLine(`${name}: ${proximityLabel('neighbor')} (${Math.round(distanceKm).toLocaleString(numberLocale())} km)`, 'neighbor');
   } else if (proximity === 'continent') {
-    heatmapActivityLine(`${name}: ${proximityLabel('continent')}, aber noch ${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt`);
+    heatmapActivityLine(`${name}: ${proximityLabel('continent')}, aber noch ${Math.round(distanceKm).toLocaleString(numberLocale())} km entfernt`);
   } else {
-    heatmapActivityLine(`${name}: ${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt`);
+    heatmapActivityLine(`${name}: ${Math.round(distanceKm).toLocaleString(numberLocale())} km entfernt`);
   }
   heatmapOwnGuesses.push({ name, distanceKm, proximity });
   renderHeatmapTop3();
@@ -1768,8 +1773,8 @@ function renderHeatmapActivity(payload) {
   if (peerId === state.self.id) return; // eigene Tipps kommen ueber ui:heatmap-guess-result mit Details
   const name = heatmapPlayerName(peerId);
   if (exact) heatmapActivityLine(`${name} hat das Zielland gefunden!`, 'exact');
-  else if (proximity === 'neighbor') heatmapActivityLine(`${name} tippt … Nachbarland! (${Math.round(distanceKm).toLocaleString('de-DE')} km)`, 'peer neighbor');
-  else heatmapActivityLine(`${name} tippt … (${Math.round(distanceKm).toLocaleString('de-DE')} km entfernt)`, 'peer');
+  else if (proximity === 'neighbor') heatmapActivityLine(`${name} tippt … Nachbarland! (${Math.round(distanceKm).toLocaleString(numberLocale())} km)`, 'peer neighbor');
+  else heatmapActivityLine(`${name} tippt … (${Math.round(distanceKm).toLocaleString(numberLocale())} km entfernt)`, 'peer');
 }
 
 /** Live-Punktestand-Badge im Header (#heatmap-score-badge, nur innerhalb von
@@ -2147,7 +2152,7 @@ async function handleWalkStep(direction) {
     }
     const location = await fetchPanoramaById(neighborId, { name: '', lat: 0, lng: 0 });
     if (!location) {
-      showToast('Dieses Bild ist nicht mehr verfügbar');
+      showToast(t('toastImageUnavailable'));
       return;
     }
     walkMeta.imageId = neighborId;
@@ -2193,7 +2198,7 @@ function maybeShowShortcutHint() {
   } catch {
     return; // Privater Modus o.ae. - dann lieber gar kein Hinweis als bei jeder Runde einer.
   }
-  showToast('Tastenkürzel: [Leertaste] tippen · [M] Karte · [E] Emotes', 5200);
+  showToast(t('shortcutHint'), 5200);
 }
 
 function renderRoundStart() {
@@ -2262,7 +2267,7 @@ function renderRoundStart() {
     // nie wieder "mitten in der Runde", anders als das normale disabled=true,
     // das der Klick auf die Minimap gleich wieder aufhebt.
     confirmBtn.disabled = true;
-    confirmBtn.textContent = '👀 Zuschauer-Modus';
+    confirmBtn.textContent = t('spectatorBtnLabel');
   } else {
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = GUESS_BTN_DEFAULT_LABEL;
@@ -2579,14 +2584,14 @@ function initVisibilityWatch() {
 
 function animateCounter(elEl, from, to, duration = 700) {
   if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-    elEl.textContent = to.toLocaleString('de-DE');
+    elEl.textContent = to.toLocaleString(numberLocale());
     return;
   }
   const start = performance.now();
   const step = (now) => {
     const progress = Math.min(1, (now - start) / duration);
     const eased = 1 - (1 - progress) ** 3;
-    elEl.textContent = Math.round(from + (to - from) * eased).toLocaleString('de-DE');
+    elEl.textContent = Math.round(from + (to - from) * eased).toLocaleString(numberLocale());
     if (progress < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
@@ -2598,14 +2603,19 @@ function renderRoundResult({ results, actual, actualMeta, eliminatedPlayerIds = 
   showScreen('result');
   el('result-next-hint').classList.remove('buffering');
 
-  el('result-round-index').textContent = String(state.round.index + 1);
-  el('result-round-total').textContent = String(state.round.total);
+  const resultHeading = el('result-heading');
+  resultHeading.dataset.roundN = String(state.round.index + 1);
+  resultHeading.dataset.roundTotal = String(state.round.total);
+  resultHeading.textContent = t('resultRoundOf', {
+    n: resultHeading.dataset.roundN,
+    total: resultHeading.dataset.roundTotal,
+  });
 
   const isBattleRoyale = state.settings.mode === 'battle-royale';
   const remainingEl = el('royale-remaining');
   if (isBattleRoyale) {
     const remaining = [...state.players.values()].filter((p) => !state.eliminatedAtRound.has(p.id)).length;
-    remainingEl.textContent = `${remaining} Spieler verbleiben`;
+    remainingEl.textContent = t('royaleRemaining', { n: remaining });
     remainingEl.classList.remove('hidden');
   } else {
     remainingEl.classList.add('hidden');
@@ -2654,22 +2664,26 @@ function renderRoundResult({ results, actual, actualMeta, eliminatedPlayerIds = 
     const chips = [];
     if (isCountryMode) {
       meta = r.noGuess
-        ? 'Kein Tipp abgegeben'
+        ? t('scoreNoGuess')
         : r.correct
-          ? `Richtig — ${escapeHtml(r.actualCountry)}`
-          : `Falsch — du: ${escapeHtml(r.guessedCountry || '—')}, richtig: ${escapeHtml(r.actualCountry || '—')}`;
+          ? t('scoreCorrect', { country: escapeHtml(r.actualCountry) })
+          : t('scoreWrong', {
+              guess: escapeHtml(r.guessedCountry || '—'),
+              actual: escapeHtml(r.actualCountry || '—'),
+            });
       barWidth = r.correct ? 100 : 4;
-      if (r.streak > 0) chips.push({ cls: 'streak', html: `&#128293; ${r.streak}er-Streak` });
+      if (r.streak > 0) chips.push({ cls: 'streak', html: `&#128293; ${t('chipStreak', { n: r.streak })}` });
     } else {
-      meta = r.noGuess ? 'Kein Tipp abgegeben' : `${r.distanceKm.toFixed(1)} km entfernt`;
+      meta = r.noGuess ? t('scoreNoGuess') : t('scoreDistance', { km: r.distanceKm.toFixed(1) });
       barWidth = Math.max(2, (r.score / 5000) * 100);
-      if (!r.noGuess) chips.push({ cls: '', html: `Basis ${r.base.toLocaleString('de-DE')}` });
-      if (r.timeBonus > 0) chips.push({ cls: 'bonus', html: `&#9889; +${r.timeBonus} Speed` });
-      if (r.streakBonus > 0) chips.push({ cls: 'streak', html: `&#128293; +${r.streakBonus} Streak x${r.streak}` });
+      if (!r.noGuess) chips.push({ cls: '', html: t('chipBase', { n: formatNumber(r.base) }) });
+      if (r.timeBonus > 0) chips.push({ cls: 'bonus', html: `&#9889; ${t('chipSpeed', { n: r.timeBonus })}` });
+      if (r.streakBonus > 0)
+        chips.push({ cls: 'streak', html: `&#128293; ${t('chipStreakBonus', { n: r.streakBonus, multiplier: r.streak })}` });
       if (r.hp != null) {
         chips.push({
           cls: r.hpDamage > 0 ? '' : 'streak',
-          html: `${r.hpDamage > 0 ? `-${r.hpDamage} HP` : 'Kein Schaden'} · ${r.hp} HP übrig`,
+          html: `${r.hpDamage > 0 ? `-${r.hpDamage} HP` : t('chipNoDamage')} · ${t('chipHpLeft', { n: r.hp })}`,
         });
       }
     }
@@ -2680,7 +2694,7 @@ function renderRoundResult({ results, actual, actualMeta, eliminatedPlayerIds = 
       .join('');
     card.innerHTML = `
       <div class="score-card-top">
-        <span class="score-name"><span class="avatar" style="width:22px;height:22px;font-size:0.7rem;background:${player?.color || '#8c99b8'};">${(player?.name || '?').charAt(0).toUpperCase()}</span>${escapeHtml(player?.name || t('defaultPlayerName'))}${justEliminated ? '<span class="score-card-eliminated-tag">Ausgeschieden</span>' : ''}</span>
+        <span class="score-name"><span class="avatar" style="width:22px;height:22px;font-size:0.7rem;background:${player?.color || '#8c99b8'};">${(player?.name || '?').charAt(0).toUpperCase()}</span>${escapeHtml(player?.name || t('defaultPlayerName'))}${justEliminated ? `<span class="score-card-eliminated-tag">${t('eliminatedTag')}</span>` : ''}</span>
         <span class="score-points">0</span>
       </div>
       <div class="score-meta">${meta}</div>
@@ -2778,7 +2792,10 @@ function renderRoundResult({ results, actual, actualMeta, eliminatedPlayerIds = 
   let remaining = RESULT_DISPLAY_SECONDS;
   const hintEl = el('result-next-hint');
   const tick = () => {
-    hintEl.textContent = remaining > 0 ? `Nächste Runde in 00:${String(remaining).padStart(2, '0')}` : 'Nächste Runde…';
+    hintEl.textContent =
+      remaining > 0
+        ? t('nextRoundIn', { seconds: String(remaining).padStart(2, '0') })
+        : t('nextRoundNow');
     remaining -= 1;
     if (remaining < 0) clearInterval(resultCountdownInterval);
   };
@@ -2820,12 +2837,12 @@ function renderPodium(sorted) {
       state.settings.mode === 'hp'
         ? `${entry.hp ?? 0} HP`
         : state.settings.mode === 'country-streak'
-          ? `${Math.round(entry.total / 1000)}/${entry.perRound.length} richtig`
+          ? t('correctOfTotal', { n: Math.round(entry.total / 1000), total: entry.perRound.length })
           : state.settings.mode === 'battle-royale'
             ? entry.eliminatedAtRound == null
-              ? '🏆 Champion'
-              : `Raus in Runde ${entry.eliminatedAtRound + 1}`
-            : `${entry.total.toLocaleString('de-DE')} Pkt.`;
+              ? t('championLabel')
+              : t('outInRound', { n: entry.eliminatedAtRound + 1 })
+            : t('pointsShort', { n: formatNumber(entry.total) });
     step.innerHTML = `
       <div class="avatar" style="background:${player?.color || '#8c99b8'};">${initial}</div>
       <div class="podium-name">${escapeHtml(player?.name || t('defaultPlayerName'))}</div>
@@ -2919,15 +2936,16 @@ function renderLeaderboard({ finalScores }) {
       ? `${survivorName} gewinnt das HP-Duell!`
       : 'HP-Duell beendet';
   } else if (isCountryMode) {
-    heading.textContent = 'Country-Streak beendet';
+    setBoardHeading(heading, 'countryStreakFinished');
   } else if (state.settings.mode === 'heatmap') {
-    heading.textContent = 'PulseMap-Duell beendet';
+    setBoardHeading(heading, 'pulsemapDuelFinished');
   } else if (isBattleRoyale) {
     const champion = sorted.find((e) => e.eliminatedAtRound == null);
     const championName = state.players.get(champion?.playerId)?.name;
-    heading.textContent = champion ? `${championName} gewinnt die Battle Royale!` : 'Battle Royale beendet';
+    if (champion) setBoardHeading(heading, 'royaleWinner', championName);
+    else setBoardHeading(heading, 'royaleFinished');
   } else {
-    heading.textContent = 'Duell beendet';
+    setBoardHeading(heading, 'duelFinished');
   }
 
   const listEl = el('board-list');
@@ -2943,17 +2961,17 @@ function renderLeaderboard({ finalScores }) {
       : entry.perRound.map((r, i) => `<span class="round-pill">R${i + 1} <b>${r?.total ?? 0}</b></span>`).join('');
     let totalLabel;
     if (isHpMode) {
-      totalLabel = `<div class="num">${entry.hp ?? 0}</div><div class="lbl">HP übrig</div>`;
+      totalLabel = `<div class="num">${entry.hp ?? 0}</div><div class="lbl">${t('hpLeftLabel')}</div>`;
     } else if (isCountryMode) {
       const correctCount = Math.round(entry.total / 1000);
-      totalLabel = `<div class="num">${correctCount}/${entry.perRound.length}</div><div class="lbl">Bester Streak: ${entry.bestStreak ?? 0}</div>`;
+      totalLabel = `<div class="num">${correctCount}/${entry.perRound.length}</div><div class="lbl">${t('bestStreakLabel', { n: entry.bestStreak ?? 0 })}</div>`;
     } else if (isBattleRoyale) {
       totalLabel =
         entry.eliminatedAtRound == null
-          ? `<div class="num">🏆</div><div class="lbl">Champion</div>`
-          : `<div class="num">R${entry.eliminatedAtRound + 1}</div><div class="lbl">Ausgeschieden</div>`;
+          ? `<div class="num">🏆</div><div class="lbl">${t('championLabelShort')}</div>`
+          : `<div class="num">R${entry.eliminatedAtRound + 1}</div><div class="lbl">${t('eliminatedTag')}</div>`;
     } else {
-      totalLabel = `<div class="num">${entry.total.toLocaleString('de-DE')}</div><div class="lbl">Punkte</div>`;
+      totalLabel = `<div class="num">${formatNumber(entry.total)}</div><div class="lbl">${t('scoreLabel')}</div>`;
     }
     row.innerHTML = `
       <div class="rank-num">${String(idx + 1).padStart(2, '0')}</div>
@@ -3195,6 +3213,53 @@ function attachHoverSound(button) {
   button.addEventListener('mouseenter', () => sound.playHover());
 }
 
+// Zahlenformat folgt der UI-Sprache statt einem hart verdrahteten 'de-DE' -
+// in einer englischen Oberflaeche wirkten deutsche Tausenderpunkte
+// ("12.345 pts") schlicht wie ein Tippfehler.
+// Ueberschrift des Endstands: Key (und ggf. Spielername) am Element
+// hinterlegen statt nur den fertigen Text zu setzen - sonst bliebe die
+// Ueberschrift bei einem Sprachwechsel in der alten Sprache stehen, weil sie
+// aus JS kommt und applyTranslations() sie nicht kennt.
+function setBoardHeading(heading, key, name) {
+  heading.dataset.i18nKey = key;
+  if (name) heading.dataset.i18nName = name;
+  else delete heading.dataset.i18nName;
+  heading.textContent = name ? t(key, { name }) : t(key);
+}
+
+// Zieht die dynamisch (nicht per data-i18n) gesetzten Texte des Kern-Loops
+// nach einem Sprachwechsel nach. Alles Noetige steht in data-Attributen am
+// jeweiligen Element, damit das hier ohne Zugriff auf den Spielzustand geht -
+// der ist nach einem Spielende naemlich schon wieder leer.
+function refreshDynamicI18n() {
+  const resultHeading = el('result-heading');
+  if (resultHeading?.dataset.roundN) {
+    resultHeading.textContent = t('resultRoundOf', {
+      n: resultHeading.dataset.roundN,
+      total: resultHeading.dataset.roundTotal,
+    });
+  }
+  const boardHeading = el('board-heading');
+  if (boardHeading?.dataset.i18nKey) {
+    const name = boardHeading.dataset.i18nName;
+    boardHeading.textContent = name
+      ? t(boardHeading.dataset.i18nKey, { name })
+      : t(boardHeading.dataset.i18nKey);
+  }
+  for (const id of ['minimap-style-label', 'result-map-style-label', 'overview-map-style-label']) {
+    const label = el(id);
+    if (label?.dataset.style) updateMapStyleLabel(id, label.dataset.style);
+  }
+}
+
+function numberLocale() {
+  return getLang() === 'de' ? 'de-DE' : 'en-US';
+}
+
+function formatNumber(value) {
+  return Number(value).toLocaleString(numberLocale());
+}
+
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str ?? '';
@@ -3274,7 +3339,7 @@ async function startChallengeFromLink(raw) {
 async function startDailyChallenge() {
   const already = getDailyResult();
   if (already) {
-    showToast(`Du hast die heutige Challenge schon gespielt: ${already.score.toLocaleString('de-DE')} Punkte. Morgen gibt's neue Orte.`);
+    showToast(`Du hast die heutige Challenge schon gespielt: ${already.score.toLocaleString(numberLocale())} Punkte. Morgen gibt's neue Orte.`);
     return;
   }
   await ensureMapSetIndex();
@@ -3301,7 +3366,7 @@ function renderDailyChallengeCard() {
   const result = getDailyResult();
   if (result) {
     card.classList.add('done');
-    sub.textContent = `Heute gespielt: ${result.score.toLocaleString('de-DE')} Punkte · morgen neue Orte`;
+    sub.textContent = `Heute gespielt: ${result.score.toLocaleString(numberLocale())} Punkte · morgen neue Orte`;
   } else {
     card.classList.remove('done');
     sub.textContent = 'Jeden Tag dieselben Orte für alle';
@@ -3316,8 +3381,8 @@ function renderMenuStats() {
   panel.classList.toggle('hidden', stats.gamesPlayed === 0);
   if (stats.gamesPlayed === 0) return;
   el('stat-games-played').textContent = String(stats.gamesPlayed);
-  el('stat-avg-score').textContent = averageScore(stats).toLocaleString('de-DE');
-  el('stat-best-score').textContent = stats.bestGameScore.toLocaleString('de-DE');
+  el('stat-avg-score').textContent = averageScore(stats).toLocaleString(numberLocale());
+  el('stat-best-score').textContent = stats.bestGameScore.toLocaleString(numberLocale());
 }
 
 function renderHeatmapMenuStats() {
@@ -3449,18 +3514,18 @@ function wireBusEvents() {
   bus.on('ui:map-resolving', renderLoadProgress);
   bus.on('ui:map-resolve-failed', () => {
     hideLoadProgress();
-    showToast('Für diese Karte wurden keine Bilder gefunden.');
+    showToast(t('toastNoImagesFound'));
     renderLobby();
   });
   bus.on('ui:round-buffering', () => {
     clearInterval(resultCountdownInterval);
     const hint = el('result-next-hint');
-    hint.textContent = 'Generiere nächste Location…';
+    hint.textContent = t('toastGeneratingNext');
     hint.classList.add('buffering');
     el('btn-advance-round').hidden = true;
   });
   bus.on('ui:round-cap-adjusted', ({ roundCount }) => {
-    showToast('Karte erschöpft. Spiel endet nach dieser Runde.');
+    showToast(t('toastMapExhausted'));
     el('hud-round-total').textContent = String(roundCount).padStart(2, '0');
     renderRoundProgress();
   });
@@ -3539,7 +3604,7 @@ function wireBusEvents() {
     console.error('Netzwerkfehler', err);
   });
   bus.on('ui:guess-unconfirmed', () => {
-    showToast('Tipp konnte nicht bestätigt werden — bitte Verbindung prüfen.');
+    showToast(t('toastGuessFailed'));
   });
 }
 
@@ -3578,6 +3643,11 @@ function registerServiceWorker() {
 async function boot() {
   registerServiceWorker();
   applyTranslations();
+  // Auch einmal initial, nicht nur bei jedem Sprachwechsel: die
+  // Ausgangsbeschriftungen der dynamischen Elemente stehen deutsch im Markup
+  // (Ergebnis- und Endstand-Ueberschrift) und waeren sonst bis zum ersten
+  // Render in der falschen Sprache.
+  refreshDynamicI18n();
   initLangToggle();
   initProfileUI();
   initThemeToggle();

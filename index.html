@@ -723,12 +723,12 @@
         <div class="pano">
           <div id="pano-container" class="pano-container"></div>
           <div class="pano-focus-blackout" id="pano-focus-blackout" aria-hidden="true">
-            <span>Fokus verloren &mdash; pausiert</span>
+            <span data-i18n="panoFocusLost">Fokus verloren &mdash; pausiert</span>
           </div>
           <p class="pano-credit" id="pano-credit"></p>
         </div>
 
-        <div class="pano-loading hidden" id="pano-loading"><span class="spinner"></span>Panorama l&auml;dt&hellip;</div>
+        <div class="pano-loading hidden" id="pano-loading"><span class="spinner"></span><span data-i18n="panoLoading">Panorama l&auml;dt&hellip;</span></div>
 
         <div class="round-progress" id="round-progress" aria-hidden="true"></div>
 
@@ -736,27 +736,27 @@
 
         <div class="hud-top">
           <div class="hud-top-left">
-            <div class="round-chip"><span class="round-chip-label">RUNDE </span><b id="hud-round-index">01</b> / <span id="hud-round-total">05</span></div>
-            <button class="hint-toggle" id="btn-hint-toggle" hidden>Hinweis</button>
+            <div class="round-chip"><span class="round-chip-label" data-i18n="hudRoundLabel">RUNDE </span><b id="hud-round-index">01</b> / <span id="hud-round-total">05</span></div>
+            <button class="hint-toggle" id="btn-hint-toggle" data-i18n="hudHint" hidden>Hinweis</button>
           </div>
           <div class="timer"><span class="dot" id="timer-dot"></span><span id="hud-timer">01:30</span></div>
           <div class="peer-status" id="hud-peer-status"></div>
         </div>
 
         <p class="hint-banner hidden" id="hint-banner"></p>
-        <p class="spectator-banner hidden" id="spectator-banner">&#128064; Du bist ausgeschieden &mdash; schau dir die restliche Partie an</p>
+        <p class="spectator-banner hidden" id="spectator-banner" data-i18n="spectatorBanner">&#128064; Du bist ausgeschieden &mdash; schau dir die restliche Partie an</p>
 
         <div class="pano-controls" id="pano-controls">
-          <button class="pano-ctrl-btn" id="btn-compass" title="Nach Norden ausrichten (R)" aria-label="Nach Norden ausrichten">
+          <button class="pano-ctrl-btn" id="btn-compass" data-i18n="alignNorth" data-i18n-attr="aria-label" data-i18n-title="alignNorthTitle" title="Nach Norden ausrichten (R)" aria-label="Nach Norden ausrichten">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9.5"/><path d="M15 9l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/><path d="M12 2.5v2M12 19.5v2"/></svg>
           </button>
-          <button class="pano-ctrl-btn" id="btn-zoom-in" title="Vergr&ouml;&szlig;ern (+)" aria-label="Vergr&ouml;&szlig;ern">
+          <button class="pano-ctrl-btn" id="btn-zoom-in" data-i18n="zoomInLabel" data-i18n-attr="aria-label" data-i18n-title="zoomInTitle" title="Vergr&ouml;&szlig;ern (+)" aria-label="Vergr&ouml;&szlig;ern">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
           </button>
-          <button class="pano-ctrl-btn" id="btn-zoom-out" title="Verkleinern (-)" aria-label="Verkleinern">
+          <button class="pano-ctrl-btn" id="btn-zoom-out" data-i18n="zoomOutLabel" data-i18n-attr="aria-label" data-i18n-title="zoomOutTitle" title="Verkleinern (-)" aria-label="Verkleinern">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
           </button>
-          <button class="pano-ctrl-btn" id="btn-fullscreen" title="Vollbild (F)" aria-label="Vollbild">
+          <button class="pano-ctrl-btn" id="btn-fullscreen" data-i18n="fullscreenLabel" data-i18n-attr="aria-label" data-i18n-title="fullscreenTitle" title="Vollbild (F)" aria-label="Vollbild">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
           </button>
         </div>
@@ -768,17 +768,17 @@
              Mitspieler durchsickern zu lassen, ueber die man sonst direkt bei
              Mapillary die exakte Position nachschlagen koennte). -->
         <div class="pano-walk-controls hidden" id="pano-walk-controls">
-          <button class="pano-walk-btn" id="btn-walk-back" title="Zurück laufen" aria-label="Zurück laufen">
+          <button class="pano-walk-btn" id="btn-walk-back" data-i18n="walkBackLabel" data-i18n-attr="title,aria-label" title="Zurück laufen" aria-label="Zurück laufen">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>
           </button>
-          <span class="pano-walk-label">Weiterlaufen <span class="beta-tag">BETA</span></span>
-          <button class="pano-walk-btn" id="btn-walk-forward" title="Weiter laufen" aria-label="Weiter laufen">
+          <span class="pano-walk-label"><span data-i18n="walkLabel">Weiterlaufen</span> <span class="beta-tag">BETA</span></span>
+          <button class="pano-walk-btn" id="btn-walk-forward" data-i18n="walkForwardLabel" data-i18n-attr="title,aria-label" title="Weiter laufen" aria-label="Weiter laufen">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
 
         <div class="hud-bottom">
-          <button class="btn btn-primary guess-btn" id="btn-confirm-guess" title="Tipp best&auml;tigen (Leertaste)" disabled>Tipp best&auml;tigen</button>
+          <button class="btn btn-primary guess-btn" id="btn-confirm-guess" data-i18n="confirmGuess" data-i18n-title="confirmGuessTitle" title="Tipp best&auml;tigen (Leertaste)" disabled>Tipp best&auml;tigen</button>
         </div>
 
         <div class="minimap-wrap" id="minimap-wrap">
@@ -786,15 +786,15 @@
           <div class="minimap" id="minimap">
             <div class="minimap-drag-handle" id="minimap-drag-handle" aria-hidden="true"></div>
             <div id="guess-map-container" class="leaflet-host"></div>
-            <button type="button" class="minimap-open-btn" id="minimap-open-btn" title="Karte &ouml;ffnen (M)">
+            <button type="button" class="minimap-open-btn" id="minimap-open-btn" data-i18n-title="openMapTitle" title="Karte &ouml;ffnen (M)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
-              <span>Karte &ouml;ffnen</span>
+              <span data-i18n="openMap">Karte &ouml;ffnen</span>
             </button>
-            <button type="button" class="map-style-toggle" id="minimap-style-toggle" title="Zwischen Satellit und Karte wechseln">
+            <button type="button" class="map-style-toggle" id="minimap-style-toggle" data-i18n-title="mapStyleToggleTitle" title="Zwischen Satellit und Karte wechseln">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M3 12l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/></svg>
-              <span id="minimap-style-label">Karte</span>
+              <span id="minimap-style-label" data-i18n="mapStyleMap">Karte</span>
             </button>
-            <button type="button" class="minimap-close-btn" id="minimap-close-btn" aria-label="Karte verkleinern">
+            <button type="button" class="minimap-close-btn" id="minimap-close-btn" data-i18n="collapseMapLabel" data-i18n-attr="aria-label" aria-label="Karte verkleinern">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
           </div>
@@ -810,7 +810,7 @@
             <button type="button" class="emote-btn" data-emoji="💩">💩</button>
             <button type="button" class="emote-btn" data-emoji="👏">👏</button>
           </div>
-          <button class="emote-toggle" id="btn-emote-toggle" aria-label="Emotes" title="Emotes (E)">&#128512;</button>
+          <button class="emote-toggle" id="btn-emote-toggle" data-i18n="emotesLabel" data-i18n-attr="aria-label" data-i18n-title="emotesTitle" aria-label="Emotes" title="Emotes (E)">&#128512;</button>
         </div>
       </section>
 
@@ -818,8 +818,8 @@
       <section class="screen" id="screen-result">
         <div class="result-head">
           <div>
-            <p class="eyebrow">Rundenergebnis</p>
-            <h2 class="screen-title">Runde <span id="result-round-index">1</span> von <span id="result-round-total">5</span></h2>
+            <p class="eyebrow" data-i18n="resultEyebrow">Rundenergebnis</p>
+            <h2 class="screen-title" id="result-heading" data-round-n="1" data-round-total="5">Runde 1 von 5</h2>
           </div>
           <span class="royale-remaining hidden" id="royale-remaining"></span>
         </div>
@@ -828,13 +828,13 @@
           <div>
             <div class="radar-big">
               <div id="result-map-container" class="leaflet-host"></div>
-              <button type="button" class="map-style-toggle" id="result-map-style-toggle" title="Zwischen Satellit und Karte wechseln">
+              <button type="button" class="map-style-toggle" id="result-map-style-toggle" data-i18n-title="mapStyleToggleTitle" title="Zwischen Satellit und Karte wechseln">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M3 12l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/></svg>
-                <span id="result-map-style-label">Karte</span>
+                <span id="result-map-style-label" data-i18n="mapStyleMap">Karte</span>
               </button>
             </div>
             <div class="fun-fact hidden" id="result-fun-fact">
-              <span class="fun-fact-label">Wusstest du schon?</span>
+              <span class="fun-fact-label" data-i18n="funFactLabel">Wusstest du schon?</span>
               <p id="result-fun-fact-text"></p>
             </div>
           </div>
@@ -842,15 +842,15 @@
         </div>
 
         <div class="result-foot">
-          <span class="next-hint" id="result-next-hint">N&auml;chste Runde in K&uuml;rze&hellip;</span>
-          <button class="btn btn-ghost btn-sm" id="btn-advance-round" hidden>Weiter &rarr;</button>
+          <span class="next-hint" id="result-next-hint" data-i18n="nextRoundSoon">N&auml;chste Runde in K&uuml;rze&hellip;</span>
+          <button class="btn btn-ghost btn-sm" id="btn-advance-round" data-i18n="advanceRoundBtn" hidden>Weiter &rarr;</button>
         </div>
       </section>
 
       <!-- ===================== HEATMAP-MODUS ===================== -->
       <section class="screen" id="screen-heatmap">
         <div class="heatmap-header">
-          <div class="round-chip"><span class="round-chip-label">RUNDE </span><b id="heatmap-round-index">01</b> / <span id="heatmap-round-total">05</span></div>
+          <div class="round-chip"><span class="round-chip-label" data-i18n="hudRoundLabel">RUNDE </span><b id="heatmap-round-index">01</b> / <span id="heatmap-round-total">05</span></div>
           <div class="heatmap-score-badge" id="heatmap-score-badge" aria-live="polite">
             <span class="heatmap-score-label" data-i18n="scoreLabel">Punkte</span>
             <span class="heatmap-score-value" id="heatmap-score-value">0</span>
@@ -913,28 +913,28 @@
 
       <!-- ===================== LEADERBOARD ===================== -->
       <section class="screen" id="screen-leaderboard">
-        <p class="eyebrow">Endstand</p>
-        <h2 class="screen-title">Duell beendet</h2>
+        <p class="eyebrow" data-i18n="leaderboardEyebrow">Endstand</p>
+        <h2 class="screen-title" id="board-heading" data-i18n-key="duelFinished">Duell beendet</h2>
 
         <div class="podium" id="podium"></div>
 
         <div class="board-list" id="board-list"></div>
 
         <div class="overview-map-wrap hidden" id="overview-map-wrap">
-          <h3>Alle Runden im &Uuml;berblick</h3>
+          <h3 data-i18n="overviewMapHeading">Alle Runden im &Uuml;berblick</h3>
           <div class="overview-map-frame">
             <div class="overview-map" id="overview-map-container"></div>
-            <button type="button" class="map-style-toggle" id="overview-map-style-toggle" title="Zwischen Satellit und Karte wechseln">
+            <button type="button" class="map-style-toggle" id="overview-map-style-toggle" data-i18n-title="mapStyleToggleTitle" title="Zwischen Satellit und Karte wechseln">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M3 12l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/></svg>
-              <span id="overview-map-style-label">Karte</span>
+              <span id="overview-map-style-label" data-i18n="mapStyleMap">Karte</span>
             </button>
           </div>
         </div>
 
         <div class="board-foot">
-          <button class="btn btn-primary" id="btn-play-again" hidden>Nochmal spielen</button>
-          <button class="btn btn-ghost" id="btn-share-challenge" hidden>Challenge teilen</button>
-          <button class="btn btn-ghost" id="btn-back-to-menu">Zur&uuml;ck zum Men&uuml;</button>
+          <button class="btn btn-primary" id="btn-play-again" data-i18n="playAgainBtn" hidden>Nochmal spielen</button>
+          <button class="btn btn-ghost" id="btn-share-challenge" data-i18n="shareChallengeBtn" hidden>Challenge teilen</button>
+          <button class="btn btn-ghost" id="btn-back-to-menu" data-i18n="backToMenuBtn">Zur&uuml;ck zum Men&uuml;</button>
         </div>
       </section>
 

@@ -3,16 +3,18 @@
 // data-i18n-Attribut in index.html und werden per applyTranslations()
 // gesetzt; dynamisch in JS erzeugte Strings rufen t() direkt auf.
 //
-// Umfang bewusst NICHT "jeder String der App": migriert sind Kopfzeile/
-// Hauptmenue (immer sichtbar), die komplette PulseMap-Lobby-/In-Game-
-// Oberflaeche, sowie die GESAMTE geteilte Lobby (Spieler-Panel, Spielregeln,
-// Kartenpaket-Auswahl, Mutatoren, Ready/Start-Flow) - die Lobby ist EIN
-// gemeinsames Bauteil fuer alle Modi, eine Teilmigration dort erzeugte
-// genau die Mischsprachen-Situation, die diese Migration eigentlich loesen
-// sollte (Nutzer-Report). Die klassischen Panorama-Modi bleiben deutsch NUR
-// noch im eigentlichen IN-GAME-HUD/Leaderboard/Tages-Challenge-Kachel
-// (nachdem "Match starten" gedrueckt wurde) - eine vollstaendige Migration
-// auch dieser Screens ist eine eigene, deutlich groessere Aufgabe.
+// Migriert ist inzwischen der komplette Spielweg: Kopfzeile/Hauptmenue, die
+// geteilte Lobby (Spieler-Panel, Spielregeln, Kartenauswahl, Mutatoren,
+// Ready/Start-Flow), die gesamte PulseMap-Oberflaeche UND seit dem
+// Kern-Loop-Abschnitt weiter unten auch In-Game-HUD, Rundenergebnis und
+// Endstand. Letztere waren zuvor die groesste Luecke: null
+// data-i18n-Attribute bei englischem Default, ein englischsprachiger Spieler
+// bekam ab dem Startknopf eine durchgehend deutsche Partie.
+//
+// Noch NICHT migriert sind Rand-/Fehlerpfade ausserhalb einer laufenden
+// Partie (Verbindungsfehler beim Beitreten, Challenge-Link-Fehler,
+// Tages-Challenge-Kachel, Menue-Statistiken) - die stehen weiterhin deutsch
+// im Code.
 const STORAGE_KEY = 'geofinder-lang';
 const SUPPORTED = ['en', 'de'];
 const FALLBACK_LANG = 'en';
@@ -72,10 +74,22 @@ export function t(key, vars) {
 export function applyTranslations(root = document) {
   root.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
-    const attr = el.getAttribute('data-i18n-attr');
+    const attrList = el.getAttribute('data-i18n-attr');
     const value = t(key);
-    if (attr) el.setAttribute(attr, value);
+    // Kommaliste statt eines einzelnen Attributs: die Panorama-Steuerung hat
+    // Buttons, deren aria-label und title denselben Text tragen sollen -
+    // vorher haette das zwei Elemente oder zwei Durchlaeufe gebraucht.
+    // Einzelwert bleibt gueltig (split(',') liefert dann ein Element).
+    if (attrList) for (const attr of attrList.split(',')) el.setAttribute(attr.trim(), value);
     else el.textContent = value;
+  });
+  // Eigener Durchlauf fuer Elemente, die BEIDES brauchen: sichtbaren Text
+  // (ueber data-i18n) UND einen abweichenden Tooltip - etwa der
+  // Tipp-bestaetigen-Button, dessen title zusaetzlich das Tastenkuerzel
+  // nennt. Ueber data-i18n-attr allein ginge das nicht, weil dieses
+  // Attribut den Textinhalt gerade ersetzt statt ergaenzt.
+  root.querySelectorAll('[data-i18n-title]').forEach((el) => {
+    el.setAttribute('title', t(el.getAttribute('data-i18n-title')));
   });
 }
 
@@ -292,6 +306,89 @@ const DICT = {
     attemptUnitMany: 'guesses',
     solvedWaiting: 'Solved in {attempts} {attemptsUnit} – waiting for the other players…',
     turnStatusWaiting: 'Waiting for {name}…',
+
+    // ---------------------------------------------------------------- Kern-Loop
+    // HUD, Rundenergebnis und Endstand - die drei Screens, in denen das
+    // eigentliche Spiel stattfindet. Waren bis hierhin komplett unuebersetzt
+    // (0 data-i18n-Attribute), obwohl die App auf Englisch als Default steht:
+    // ein englischsprachiger Spieler bekam ab dem Startknopf eine deutsche
+    // Partie.
+    hudRoundLabel: 'ROUND ',
+    hudHint: 'Hint',
+    panoLoading: 'Loading panorama…',
+    panoFocusLost: 'Focus lost — paused',
+    spectatorBanner: '👀 You are out — watch the rest of the match',
+    spectatorBtnLabel: '👀 Spectating',
+    confirmGuess: 'Confirm guess',
+    confirmGuessTitle: 'Confirm guess (Space)',
+    openMap: 'Open map',
+    openMapTitle: 'Open map (M)',
+    collapseMapLabel: 'Shrink map',
+    alignNorth: 'Align north',
+    alignNorthTitle: 'Align north (R)',
+    zoomInLabel: 'Zoom in',
+    zoomInTitle: 'Zoom in (+)',
+    zoomOutLabel: 'Zoom out',
+    zoomOutTitle: 'Zoom out (-)',
+    fullscreenLabel: 'Fullscreen',
+    fullscreenTitle: 'Fullscreen (F)',
+    emotesLabel: 'Emotes',
+    emotesTitle: 'Emotes (E)',
+    walkLabel: 'Keep walking',
+    walkForwardLabel: 'Walk forward',
+    walkBackLabel: 'Walk back',
+    mapStyleToggleTitle: 'Switch between satellite and map',
+    mapStyleMap: 'Map',
+    mapStyleSatellite: 'Satellite',
+    shortcutHint: 'Shortcuts: [Space] guess · [M] map · [E] emotes',
+
+    resultEyebrow: 'Round result',
+    resultRoundOf: 'Round {n} of {total}',
+    funFactLabel: 'Did you know?',
+    nextRoundIn: 'Next round in 00:{seconds}',
+    nextRoundNow: 'Next round…',
+    nextRoundSoon: 'Next round shortly…',
+    advanceRoundBtn: 'Next →',
+    royaleRemaining: '{n} still in',
+
+    scoreNoGuess: 'No guess submitted',
+    scoreCorrect: 'Correct — {country}',
+    scoreWrong: 'Wrong — you: {guess}, correct: {actual}',
+    scoreDistance: '{km} km away',
+    chipStreak: '{n} streak',
+    chipBase: 'Base {n}',
+    chipSpeed: '+{n} speed',
+    chipStreakBonus: '+{n} streak x{multiplier}',
+    chipNoDamage: 'No damage',
+    chipHpLeft: '{n} HP left',
+    eliminatedTag: 'Eliminated',
+
+    leaderboardEyebrow: 'Final standings',
+    overviewMapHeading: 'All rounds at a glance',
+    playAgainBtn: 'Play again',
+    shareChallengeBtn: 'Share challenge',
+    backToMenuBtn: 'Back to menu',
+    duelFinished: 'Duel over',
+    hpDuelFinished: 'HP duel over',
+    countryStreakFinished: 'Country streak over',
+    pulsemapDuelFinished: 'PulseMap duel over',
+    royaleFinished: 'Battle Royale over',
+    royaleWinner: '{name} wins the Battle Royale!',
+    hpWinner: '{name} wins the HP duel!',
+    championLabel: '🏆 Champion',
+    championLabelShort: 'Champion',
+    outInRound: 'Out in round {n}',
+    pointsShort: '{n} pts',
+    correctOfTotal: '{n}/{total} correct',
+    hpLeftLabel: 'HP left',
+    bestStreakLabel: 'Best streak: {n}',
+
+    toastImageUnavailable: 'This image is no longer available',
+    toastGuessFailed: 'Guess could not be confirmed — please check your connection.',
+    toastMapExhausted: 'Map exhausted. The game ends after this round.',
+    toastGeneratingNext: 'Generating next location…',
+    toastNoImagesFound: 'No images found for this map.',
+    toastPeerLost: '{name} lost connection — waiting for them to return…',
   },
   de: {
     brandTagline: '360°-Multiplayer · bis zu 6 Spieler · P2P über WebRTC',
@@ -486,5 +583,84 @@ const DICT = {
     attemptUnitMany: 'Tipps',
     solvedWaiting: 'Gelöst in {attempts} {attemptsUnit} – warte auf die anderen Spieler…',
     turnStatusWaiting: 'Warten auf {name}…',
+
+    // ---------------------------------------------------------------- Kern-Loop
+    // Siehe gleichnamigen Abschnitt im englischen Block oben.
+    hudRoundLabel: 'RUNDE ',
+    hudHint: 'Hinweis',
+    panoLoading: 'Panorama lädt…',
+    panoFocusLost: 'Fokus verloren — pausiert',
+    spectatorBanner: '👀 Du bist ausgeschieden — schau dir die restliche Partie an',
+    spectatorBtnLabel: '👀 Zuschauer-Modus',
+    confirmGuess: 'Tipp bestätigen',
+    confirmGuessTitle: 'Tipp bestätigen (Leertaste)',
+    openMap: 'Karte öffnen',
+    openMapTitle: 'Karte öffnen (M)',
+    collapseMapLabel: 'Karte verkleinern',
+    alignNorth: 'Nach Norden ausrichten',
+    alignNorthTitle: 'Nach Norden ausrichten (R)',
+    zoomInLabel: 'Vergrößern',
+    zoomInTitle: 'Vergrößern (+)',
+    zoomOutLabel: 'Verkleinern',
+    zoomOutTitle: 'Verkleinern (-)',
+    fullscreenLabel: 'Vollbild',
+    fullscreenTitle: 'Vollbild (F)',
+    emotesLabel: 'Emotes',
+    emotesTitle: 'Emotes (E)',
+    walkLabel: 'Weiterlaufen',
+    walkForwardLabel: 'Weiter laufen',
+    walkBackLabel: 'Zurück laufen',
+    mapStyleToggleTitle: 'Zwischen Satellit und Karte wechseln',
+    mapStyleMap: 'Karte',
+    mapStyleSatellite: 'Satellit',
+    shortcutHint: 'Tastenkürzel: [Leertaste] tippen · [M] Karte · [E] Emotes',
+
+    resultEyebrow: 'Rundenergebnis',
+    resultRoundOf: 'Runde {n} von {total}',
+    funFactLabel: 'Wusstest du schon?',
+    nextRoundIn: 'Nächste Runde in 00:{seconds}',
+    nextRoundNow: 'Nächste Runde…',
+    nextRoundSoon: 'Nächste Runde in Kürze…',
+    advanceRoundBtn: 'Weiter →',
+    royaleRemaining: 'Noch {n} dabei',
+
+    scoreNoGuess: 'Kein Tipp abgegeben',
+    scoreCorrect: 'Richtig — {country}',
+    scoreWrong: 'Falsch — du: {guess}, richtig: {actual}',
+    scoreDistance: '{km} km entfernt',
+    chipStreak: '{n}er-Streak',
+    chipBase: 'Basis {n}',
+    chipSpeed: '+{n} Speed',
+    chipStreakBonus: '+{n} Streak x{multiplier}',
+    chipNoDamage: 'Kein Schaden',
+    chipHpLeft: '{n} HP übrig',
+    eliminatedTag: 'Ausgeschieden',
+
+    leaderboardEyebrow: 'Endstand',
+    overviewMapHeading: 'Alle Runden im Überblick',
+    playAgainBtn: 'Nochmal spielen',
+    shareChallengeBtn: 'Challenge teilen',
+    backToMenuBtn: 'Zurück zum Menü',
+    duelFinished: 'Duell beendet',
+    hpDuelFinished: 'HP-Duell beendet',
+    countryStreakFinished: 'Country-Streak beendet',
+    pulsemapDuelFinished: 'PulseMap-Duell beendet',
+    royaleFinished: 'Battle Royale beendet',
+    royaleWinner: '{name} gewinnt die Battle Royale!',
+    hpWinner: '{name} gewinnt das HP-Duell!',
+    championLabel: '🏆 Champion',
+    championLabelShort: 'Champion',
+    outInRound: 'Raus in Runde {n}',
+    pointsShort: '{n} Pkt.',
+    correctOfTotal: '{n}/{total} richtig',
+    hpLeftLabel: 'HP übrig',
+    bestStreakLabel: 'Bester Streak: {n}',
+
+    toastImageUnavailable: 'Dieses Bild ist nicht mehr verfügbar',
+    toastGuessFailed: 'Tipp konnte nicht bestätigt werden — bitte Verbindung prüfen.',
+    toastMapExhausted: 'Karte erschöpft. Spiel endet nach dieser Runde.',
+    toastGeneratingNext: 'Generiere nächste Location…',
+    toastNoImagesFound: 'Für diese Karte wurden keine Bilder gefunden.',
+    toastPeerLost: '{name} hat die Verbindung verloren — wartet auf Rückkehr…',
   },
 };
