@@ -70,10 +70,23 @@ const FAST_ACCURATE_GUESS_KM = 25;
 // verschickt werden (das waere ein neues Leck der spaeteren Antworten,
 // genau das Problem, das der Anti-Cheat-Fix dieser Session verhindern soll).
 function preloadImage(url) {
-  if (!url || typeof Image === 'undefined') return;
-  const img = new Image();
-  img.src = url;
+  if (!url || typeof Image === 'undefined') return Promise.resolve();
+  return new Promise((resolve) => {
+    const img = new Image();
+    // onerror ebenfalls aufloesen: ein nicht ladbares Vorschaubild darf den
+    // Spielstart nie blockieren - der eigentliche Ladeversuch passiert
+    // ohnehin gleich noch einmal im Viewer.
+    img.onload = resolve;
+    img.onerror = resolve;
+    img.src = url;
+  });
 }
+
+// Obergrenze fuer das Warten auf das Bild der ERSTEN Runde (siehe
+// startGame()). Lieber ein paar Sekunden Ladebildschirm mehr als ein HUD,
+// das aufgebaut dasteht und auf sein Panorama wartet - aber auch nicht
+// endlos, falls das Bild gar nicht kommt.
+const FIRST_IMAGE_WAIT_MS = 5000;
 
 // Anti-Cheat-Fix (siehe PROXY_WORKER_URL-Kommentar in config.js): mintet
 // ueber den Cloudflare-Worker ein verschluesseltes Einweg-Token fuer die
@@ -425,6 +438,7 @@ export class HostController {
 
     bus.emit('ui:map-resolving', { found: 0, target: this._targetRoundCount });
     let exhausted = false;
+    let firstImageReady = Promise.resolve();
     while (this.roundLocations.length < minBuffer) {
       const { value, done } = await generator.next();
       if (done) {
@@ -434,14 +448,11 @@ export class HostController {
       this.roundLocations.push(value);
       this._prefetchProxiedUrl(value, this.roundLocations.length - 1);
       // Bildbytes sofort vorwaermen, nicht erst wenn die Runde drankommt.
-      // preloadImage() lief bisher NUR fuer Runde N+1 (siehe _startRound()) -
-      // die ERSTE Runde lud ihr Bild dadurch erst, wenn der Ladebildschirm
-      // schon weg und das HUD aufgebaut war. Bei 300-800 KB pro Equirect war
-      // genau das das gemeldete "Bilder laden ewig beim Rundenstart". Hier
-      // faellt der Download stattdessen in die ohnehin vorhandene Wartezeit
-      // der Ortssuche. Rein host-lokal, kein Protokollfeld - es wird nichts
-      // zusaetzlich an Mitspieler verschickt.
-      preloadImage(value.panoramaUrl);
+      // preloadImage() lief bisher NUR fuer Runde N+1 (siehe _startRound()),
+      // die ERSTE Runde hatte also gar keinen Vorlauf. Rein host-lokal, kein
+      // Protokollfeld - an Mitspieler geht dadurch nichts zusaetzlich raus.
+      const preloaded = preloadImage(value.panoramaUrl);
+      if (this.roundLocations.length === 1) firstImageReady = preloaded;
       bus.emit('ui:map-resolving', { found: this.roundLocations.length, target: this._targetRoundCount });
     }
 
@@ -482,6 +493,17 @@ export class HostController {
         state.self.id
       )
     );
+    // Auf das Bild der ersten Runde warten, SOLANGE der Ladebildschirm noch
+    // steht. Vorher lief das Vorwaermen zwar schon, brachte aber praktisch
+    // nichts: beide Startregionen loesen in derselben parallelen Welle auf,
+    // danach startete die Runde sofort - der Download hatte also gar keinen
+    // Vorlauf und fand vor einem bereits aufgebauten, leeren HUD statt.
+    // Genau das war das gemeldete "Bilder laden ewig, um eine Runde zu
+    // starten". Die Wartezeit verschwindet dadurch nicht, sie wandert aber
+    // dorthin, wo sie hingehoert und wo es eine Fortschrittsanzeige gibt.
+    // Gedeckelt, damit ein haengendes Bild das Spiel nie blockiert.
+    await Promise.race([firstImageReady, new Promise((r) => setTimeout(r, FIRST_IMAGE_WAIT_MS))]);
+
     bus.emit('ui:game-started');
     this._startRound(0);
 
