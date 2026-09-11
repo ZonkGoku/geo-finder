@@ -105,6 +105,9 @@ function initProfileUI() {
   swatches.forEach((sw) => {
     if (sw.dataset.color === state.self.color) sw.classList.add('selected');
     else sw.classList.remove('selected');
+    // initProfileUI() laeuft nur einmal beim Boot, das Anhaengen hier kann
+    // sich also nicht bei jedem Render aufstapeln.
+    attachHoverSound(sw);
     sw.addEventListener('click', () => {
       sound.playClick();
       swatches.forEach((s) => s.classList.remove('selected'));
@@ -1227,6 +1230,7 @@ async function startGameFromLobby(seed) {
 }
 
 function wireLobbyControls() {
+  attachHoverSound(el('btn-ready-toggle'));
   el('btn-ready-toggle').addEventListener('click', () => {
     sound.playClick();
     const me = state.players.get(state.self.id);
@@ -1410,14 +1414,30 @@ function renderRoundProgress() {
   }
 }
 
+// Zuletzt GERENDERTER eigener HP-Wert. renderHpBars() baut die Leisten jedes
+// Mal komplett neu aus state.hp auf und kann den Verlust deshalb nicht aus dem
+// DOM ablesen - ohne dieses Gedaechtnis gaebe es kein Ereignis, an dem sich
+// "gerade Schaden bekommen" festmachen liesse. null = noch nichts gerendert
+// (erste Runde), dann ist der Wert ein Startwert und kein Verlust.
+let lastOwnHp = null;
+
 function renderHpBars() {
   const container = el('hp-bars');
   if (state.settings.mode !== 'hp') {
     container.classList.add('hidden');
+    lastOwnHp = null;
     return;
   }
   container.classList.remove('hidden');
   container.innerHTML = '';
+
+  const ownHp = state.hp.get(state.self.id) ?? 6000;
+  if (lastOwnHp !== null && ownHp < lastOwnHp) {
+    shakeScreen();
+    haptics.tapStrong();
+  }
+  lastOwnHp = ownHp;
+
   for (const p of state.players.values()) {
     const hp = state.hp.get(p.id) ?? 6000;
     const row = document.createElement('div');
@@ -1475,6 +1495,32 @@ function spawnEliminationFlash() {
   flash.classList.remove('active');
   void flash.offsetWidth;
   flash.classList.add('active');
+}
+
+/** Aufprall-Erschuetterung (siehe .shake-hit in styles.css). hard=true fuer
+ * die eigene Elimination, sonst ein normaler Treffer.
+ *
+ * Zielt auf dem HUD auf .pano, damit nur das Bild wackelt und die Anzeigen
+ * darueber ruhig stehen bleiben. Auf allen anderen Screens (die Elimination
+ * wird z. B. erst im Rundenergebnis gezeigt, wo .pano gar nicht sichtbar ist)
+ * uebernimmt .device als sichtbarer Rahmen - ohne diese Fallunterscheidung
+ * wuerde dort ein unsichtbares Element wackeln.
+ *
+ * Reflow-Trigger-Muster wie bei spawnEliminationFlash()/.guess-pulse, damit
+ * zwei Treffer kurz hintereinander die Animation jeweils neu starten. */
+function shakeScreen({ hard = false } = {}) {
+  const onHud = el('screen-hud').classList.contains('active');
+  const target = document.querySelector(onHud ? '.pano' : '.device');
+  if (!target) return;
+  target.classList.remove('shake-hit', 'shake-hard');
+  void target.offsetWidth;
+  target.classList.add('shake-hit');
+  if (hard) target.classList.add('shake-hard');
+  target.addEventListener(
+    'animationend',
+    () => target.classList.remove('shake-hit', 'shake-hard'),
+    { once: true }
+  );
 }
 
 function shakeHeatmapSearchBox() {
@@ -1994,6 +2040,9 @@ function startHeatmapPingPick(emoji) {
   heatmapMap?.enablePingPicker((countryId) => {
     controller?.sendHeatmapPing(emoji, countryId);
     heatmapMap?.pingCountry(countryId, emoji);
+    // Bestaetigt das Treffen eines Landes auf der Karte - auf Mobile sieht man
+    // den Ping selbst oft erst, wenn der Finger wieder weg ist.
+    haptics.tapLight();
     cancelHeatmapPingPick();
   });
 }
@@ -2129,10 +2178,29 @@ async function handleWalkStep(direction) {
   }
 }
 
+const SHORTCUT_HINT_KEY = 'geofinder.shortcutHintSeen';
+
+/** Einmaliger Hinweis auf die Tastenkuerzel - ungenutzte Shortcuts sind keine.
+ * Bewusst nur einmal pro Geraet und nur dort, wo es ueberhaupt eine Tastatur
+ * gibt (hover:hover + pointer:fine schliesst Touch-Geraete aus), und ueber den
+ * bestehenden Toast statt eines eigenen Overlays - eine Legende, die man
+ * wegklicken muss, waere zum Rundenstart genau die falsche Ablenkung. */
+function maybeShowShortcutHint() {
+  if (!window.matchMedia?.('(hover:hover) and (pointer:fine)').matches) return;
+  try {
+    if (localStorage.getItem(SHORTCUT_HINT_KEY) === '1') return;
+    localStorage.setItem(SHORTCUT_HINT_KEY, '1');
+  } catch {
+    return; // Privater Modus o.ae. - dann lieber gar kein Hinweis als bei jeder Runde einer.
+  }
+  showToast('Tastenkürzel: [Leertaste] tippen · [M] Karte · [E] Emotes', 5200);
+}
+
 function renderRoundStart() {
   showScreen('hud');
   ensureHudWidgets();
   hintRevealed = false;
+  maybeShowShortcutHint();
 
   el('hud-round-index').textContent = String(state.round.index + 1).padStart(2, '0');
   el('hud-round-total').textContent = String(state.round.total).padStart(2, '0');
@@ -2228,6 +2296,13 @@ function renderRoundStart() {
       if (critical && totalSeconds > 0 && tickedCriticalSecond !== totalSeconds) {
         tickedCriticalSecond = totalSeconds;
         sound.playTick(totalSeconds <= 3);
+        // Haptik bewusst NUR in den letzten 3 Sekunden, nicht ueber das ganze
+        // 15s-Kritisch-Fenster: 15 Vibrationen hintereinander waeren
+        // aufdringlich und kosten auf Mobile spuerbar Akku. Die drei letzten
+        // Sekunden sind der Moment, in dem man das Geraet nicht mehr ansieht,
+        // weil man auf die Karte tippt - genau da traegt Haptik etwas bei,
+        // was der Ton allein nicht leistet (Stummschaltung, laute Umgebung).
+        if (totalSeconds <= 3) haptics.tapLight();
       }
       const tension = 1 - Math.max(0, Math.min(TENSION_WINDOW_S, clamped / 1000)) / TENSION_WINDOW_S;
       sound.setRoundTension(tension);
@@ -2343,6 +2418,9 @@ function wireHudControls() {
     const guess = guessMap.getGuess();
     if (!guess) return;
     sound.playGuessSubmitted();
+    // Der Tipp ist unwiderruflich - deutlicher als das tapLight() beim blossen
+    // Setzen des Pins, damit sich "gesetzt" und "abgeschickt" unterscheiden.
+    haptics.tapMedium();
     if (state.role === 'host') controller.submitLocalGuess(guess.lat, guess.lng);
     else controller.submitGuess(guess.lat, guess.lng);
     const btn = el('btn-confirm-guess');
@@ -2397,8 +2475,64 @@ function wireHudControls() {
       const emoji = btn.dataset.emoji;
       controller?.sendEmote(emoji);
       spawnEmote(emoji);
+      haptics.tapLight();
       el('emote-wheel').classList.add('hidden');
     });
+  });
+
+  // ---------------------------------------------------------------- Shortcuts
+  // Bis hierhin gab es keine einzige Spiel-Tastenkombination: jede Aktion war
+  // ein Mausweg quer ueber den (seit dem Vollbild-Umbau bis zu 2560px breiten)
+  // Bildschirm, bei laufendem Rundentimer.
+  //
+  // Loest bewusst die vorhandenen Buttons per .click() aus, statt die Aktionen
+  // hier zu wiederholen - so bleiben Klick- und Tastenweg garantiert identisch
+  // (inkl. Sound/Disabled-Zustand) und koennen nicht auseinanderlaufen.
+  // Ausnahme M: expandMap/collapseMap sind lokale Closures dieser Funktion,
+  // fuer die es keinen einzelnen Button gibt (oeffnen und schliessen sind
+  // zwei verschiedene).
+  document.addEventListener('keydown', (e) => {
+    // Modifier-Kombis gehoeren dem Browser/Betriebssystem (Cmd+R, Ctrl+F ...).
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // Harte Eingabefeld-Sperre. Ohne sie wuerde ein Leerzeichen im Spielernamen
+    // oder in der PulseMap-Laendersuche einen Tipp abschicken - der teuerste
+    // denkbare Fehlausloeser, weil ein Tipp unwiderruflich ist.
+    const target = e.target;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+    if (!el('screen-hud').classList.contains('active')) return;
+
+    switch (e.key.toLowerCase()) {
+      case ' ': {
+        // preventDefault zwingend: Space wuerde sonst zusaetzlich scrollen.
+        e.preventDefault();
+        const btn = el('btn-confirm-guess');
+        // Kein Pin gesetzt oder bereits getippt -> Button ist disabled, und
+        // .click() auf einen disabled Button ist von sich aus wirkungslos.
+        // Ausgeschiedene Zuschauer sind damit ebenfalls automatisch gesperrt.
+        if (!btn.disabled) btn.click();
+        break;
+      }
+      case 'm':
+        el('minimap').classList.contains('expanded') ? collapseMap() : expandMap();
+        break;
+      case 'e':
+        el('btn-emote-toggle').click();
+        break;
+      case 'r':
+        el('btn-compass').click();
+        break;
+      case 'f':
+        el('btn-fullscreen').click();
+        break;
+      // '=' ist auf DE- wie US-Layout dieselbe Taste wie '+', nur ohne Shift.
+      case '+':
+      case '=':
+        el('btn-zoom-in').click();
+        break;
+      case '-':
+        el('btn-zoom-out').click();
+        break;
+    }
   });
 }
 
@@ -2631,6 +2765,7 @@ function renderRoundResult({ results, actual, actualMeta, eliminatedPlayerIds = 
   if (eliminatedPlayerIds.includes(state.self.id)) {
     sound.playElimination();
     spawnEliminationFlash();
+    shakeScreen({ hard: true });
     haptics.tapStrong();
   }
 
@@ -3360,6 +3495,10 @@ function wireBusEvents() {
   bus.on('ui:heatmap-ping-received', ({ playerId, emoji, countryId }) => {
     if (playerId === state.self.id) return; // eigener Ping zeigt sich schon lokal in startHeatmapPingPick()
     heatmapMap?.pingCountry(countryId, emoji);
+    // Fremder Ping ist eine Mitteilung eines Mitspielers - schwaecher als das
+    // eigene Setzen (tapLight dort), aber nicht stumm: sonst geht er unter,
+    // waehrend man gerade die Laendersuche tippt.
+    haptics.tapLight();
   });
   bus.on('ui:join-rejected', ({ reason }) => {
     resetToMenu();

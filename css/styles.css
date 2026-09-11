@@ -2072,6 +2072,36 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
 .heatmap-search-box.shake{ animation:heatmapShake 0.4s ease; border-color:rgba(242,85,74,0.55); }
 @media (prefers-reduced-motion: reduce){ .heatmap-search-box.shake{ animation:none; } }
 
+/* Aufprall-Erschuetterung fuer die beiden Momente mit dem hoechsten Einsatz:
+   HP-Verlust im HP-Duell und die eigene Elimination im Battle Royale. Beide
+   hatten bisher gar kein koerperliches Feedback - ein Wackeln gab es nur bei
+   einem Tippfehler in der PulseMap-Laendersuche (heatmapShake oben).
+
+   Abklingende Amplitude statt gleichmaessigem Hin-und-Her: ein Aufprall
+   verliert Energie, ein konstantes Wackeln liest sich als Glitch. Liegt auf
+   .pano statt auf body, damit nur das Bild wackelt und die HUD-Chrome
+   darueber ruhig stehen bleibt; .device hat bereits overflow:hidden, der
+   Ausschlag wird also sauber beschnitten statt Scrollbalken zu erzeugen.
+   translate3d haelt das Ganze auf dem Compositor, ohne Layout pro Frame. */
+   --shake-amp skaliert die Auslenkung, statt zwei fast identische
+   Keyframe-Saetze zu pflegen: die Variable ist waehrend der Animation
+   konstant und wird von den calc() in den Keyframes nur gelesen (eine
+   animierte Custom Property waere etwas anderes und funktioniert so nicht). */
+@keyframes screenShake{
+  0%,100%{ transform:translate3d(0,0,0); }
+  12%{ transform:translate3d(calc(-8px * var(--shake-amp,1)), calc(4px * var(--shake-amp,1)), 0); }
+  26%{ transform:translate3d(calc(7px * var(--shake-amp,1)), calc(-5px * var(--shake-amp,1)), 0); }
+  41%{ transform:translate3d(calc(-5px * var(--shake-amp,1)), calc(-2px * var(--shake-amp,1)), 0); }
+  58%{ transform:translate3d(calc(4px * var(--shake-amp,1)), calc(3px * var(--shake-amp,1)), 0); }
+  76%{ transform:translate3d(calc(-2px * var(--shake-amp,1)), calc(1px * var(--shake-amp,1)), 0); }
+  90%{ transform:translate3d(calc(1px * var(--shake-amp,1)), 0, 0); }
+}
+.shake-hit{ animation:screenShake 460ms cubic-bezier(.36,.07,.19,.97) both; will-change:transform; }
+/* Elimination ist endgueltig - laenger und weiter ausschlagend als ein
+   blosser Treffer. */
+.shake-hit.shake-hard{ animation-duration:620ms; --shake-amp:1.7; }
+@media (prefers-reduced-motion: reduce){ .shake-hit{ animation:none; } }
+
 /* Laender-Einfaerbung: sanftes Fade-In statt eines schlagartigen Farbwechsels
    (CSS-Transitionen wirken auch auf per JS gesetzte SVG-Praesentations-
    attribute wie fill/fill-opacity, siehe HeatmapMap.colorCountry()) plus ein

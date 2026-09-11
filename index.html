@@ -747,16 +747,16 @@
         <p class="spectator-banner hidden" id="spectator-banner">&#128064; Du bist ausgeschieden &mdash; schau dir die restliche Partie an</p>
 
         <div class="pano-controls" id="pano-controls">
-          <button class="pano-ctrl-btn" id="btn-compass" title="Nach Norden ausrichten" aria-label="Nach Norden ausrichten">
+          <button class="pano-ctrl-btn" id="btn-compass" title="Nach Norden ausrichten (R)" aria-label="Nach Norden ausrichten">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9.5"/><path d="M15 9l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/><path d="M12 2.5v2M12 19.5v2"/></svg>
           </button>
-          <button class="pano-ctrl-btn" id="btn-zoom-in" title="Vergr&ouml;&szlig;ern" aria-label="Vergr&ouml;&szlig;ern">
+          <button class="pano-ctrl-btn" id="btn-zoom-in" title="Vergr&ouml;&szlig;ern (+)" aria-label="Vergr&ouml;&szlig;ern">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
           </button>
-          <button class="pano-ctrl-btn" id="btn-zoom-out" title="Verkleinern" aria-label="Verkleinern">
+          <button class="pano-ctrl-btn" id="btn-zoom-out" title="Verkleinern (-)" aria-label="Verkleinern">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
           </button>
-          <button class="pano-ctrl-btn" id="btn-fullscreen" title="Vollbild" aria-label="Vollbild">
+          <button class="pano-ctrl-btn" id="btn-fullscreen" title="Vollbild (F)" aria-label="Vollbild">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
           </button>
         </div>
@@ -778,7 +778,7 @@
         </div>
 
         <div class="hud-bottom">
-          <button class="btn btn-primary guess-btn" id="btn-confirm-guess" disabled>Tipp best&auml;tigen</button>
+          <button class="btn btn-primary guess-btn" id="btn-confirm-guess" title="Tipp best&auml;tigen (Leertaste)" disabled>Tipp best&auml;tigen</button>
         </div>
 
         <div class="minimap-wrap" id="minimap-wrap">
@@ -786,7 +786,7 @@
           <div class="minimap" id="minimap">
             <div class="minimap-drag-handle" id="minimap-drag-handle" aria-hidden="true"></div>
             <div id="guess-map-container" class="leaflet-host"></div>
-            <button type="button" class="minimap-open-btn" id="minimap-open-btn">
+            <button type="button" class="minimap-open-btn" id="minimap-open-btn" title="Karte &ouml;ffnen (M)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
               <span>Karte &ouml;ffnen</span>
             </button>
@@ -810,7 +810,7 @@
             <button type="button" class="emote-btn" data-emoji="💩">💩</button>
             <button type="button" class="emote-btn" data-emoji="👏">👏</button>
           </div>
-          <button class="emote-toggle" id="btn-emote-toggle" aria-label="Emotes" title="Emotes">&#128512;</button>
+          <button class="emote-toggle" id="btn-emote-toggle" aria-label="Emotes" title="Emotes (E)">&#128512;</button>
         </div>
       </section>
 
