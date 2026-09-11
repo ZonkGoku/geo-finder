@@ -23,6 +23,10 @@ const HEATMAP_WIN_POINTS = 1000;
 // alle Laender durchprobiert, um das Zielland aus den Antworten
 // einzugrenzen, schon.
 const HEATMAP_GUESS_MIN_INTERVAL_MS = 150;
+// Deutlich grosszuegiger als der Guess-Rate-Limit oben - ein Ping ist reine
+// Deko ohne Anti-Cheat-Implikation, der Limit hier ist nur gegen "jemand
+// spammt die Karte mit Emojis voll" gedacht, nicht gegen Bot-Verhalten.
+const HEATMAP_PING_MIN_INTERVAL_MS = 1200;
 // heatmapTurnMode==='efficiency': kleiner Bonus obendrauf fuer die schnellste
 // Person unter mehreren, die die Runde mit der gleich niedrigsten Zug-Zahl
 // abgeschlossen haben (siehe _endHeatmapEfficiencyRound()) - bewusst klein
@@ -182,6 +186,18 @@ export class HostController {
         }
         bus.emit('ui:emote-received', { peerId, emoji: message.payload.emoji });
         break;
+      case MSG.HEATMAP_PING: {
+        const lastPingAt = this._heatmapPingLastAt.get(peerId);
+        if (lastPingAt != null && Date.now() - lastPingAt < HEATMAP_PING_MIN_INTERVAL_MS) break;
+        if (!this._heatmapStore?.byId.has(message.payload.countryId)) break;
+        this._heatmapPingLastAt.set(peerId, Date.now());
+        const pingPayload = { playerId: peerId, emoji: message.payload.emoji, countryId: message.payload.countryId };
+        for (const p of state.players.values()) {
+          if (p.id !== peerId) this.pm.sendTo(p.id, makeMessage(MSG.HEATMAP_PING, pingPayload, state.self.id));
+        }
+        bus.emit('ui:heatmap-ping-received', pingPayload);
+        break;
+      }
       case MSG.PING:
         this.pm.sendTo(peerId, makeMessage(MSG.PONG, { echoTs: message.payload.echoTs }, state.self.id));
         break;
@@ -251,6 +267,14 @@ export class HostController {
 
   sendEmote(emoji) {
     this.pm.broadcast(makeMessage(MSG.EMOTE, { playerId: state.self.id, emoji }, state.self.id));
+  }
+
+  /** Host ist selbst auch Spieler - eigener Sendepfad statt ueber
+   * _handleHeatmapPing() zu gehen (dort wird u.a. gegen state.round.index
+   * geprueft, was fuer die eigene, garantiert aktuelle Runde unnoetig ist). */
+  sendHeatmapPing(emoji, countryId) {
+    this._heatmapPingLastAt.set(state.self.id, Date.now());
+    this.pm.broadcast(makeMessage(MSG.HEATMAP_PING, { playerId: state.self.id, emoji, countryId }, state.self.id));
   }
 
   _onPeerLost(peerId) {
@@ -853,6 +877,7 @@ export class HostController {
     // schneller eingrenzt, als es das Spiel je vorsieht (kein Mensch tippt
     // schneller als HEATMAP_GUESS_MIN_INTERVAL_MS).
     this._heatmapLastGuessAt = new Map();
+    this._heatmapPingLastAt = new Map();
 
     this.pm.broadcast(
       makeMessage(

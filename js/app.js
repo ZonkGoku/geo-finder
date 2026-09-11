@@ -1975,6 +1975,55 @@ function wireHeatmapControls() {
       showToast(t('toastCopyFailed') + ': ' + text);
     }
   });
+
+  wireHeatmapPingWheel();
+}
+
+// Minimap-Emoji-Pings (siehe MSG.HEATMAP_PING in protocol.js): zwei Klicks
+// statt einem wie beim klassischen Emote-Wheel (Emoji waehlen, DANN ein Land
+// antippen) - dazwischen liegt ein expliziter "Ping-Auswahl"-Zustand
+// (heatmapPingEmoji gesetzt), waehrend dem ein Kartenklick nicht wie sonst
+// ignoriert wird, sondern HeatmapMap.enablePingPicker() abfaengt.
+let heatmapPingEmoji = null;
+
+function startHeatmapPingPick(emoji) {
+  heatmapPingEmoji = emoji;
+  el('heatmap-emote-wheel').classList.add('hidden');
+  el('heatmap-ping-hint').classList.remove('hidden');
+  el('heatmap-map-container').classList.add('picking');
+  heatmapMap?.enablePingPicker((countryId) => {
+    controller?.sendHeatmapPing(emoji, countryId);
+    heatmapMap?.pingCountry(countryId, emoji);
+    cancelHeatmapPingPick();
+  });
+}
+
+function cancelHeatmapPingPick() {
+  if (!heatmapPingEmoji) return;
+  heatmapPingEmoji = null;
+  el('heatmap-ping-hint').classList.add('hidden');
+  el('heatmap-map-container').classList.remove('picking');
+  heatmapMap?.disablePingPicker();
+}
+
+function wireHeatmapPingWheel() {
+  el('btn-heatmap-emote-toggle').addEventListener('click', () => {
+    sound.playClick();
+    if (heatmapPingEmoji) {
+      cancelHeatmapPingPick();
+      return;
+    }
+    el('heatmap-emote-wheel').classList.toggle('hidden');
+  });
+  el('heatmap-emote-wheel').querySelectorAll('.emote-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      sound.playClick();
+      startHeatmapPingPick(btn.dataset.emoji);
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && heatmapPingEmoji) cancelHeatmapPingPick();
+  });
 }
 
 const PANO_FADE_MS = 180;
@@ -3298,6 +3347,10 @@ function wireBusEvents() {
   bus.on('ui:emote-received', ({ peerId, emoji }) => {
     if (peerId === state.self.id) return;
     spawnEmote(emoji);
+  });
+  bus.on('ui:heatmap-ping-received', ({ playerId, emoji, countryId }) => {
+    if (playerId === state.self.id) return; // eigener Ping zeigt sich schon lokal in startHeatmapPingPick()
+    heatmapMap?.pingCountry(countryId, emoji);
   });
   bus.on('ui:join-rejected', ({ reason }) => {
     resetToMenu();

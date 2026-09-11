@@ -273,6 +273,7 @@ const DICT = {
     labelsOff: 'Off',
 
     searchPlaceholder: 'Enter a country…',
+    heatmapPingHint: 'Tap a country to ping it',
     top3Title: 'Your top 3 guesses',
     scoreLabel: 'Score',
     neighborBadge: 'Neighbor',
@@ -464,6 +465,7 @@ const DICT = {
     labelsOff: 'Aus',
 
     searchPlaceholder: 'Land eingeben…',
+    heatmapPingHint: 'Tippe auf ein Land, um dorthin zu pingen',
     top3Title: 'Deine Top 3 Tipps',
     scoreLabel: 'Punkte',
     neighborBadge: 'Nachbarland',

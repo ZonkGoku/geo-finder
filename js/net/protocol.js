@@ -47,6 +47,15 @@ export const MSG = {
   // nachtraeglich und informiert alle Mitspieler darueber.
   ROUND_CAP_ADJUSTED: 'ROUND_CAP_ADJUSTED',
   ROUND_BUFFERING: 'ROUND_BUFFERING', // Host -> alle: naechste Runde ist noch nicht fertig geladen, bitte kurz warten
+  // PulseMap-Pendant zu EMOTE: anders als die generische Emote-Blase (die
+  // ueberall zufaellig aufsteigt) haengt dieser Ping an einer konkreten
+  // Laender-ID auf der Weltkarte - "schau HIER hin" statt nur "schau auf
+  // mein Gefuehl gerade". Country-ID statt lat/lng: verrät nichts, was nicht
+  // schon jeder auf derselben Karte sehen kann (kein Anti-Cheat-Thema, siehe
+  // Kommentar bei HEATMAP_GUESS oben). Nur in PulseMap moeglich, weil dort
+  // (anders als bei den klassischen Modi) ein Kartenklick NICHT bereits die
+  // Tipp-Eingabe ist - die laeuft über das Suchfeld, siehe heatmap-map.js.
+  HEATMAP_PING: 'HEATMAP_PING',
 };
 
 export function makeMessage(type, payload, senderId) {

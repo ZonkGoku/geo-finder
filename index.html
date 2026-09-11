@@ -885,6 +885,24 @@
 
           <div class="heatmap-activity-feed" id="heatmap-activity-feed"></div>
 
+          <!-- Minimap-Emoji-Pings (siehe MSG.HEATMAP_PING in protocol.js,
+               HeatmapMap.enablePingPicker()/pingCountry() in heatmap-map.js):
+               anders als der Emote-Wheel in #screen-hud (der sofort eine
+               zufaellig positionierte Sprechblase abschickt) waehlt man hier
+               erst ein Emoji, dann EIN Land auf der Karte - der Ping haengt
+               an einer echten Position statt generisch irgendwo aufzusteigen. -->
+          <div class="emote-wrap" id="heatmap-emote-wrap">
+            <div class="emote-wheel hidden" id="heatmap-emote-wheel">
+              <button type="button" class="emote-btn" data-emoji="😱">😱</button>
+              <button type="button" class="emote-btn" data-emoji="🎯">🎯</button>
+              <button type="button" class="emote-btn" data-emoji="😂">😂</button>
+              <button type="button" class="emote-btn" data-emoji="💩">💩</button>
+              <button type="button" class="emote-btn" data-emoji="👏">👏</button>
+            </div>
+            <button class="emote-toggle" id="btn-heatmap-emote-toggle" aria-label="Emotes" title="Emotes">&#128512;</button>
+          </div>
+          <p class="heatmap-ping-hint hidden" id="heatmap-ping-hint" data-i18n="heatmapPingHint">Tippe auf ein Land, um dorthin zu pingen</p>
+
           <div class="heatmap-result-banner hidden" id="heatmap-result-banner">
             <p class="heatmap-result-title" id="heatmap-result-title"></p>
             <p class="heatmap-result-sub" id="heatmap-result-sub"></p>

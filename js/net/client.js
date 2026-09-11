@@ -110,6 +110,10 @@ export class ClientController {
     this.pm.sendToHost(makeMessage(MSG.EMOTE, { playerId: state.self.id, emoji }, state.self.id));
   }
 
+  sendHeatmapPing(emoji, countryId) {
+    this.pm.sendToHost(makeMessage(MSG.HEATMAP_PING, { playerId: state.self.id, emoji, countryId }, state.self.id));
+  }
+
   _onMessage(message) {
     switch (message.type) {
       case MSG.ROOM_JOIN_ACCEPTED:
@@ -277,6 +281,9 @@ export class ClientController {
         break;
       case MSG.EMOTE:
         bus.emit('ui:emote-received', { peerId: message.payload.playerId, emoji: message.payload.emoji });
+        break;
+      case MSG.HEATMAP_PING:
+        bus.emit('ui:heatmap-ping-received', { playerId: message.payload.playerId, emoji: message.payload.emoji, countryId: message.payload.countryId });
         break;
       case MSG.PONG:
         state.clockOffsetMs = Math.round((Date.now() - message.payload.echoTs) / 2);

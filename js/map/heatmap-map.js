@@ -190,6 +190,44 @@ export class HeatmapMap {
     this.map.flyTo(layer.getBounds().getCenter(), this.map.getZoom(), { duration: 0.8 });
   }
 
+  /** "Ping-Auswahl"-Modus: der naechste Klick auf ein Land ruft onPick(id)
+   * statt (wie ein normaler PulseMap-Kartenklick) gar nichts zu tun - die
+   * eigentliche Tipp-Eingabe laeuft ueber das Suchfeld, ein Klick auf die
+   * Karte ist sonst ungenutzt (siehe MSG.HEATMAP_PING-Kommentar in
+   * protocol.js). Einmaliger Klick: schaltet sich nach der Auswahl selbst
+   * wieder ab (siehe app.js), damit man nicht aus Versehen im Ping-Modus
+   * haengen bleibt und stattdessen normal weiter looken/zoomen kann. */
+  enablePingPicker(onPick) {
+    this._pingPickHandler = (e) => onPick(String(e.layer.feature.id));
+    this.layer?.on('click', this._pingPickHandler);
+  }
+
+  disablePingPicker() {
+    if (this._pingPickHandler) this.layer?.off('click', this._pingPickHandler);
+    this._pingPickHandler = null;
+  }
+
+  /** Zeigt einen kurzlebigen Emoji-Marker auf dem Zentrum eines Landes -
+   * sowohl fuer den eigenen Ping (sofortiges lokales Feedback beim Senden)
+   * als auch fuer empfangene Pings von Mitspielern (siehe
+   * ui:heatmap-ping-received in app.js). Kein Leaflet-Popup/-Tooltip
+   * (die sind an Hover/Klick gebunden), sondern ein reiner Marker mit
+   * CSS-Pop-in/-out-Animation, der sich selbst wieder entfernt. */
+  pingCountry(countryId, emoji) {
+    const layer = this.layerByCountryId.get(String(countryId));
+    if (!layer) return;
+    const icon = window.L.divIcon({
+      className: '',
+      html: `<span class="heatmap-ping-marker">${emoji}</span>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+    const marker = window.L.marker(layer.getBounds().getCenter(), { icon, interactive: false, zIndexOffset: 1000 }).addTo(
+      this.map
+    );
+    setTimeout(() => this.map.removeLayer(marker), 2200);
+  }
+
   /** Container-relative Pixelposition eines Punkts - fuer an die Karte
    * angeheftete Effekte (Konfetti-/Radar-Ping-Ursprung, siehe app.js
    * renderHeatmapRoundResult()). */
