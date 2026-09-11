@@ -41,6 +41,7 @@ import {
 } from './core/challenge.js';
 import * as sound from './audio/sound.js';
 import { t, getLang, setLang, onLangChange, applyTranslations, countryDisplayName } from './core/i18n.js';
+import { logTiming } from './core/debug-timing.js';
 
 const PROFILE_KEY = 'geofinder.profile';
 const RESULT_DISPLAY_SECONDS = 8;
@@ -2111,11 +2112,16 @@ function transitionPanorama() {
   // fertig ist, und blendet dann direkt von Bild zu Bild ueber.
   container.classList.toggle('pano-foggy', Boolean(mutators.fogOfWar));
   const spinnerTimer = showPanoLoadingDelayed();
+  // Misst NUR den Bild-Download plus Pannellum-Aufbau, nicht die vorherige
+  // Mapillary-Suche - genau die Trennung, die "laedt ewig" braucht: ein
+  // vorgewaermtes Bild (PRELOAD_ROUND) sollte hier nahe null liegen.
+  const panoStartedAt = performance.now();
   panoViewer.load(state.round.panoramaUrl, {
     vaov: state.round.vaov,
     modifier: state.settings.modifier,
     mutators,
     onLoad: () => {
+      logTiming(`Panorama Runde ${state.round.index + 1} geladen`, performance.now() - panoStartedAt);
       hidePanoLoading(spinnerTimer);
       if (mutators.fogOfWar) {
         // Reflow erzwingen, damit der Browser den unscharfen Startzustand

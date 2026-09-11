@@ -11,7 +11,7 @@
 // weil GitHub Pages dieses Projekt unter einem Unterpfad
 // (https://<user>.github.io/geo-finder/) ausliefert, nicht unter der
 // Domain-Wurzel.
-const CACHE_VERSION = 'geofinder-v4';
+const CACHE_VERSION = 'geofinder-v5';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -28,6 +28,7 @@ const APP_SHELL_URLS = [
   './js/core/country-lookup.js',
   './js/core/country-names-de.js',
   './js/core/country-store.js',
+  './js/core/debug-timing.js',
   './js/core/heatmap-color.js',
   './js/core/heatmap-proximity.js',
   './js/core/heatmap-stats.js',

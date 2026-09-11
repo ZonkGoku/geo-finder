@@ -1,4 +1,5 @@
 import { MAPILLARY_ACCESS_TOKEN } from '../config.js';
+import { logTiming, logInfo } from '../core/debug-timing.js';
 
 const API_BASE = 'https://graph.mapillary.com';
 const REQUEST_TIMEOUT_MS = 8000;
@@ -27,8 +28,11 @@ async function fetchJson(url, label) {
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   let res;
+  const startedAt = performance.now();
   try {
     res = await fetch(url, { signal: controller.signal });
+    // Endpunkt-Typ statt der vollen URL loggen: die enthaelt den Zugangstoken.
+    logTiming(url.includes('/images?') ? 'mapillary LISTE' : 'mapillary DETAIL', performance.now() - startedAt);
   } catch (err) {
     if (err.name === 'AbortError') {
       throw new Error(`Mapillary-Anfrage für "${label}" hat zu lange gedauert (Timeout)`);
@@ -199,9 +203,11 @@ export async function fetchPanoramaForRegion(region, rand = Math.random) {
   // sondern die Regionsmitte. Ein still falscher Zielpunkt waere schlimmer
   // als ein paar zusaetzliche Anfragen.
   const first = items[0];
+  logInfo('Kandidaten aus der Liste', items.length);
   const listIsSelfSufficient =
     first.is_pano !== undefined && first.thumb_2048_url !== undefined && first.geometry !== undefined;
 
+  logInfo('Liste reicht allein (keine Detailabfragen noetig)', listIsSelfSufficient);
   if (listIsSelfSufficient) {
     for (const item of items) {
       const location = buildLocationFromDetail(item, region);

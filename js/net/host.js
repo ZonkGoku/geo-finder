@@ -433,6 +433,15 @@ export class HostController {
       }
       this.roundLocations.push(value);
       this._prefetchProxiedUrl(value, this.roundLocations.length - 1);
+      // Bildbytes sofort vorwaermen, nicht erst wenn die Runde drankommt.
+      // preloadImage() lief bisher NUR fuer Runde N+1 (siehe _startRound()) -
+      // die ERSTE Runde lud ihr Bild dadurch erst, wenn der Ladebildschirm
+      // schon weg und das HUD aufgebaut war. Bei 300-800 KB pro Equirect war
+      // genau das das gemeldete "Bilder laden ewig beim Rundenstart". Hier
+      // faellt der Download stattdessen in die ohnehin vorhandene Wartezeit
+      // der Ortssuche. Rein host-lokal, kein Protokollfeld - es wird nichts
+      // zusaetzlich an Mitspieler verschickt.
+      preloadImage(value.panoramaUrl);
       bus.emit('ui:map-resolving', { found: this.roundLocations.length, target: this._targetRoundCount });
     }
 
@@ -502,6 +511,15 @@ export class HostController {
       }
       this.roundLocations.push(value);
       this._prefetchProxiedUrl(value, this.roundLocations.length - 1);
+      // Bildbytes sofort vorwaermen, nicht erst wenn die Runde drankommt.
+      // preloadImage() lief bisher NUR fuer Runde N+1 (siehe _startRound()) -
+      // die ERSTE Runde lud ihr Bild dadurch erst, wenn der Ladebildschirm
+      // schon weg und das HUD aufgebaut war. Bei 300-800 KB pro Equirect war
+      // genau das das gemeldete "Bilder laden ewig beim Rundenstart". Hier
+      // faellt der Download stattdessen in die ohnehin vorhandene Wartezeit
+      // der Ortssuche. Rein host-lokal, kein Protokollfeld - es wird nichts
+      // zusaetzlich an Mitspieler verschickt.
+      preloadImage(value.panoramaUrl);
       bus.emit('ui:map-resolving', { found: this.roundLocations.length, target: this._targetRoundCount });
 
       const justArrivedIndex = this.roundLocations.length - 1;
