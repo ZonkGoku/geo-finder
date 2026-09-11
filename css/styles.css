@@ -2091,6 +2091,16 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
   .peer-dot{ padding:4px; }
   .peer-dot-name{ display:none; }
 
+  /* Panorama-Zoom/-Fullscreen- (.pano-ctrl-btn, 32px) und Walk-Mode-Pfeile
+     (.pano-walk-btn, 34px) blieben bislang unter der 48px-Touch-Ziel-
+     Mindestgroesse, die ueberall sonst im Mobile-Pass schon gilt (siehe
+     .choice-row button/.heatmap-search-box oben) - auf Desktop bewusst
+     unveraendert (praezise Maus-Bedienung, kompaktere Optik gewollt). */
+  .pano-ctrl-btn{ width:48px; height:48px; }
+  .pano-ctrl-btn svg{ width:18px; height:18px; }
+  .pano-walk-btn{ width:48px; height:48px; }
+  .pano-walk-btn svg{ width:20px; height:20px; }
+
   /* --- Maximaler Platz fuers Panorama: waehrend einer aktiven Runde
      (HUD/Heatmap) brauchen weder das Marketing-Logo/-Kicker ueber der
      "Geraete"-Karte noch die volle 600px-Mindesthoehe wirklich Platz - auf
