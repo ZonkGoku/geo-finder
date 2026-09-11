@@ -131,6 +131,13 @@ body{
 }
 
 h1,h2,h3{ font-family: var(--font-display); font-weight:600; text-wrap:balance; margin:0; }
+/* Ueberschrift der beiden Ergebnis-Screens (Rundenergebnis, Endstand). Stand
+   vorher als style="font-size:1.5rem"/"1.6rem" direkt im Markup und damit
+   ausserhalb jeder Typo-Anpassung - u. a. beim Verbreitern dieser Screens auf
+   1440px waeren die beiden Titel als einzige nicht mitgewachsen. clamp()
+   statt zweier fester Groessen: derselbe Titel-Rang soll auf beiden Screens
+   auch gleich gross sein. */
+.screen-title{ font-size:clamp(1.45rem, 2.2vw, 1.75rem); }
 button{ font-family:inherit; color:inherit; }
 /* touch-action:manipulation unterdrueckt Safaris Doppel-Tap-zum-Zoomen auf
    Buttons/Links/Inputs (schnelles Antippen loeste sonst versehentlich einen
@@ -686,6 +693,86 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
   body:has(#screen-lobby.active) .lobby-main{ grid-template-columns:minmax(360px, 440px) 1fr; }
   body:has(#screen-lobby.active) .lobby-stage-art{ height:min(320px, 30vh); }
   body:has(#screen-lobby.active) .lobby-stage{ top:calc(24px + env(safe-area-inset-top)); }
+}
+
+/* ---------------------------------------------------------------- Desktop-Vollbild
+   Das 360-Grad-Panorama ist der Informationstraeger des Spiels: Schilder,
+   Nummernschilder, Vegetation sind die Hinweise, aus denen der Tipp entsteht.
+   Bis hierhin lief es trotzdem in der 900px-.device-Karte (siehe
+   .device{max-width:900px}) - auf einem 2560px-Monitor also in knapp einem
+   Drittel der Breite, der Rest war Hintergrund. Gemessen vor dem Umbau:
+   .pano 898x600 bei x=831.
+
+   Bewusst auf min-width:769px begrenzt, obwohl die Lobby-Entsprechung oben
+   unscoped ist: der Mobile-Pfad (@media max-width:768px ab "Daumenzone")
+   ist durchoptimiert und soll sich nachweisbar NICHT mitaendern - mit dieser
+   Grenze kann er es gar nicht erst. */
+@media (min-width:769px){
+  body:has(#screen-hud.active) .page{ max-width:none; width:100%; }
+  body:has(#screen-hud.active) .page-head{ display:none; }
+  /* body traegt 40px/56px Innenabstand (siehe body{padding:...}). Ein
+     .device mit height:100dvh DARIN ergibt 100dvh + 96px Gesamthoehe, also
+     eine scrollende Seite unter einem Vollbild-Panorama - ein Drag im
+     Panorama wuerde dann die Seite mitziehen. Beim Lobby-Vollbild faellt
+     dasselbe nur nicht auf, weil .device-screen dort selbst scrollt
+     (gemessen: docScrollH 1253 bei clientH 1080). Daher hier UND fuer die
+     Lobby auf 0 - safe-area uebernehmen die inneren Elemente
+     (.device-chrome, .hud-bottom, .minimap-wrap) laengst selbst. */
+  body:has(#screen-hud.active),
+  body:has(#screen-lobby.active){ padding:0; }
+  body:has(#screen-hud.active) .device{
+    max-width:none; width:100%; height:100dvh;
+    border-radius:0; border:none; box-shadow:none;
+    display:flex; flex-direction:column;
+  }
+  body:has(#screen-hud.active) .device-screen{ flex:1; min-height:0; }
+  /* .screen{padding:36px} muss weg: .pano liegt zwar inset:0 und ignoriert
+     das Padding ohnehin, die absolut positionierten HUD-Elemente
+     (.hud-top, .hud-bottom, .minimap-wrap, .emote-wrap) beziehen sich aber
+     auf .screen und wuerden sonst 36px vom Bildschirmrand eingerueckt
+     schweben. */
+  body:has(#screen-hud.active) #screen-hud.screen{ min-height:100%; padding:0; }
+  /* Die Credits-Fusszeile steht im Markup NACH .page, also unter dem jetzt
+     100dvh hohen .device - dadurch wurde die Seite hinter dem Vollbild-
+     Panorama scrollbar (gemessen: scrollH 1157 bei clientH 1080). Ein Drag
+     im Panorama haette so die Seite mitziehen koennen. Waehrend des Spiels
+     hat die Fusszeile ohnehin nichts zu suchen, aus demselben Grund, aus dem
+     .page-head hier ausgeblendet wird. Mobile bleibt unberuehrt: dort ist
+     .device nicht 100dvh hoch, die Seite scrollt also gar nicht erst. */
+  body:has(#screen-hud.active) .foot-note,
+  body:has(#screen-lobby.active) .foot-note{ display:none; }
+
+  /* Ergebnis-Screens sind Lese-Screens, kein Vollbild-Inhalt: mehr Luft fuer
+     Karte + Punkteliste nebeneinander, aber gedeckelt - ohne Deckel entstehen
+     auf Ultrawide 30cm lange Textzeilen, der klassische Fehler beim
+     Full-Bleed-Umbau. */
+  /* .page (max-width:1020px) muss mit angehoben werden - ein breiteres
+     .device darin bliebe sonst wirkungslos, weil es sich auf 100% eines
+     1020px-Containers bezieht. Genau dieselbe Falle wie beim Lobby-Override
+     oben, siehe dortigen Kommentar. */
+  body:has(#screen-result.active) .page,
+  body:has(#screen-leaderboard.active) .page{ max-width:1440px; }
+  body:has(#screen-result.active) .device,
+  body:has(#screen-leaderboard.active) .device{ max-width:1440px; }
+
+  /* Die Minimap war auf 140px fix - neben einem 900px-Panorama angemessen,
+     auf 2560px Vollbild nur noch ein Punkt in der Ecke (gemessen: 140px bei
+     x=2396). Mit dem Panorama mitwachsen lassen, aber gedeckelt: die
+     eingeklappte Karte soll Orientierung geben, nicht schon das Zielgebiet
+     verraten. clamp() statt Stufen, damit es zwischen Laptop und 4K keine
+     Spruenge gibt. */
+  body:has(#screen-hud.active) .minimap:not(.expanded){
+    width:clamp(140px, 11vw, 210px);
+    height:clamp(140px, 11vw, 210px);
+  }
+  /* Ausgeklappt entsprechend groesser - 300px Hoehe neben einem 1040px hohen
+     Panorama zwingt sonst zu unnoetigem Zoomen fuer einen praezisen Pin.
+     vh-Anteil bewusst unter 50%, damit das Panorama beim Pin-Setzen
+     sichtbar bleibt (man vergleicht Bild und Karte gegeneinander). */
+  body:has(#screen-hud.active) .minimap.expanded{
+    width:min(620px, 40vw);
+    height:min(480px, 46vh);
+  }
 }
 
 /* "Die Buehne" - rechte Spalte der Desktop-Lobby. Vorher komplett leerer

@@ -11,7 +11,7 @@
 // weil GitHub Pages dieses Projekt unter einem Unterpfad
 // (https://<user>.github.io/geo-finder/) ausliefert, nicht unter der
 // Domain-Wurzel.
-const CACHE_VERSION = 'geofinder-v3';
+const CACHE_VERSION = 'geofinder-v4';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -22,14 +22,29 @@ const APP_SHELL_URLS = [
   './js/app.js',
   './js/config.js',
   './js/audio/sound.js',
+  './js/core/achievements.js',
+  './js/core/border-distance.js',
+  './js/core/challenge.js',
   './js/core/country-lookup.js',
+  './js/core/country-names-de.js',
+  './js/core/country-store.js',
+  './js/core/heatmap-color.js',
+  './js/core/heatmap-proximity.js',
+  './js/core/heatmap-stats.js',
+  './js/core/high-scores.js',
+  './js/core/history-manager.js',
+  './js/core/i18n.js',
+  './js/core/player-stats.js',
   './js/core/point-in-polygon.js',
   './js/core/pool-loader.js',
+  './js/core/profile.js',
+  './js/core/rank-tier.js',
   './js/core/rng.js',
   './js/core/scoring.js',
   './js/core/state.js',
   './js/core/verified-image-cache.js',
   './js/map/guess-map.js',
+  './js/map/heatmap-map.js',
   './js/map/result-map.js',
   './js/map/tile-config.js',
   './js/net/client.js',
@@ -38,6 +53,9 @@ const APP_SHELL_URLS = [
   './js/net/protocol.js',
   './js/panorama/mapillary-source.js',
   './js/panorama/pano-viewer.js',
+  './js/ui/haptics.js',
+  './js/ui/particles.js',
+  './js/ui/qrcode.js',
   './js/ui/router.js',
   './js/ui/toast.js',
   './lib/peerjs/peerjs.min.js',
