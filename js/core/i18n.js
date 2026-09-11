@@ -274,6 +274,8 @@ const DICT = {
 
     searchPlaceholder: 'Enter a country…',
     heatmapPingHint: 'Tap a country to ping it',
+    toastProxyFallback:
+      '⚠ Round {round}: anti-cheat proxy unreachable, sent unprotected (raw location is visible to other players this round)',
     top3Title: 'Your top 3 guesses',
     scoreLabel: 'Score',
     neighborBadge: 'Neighbor',
@@ -466,6 +468,8 @@ const DICT = {
 
     searchPlaceholder: 'Land eingeben…',
     heatmapPingHint: 'Tippe auf ein Land, um dorthin zu pingen',
+    toastProxyFallback:
+      '⚠ Runde {round}: Anti-Cheat-Proxy nicht erreichbar, ungeschützt gesendet (roher Standort ist diese Runde für andere sichtbar)',
     top3Title: 'Deine Top 3 Tipps',
     scoreLabel: 'Punkte',
     neighborBadge: 'Nachbarland',

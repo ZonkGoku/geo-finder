@@ -3348,6 +3348,15 @@ function wireBusEvents() {
     if (peerId === state.self.id) return;
     spawnEmote(emoji);
   });
+  // Sichtbares Gegenstueck zum stillen Fallback, den resolveProxiedPanoramaUrl()
+  // in net/host.js frueher hatte (Live-Report: Mitspieler konnte trotz Proxy
+  // noch die rohe Mapillary-URL im Network-Tab sehen) - der Host bekommt
+  // jetzt einen Hinweis, WENN das fuer eine Runde passiert ist, statt es nie
+  // zu erfahren. Nur host-lokal (net:proxy-fallback wird nie gebroadcastet),
+  // bei Mitspielern feuert dieser Listener also nie.
+  bus.on('net:proxy-fallback', ({ roundIndex }) => {
+    showToast(t('toastProxyFallback', { round: (roundIndex ?? 0) + 1 }), 6000);
+  });
   bus.on('ui:heatmap-ping-received', ({ playerId, emoji, countryId }) => {
     if (playerId === state.self.id) return; // eigener Ping zeigt sich schon lokal in startHeatmapPingPick()
     heatmapMap?.pingCountry(countryId, emoji);

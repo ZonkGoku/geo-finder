@@ -80,12 +80,29 @@ function preloadImage(url) {
 // Mapillary-Bild-ID der Runde und liefert die proxierte Bild-URL, statt die
 // rohe Mapillary-CDN-URL (und damit indirekt die Bild-ID, mit der jeder
 // Mapillarys OEFFENTLICHEN Entity-Endpunkt selbst nach der exakten geometry
-// fragen koennte) an Mitspieler zu verschicken. Timeout + Catch-Fallback
-// bewusst grosszuegig: ein nicht erreichbarer Proxy darf NIE das Spiel
-// blockieren, nur den Zusatzschutz fuer diese eine Runde auslassen.
-async function resolveProxiedPanoramaUrl(location) {
+// fragen koennte) an Mitspieler zu verschicken.
+//
+// Sicherheitsluecke behoben (Live-Report: ein Mitspieler konnte im Network-
+// Tab trotzdem noch die rohe Mapillary-URL/-Bild-ID sehen): der Catch-
+// Fallback hier gab bei JEDEM einzelnen Fehlschlag (Timeout, Worker-
+// Kaltstart, Werbeblocker der *.workers.dev blockiert, CORS-Hickser) still
+// die ungeschuetzte Original-URL zurueck - keine Warnung, kein zweiter
+// Versuch. Fuer eine Handvoll Freunde, die sich gegenseitig vertrauen, mag
+// das folgenlos sein, aber es untergrub genau die Garantie, die dieser
+// gesamte Proxy herstellen soll, und zwar lautlos. Jetzt: ein zweiter
+// Versuch VOR dem Aufgeben (faengt Kaltstarts/Netz-Ausreisser ab, ohne bei
+// einem hart blockierten Request - Werbeblocker schlaegt sofort fehl, nicht
+// erst nach Timeout - nennenswert Zeit zu kosten), und ein 'net:proxy-
+// fallback'-Bus-Event beim endgueltigen Aufgeben, das app.js als sichtbare
+// Warnung fuer den Host anzeigt (siehe wireBusEvents()) - "faellt lautlos
+// auf ungeschuetzt zurueck" wird zu "faellt sichtbar zurueck, der Host
+// weiss es". Das eigentliche "Spiel darf nie blockieren"-Prinzip bleibt
+// bestehen (siehe Kommentar an isProxyConfigured() in config.js) - kein
+// Nutzer wollte je, dass ein toter Drittanbieter-Dienst eine Partie
+// lahmlegt, nur dass ein stiller Schutzverlust nicht mehr UNBEMERKT bleibt.
+async function fetchProxyToken(location, attemptTimeoutMs) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 5000);
+  const timer = setTimeout(() => controller.abort(), attemptTimeoutMs);
   try {
     const res = await fetch(`${PROXY_WORKER_URL}/resolve`, {
       method: 'POST',
@@ -96,13 +113,32 @@ async function resolveProxiedPanoramaUrl(location) {
     if (!res.ok) throw new Error(`Proxy resolve fehlgeschlagen (HTTP ${res.status})`);
     const { token } = await res.json();
     if (!token) throw new Error('Proxy resolve: kein Token in der Antwort');
-    return `${PROXY_WORKER_URL}/image?token=${encodeURIComponent(token)}`;
-  } catch (err) {
-    console.warn('Proxy-Panorama-Aufloesung fehlgeschlagen, sende direkte Mapillary-URL:', err.message);
-    return location.panoramaUrl;
+    return token;
   } finally {
     clearTimeout(timer);
   }
+}
+
+// roundIndex kommt explizit vom Aufrufer (_startRound()/_prefetchProxiedUrl()/
+// PRELOAD_ROUND-Pfad kennen ihn alle direkt) statt aus state.round.index
+// erraten zu werden - diese Funktion laeuft haeufig VOR dem Zeitpunkt, an
+// dem state.round auf die betroffene Runde aktualisiert wird (der Prefetch-
+// Pfad sogar ganze Runden im Voraus), state.round.index haette dort noch
+// die vorherige oder eine veraltete Runde gezeigt.
+async function resolveProxiedPanoramaUrl(location, roundIndex) {
+  const attempts = [4000, 4000];
+  let lastErr = null;
+  for (let i = 0; i < attempts.length; i++) {
+    try {
+      const token = await fetchProxyToken(location, attempts[i]);
+      return `${PROXY_WORKER_URL}/image?token=${encodeURIComponent(token)}`;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  console.warn('Proxy-Panorama-Aufloesung fehlgeschlagen (2 Versuche), sende direkte Mapillary-URL:', lastErr?.message);
+  bus.emit('net:proxy-fallback', { roundIndex: roundIndex ?? null });
+  return location.panoramaUrl;
 }
 
 export class HostController {
@@ -396,7 +432,7 @@ export class HostController {
         break;
       }
       this.roundLocations.push(value);
-      this._prefetchProxiedUrl(value);
+      this._prefetchProxiedUrl(value, this.roundLocations.length - 1);
       bus.emit('ui:map-resolving', { found: this.roundLocations.length, target: this._targetRoundCount });
     }
 
@@ -465,7 +501,7 @@ export class HostController {
         return;
       }
       this.roundLocations.push(value);
-      this._prefetchProxiedUrl(value);
+      this._prefetchProxiedUrl(value, this.roundLocations.length - 1);
       bus.emit('ui:map-resolving', { found: this.roundLocations.length, target: this._targetRoundCount });
 
       const justArrivedIndex = this.roundLocations.length - 1;
@@ -494,12 +530,12 @@ export class HostController {
    * Mitspieler, den er benachteiligen koennte), bei statischen Paketen liegt
    * die Koordinate schon unverschluesselt in der mitgelieferten JSON-Datei,
    * ein Bild-Proxy wuerde dort nichts verbergen. */
-  _getProxiedPanoramaUrl(location) {
+  _getProxiedPanoramaUrl(location, roundIndex) {
     if (!isProxyConfigured() || !state.roomCode || !location.mapillaryImageId) {
       return Promise.resolve(location.panoramaUrl);
     }
     if (!this.proxiedUrlCache.has(location)) {
-      this.proxiedUrlCache.set(location, resolveProxiedPanoramaUrl(location));
+      this.proxiedUrlCache.set(location, resolveProxiedPanoramaUrl(location, roundIndex));
     }
     return this.proxiedUrlCache.get(location);
   }
@@ -512,8 +548,8 @@ export class HostController {
    * der Cloudflare-Roundtrip bis zum eigentlichen _startRound() praktisch
    * immer schon abgeschlossen ist (Cache-Hit, keine spuerbare Wartezeit) -
    * das ist der eigentliche Performance-Hebel hier, nicht der Proxy selbst. */
-  _prefetchProxiedUrl(location) {
-    if (location) this._getProxiedPanoramaUrl(location);
+  _prefetchProxiedUrl(location, roundIndex) {
+    if (location) this._getProxiedPanoramaUrl(location, roundIndex);
   }
 
   async _startRound(index) {
@@ -533,7 +569,7 @@ export class HostController {
     // wird schon aufgerufen, sobald die Runde ueberhaupt verfuegbar wird, weit
     // bevor sie hier tatsaechlich drankommt) - nur im Solo-Modus/bei
     // statischen Kartenpaketen loest das synchron zur direkten URL auf.
-    const peerPanoramaUrl = await this._getProxiedPanoramaUrl(location);
+    const peerPanoramaUrl = await this._getProxiedPanoramaUrl(location, index);
     state.round = {
       index,
       total: this._targetRoundCount,
@@ -593,7 +629,7 @@ export class HostController {
       // _prefetchProxiedUrl() bei jedem roundLocations.push()), also meist
       // eh schon fertig; bewusst trotzdem nicht awaited, damit ein seltener
       // Cache-Miss hier nicht den ROUND_START-Broadcast oben verzoegert.
-      this._getProxiedPanoramaUrl(nextLocation).then((nextPeerPanoramaUrl) => {
+      this._getProxiedPanoramaUrl(nextLocation, index + 1).then((nextPeerPanoramaUrl) => {
         this.pm.broadcast(
           makeMessage(MSG.PRELOAD_ROUND, { roundIndex: index + 1, panoramaUrl: nextPeerPanoramaUrl }, state.self.id)
         );
