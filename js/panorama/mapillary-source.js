@@ -10,6 +10,12 @@ const SEARCH_RADIUS_M = 50;
 // und nicht jedes Mal dasselbe Foto fuer eine Region liefert.
 const LIST_LIMIT = 100;
 const MAX_DETAIL_ATTEMPTS = 8;
+// Groesse eines Detail-Batches im Fallback-Pfad (siehe findFirstPanoDetail()).
+const DETAIL_BATCH_SIZE = 3;
+// Felder, die die Listenabfrage mitliefern SOLL, damit die Detailrunde
+// entfallen kann. Fallback ist die reine ID-Liste wie bisher.
+const LIST_FIELDS_RICH = 'id,is_pano,geometry,thumb_2048_url';
+const LIST_FIELDS_MINIMAL = 'id';
 
 /**
  * fetch() mit eigenem Timeout (Browser-fetch() hat sonst keins) und
@@ -167,38 +173,99 @@ export async function fetchPanoramaById(id, regionMeta) {
 export async function fetchPanoramaForRegion(region, rand = Math.random) {
   const listParams = new URLSearchParams({
     access_token: MAPILLARY_ACCESS_TOKEN,
-    fields: 'id',
+    // Mehr als nur die ID anfragen: die Doku sagt, dass is_pano nicht
+    // zusammen mit lat/lng GEFILTERT werden kann - ob es als zurueckgeliefertes
+    // FELD erlaubt ist, ist eine andere Frage. Liefert Mapillary die Felder
+    // mit, faellt die komplette Detailrunde unten weg (bis zu 8 Anfragen pro
+    // Region), und es koennen gleich alle Kandidaten statt nur der ersten 8
+    // beruecksichtigt werden. Tut es das nicht, kostet der Versuch nichts:
+    // ueberzaehlige Felder werden entweder ignoriert (dann greift der
+    // Fallback unten) oder quittiert - siehe catch in fetchCandidateList().
+    fields: LIST_FIELDS_RICH,
     lat: String(region.lat),
     lng: String(region.lng),
     radius: String(SEARCH_RADIUS_M),
     limit: String(LIST_LIMIT),
   });
 
-  const listJson = await fetchJson(`${API_BASE}/images?${listParams.toString()}`, region.name);
-  const ids = shuffle((listJson?.data || []).map((img) => img.id), rand);
-  if (ids.length === 0) return null;
+  const items = shuffle(await fetchCandidateList(listParams, region), rand);
+  if (items.length === 0) return null;
+
+  // Entscheidend an den DATEN festmachen, nicht daran, ob die Anfrage
+  // durchging: Mapillary koennte ueberzaehlige Felder auch still ignorieren.
+  // geometry muss dabei mitgeprueft werden - ohne sie wuerde
+  // buildLocationFromDetail() stillschweigend auf den Regionsmittelpunkt
+  // zurueckfallen, und der gesuchte Ort waere dann nicht der Aufnahmeort,
+  // sondern die Regionsmitte. Ein still falscher Zielpunkt waere schlimmer
+  // als ein paar zusaetzliche Anfragen.
+  const first = items[0];
+  const listIsSelfSufficient =
+    first.is_pano !== undefined && first.thumb_2048_url !== undefined && first.geometry !== undefined;
+
+  if (listIsSelfSufficient) {
+    for (const item of items) {
+      const location = buildLocationFromDetail(item, region);
+      if (location) return location;
+    }
+    // Kein einziges Pano unter allen Kandidaten - Detailabfragen wuerden
+    // dasselbe Ergebnis teurer liefern.
+    return null;
+  }
 
   const detailParams = new URLSearchParams({
     access_token: MAPILLARY_ACCESS_TOKEN,
     fields: 'id,is_pano,geometry,thumb_2048_url',
   });
-
-  // Die Detailabfragen laufen gegen den Entity-Endpunkt (graph.mapillary.com/:id),
-  // nicht gegen den Such-Endpunkt, der die urspruengliche bbox-Anfrage betraf -
-  // laut Doku 60.000 Anfragen/Minute erlaubt, also unproblematisch parallel.
-  // Das serielle Abklappern mit 350ms-Pause war unnoetige Vorsicht und hat
-  // Kartenpakete wie Hamburg spuerbar verlangsamt.
-  const candidateIds = ids.slice(0, MAX_DETAIL_ATTEMPTS);
-  const details = await Promise.allSettled(
-    candidateIds.map((id) => fetchDetailCached(id, detailParams, region.name))
+  return findFirstPanoDetail(
+    items.slice(0, MAX_DETAIL_ATTEMPTS).map((img) => img.id),
+    detailParams,
+    region
   );
+}
 
-  for (const result of details) {
-    if (result.status !== 'fulfilled') continue;
-    const location = buildLocationFromDetail(result.value, region);
-    if (location) return location;
+/** Kandidatenliste einer Region. Faellt auf die reine ID-Liste zurueck, falls
+ * Mapillary die zusaetzlichen Felder auf diesem Endpunkt ablehnt - dieselbe
+ * Situation wie bei sequence_id in fetchPanoramaById(), wo die API live
+ * angefangen hat, ein zuvor akzeptiertes Feld zu verweigern. Ein
+ * Schema-Wechsel auf Mapillary-Seite darf die Runden-Aufloesung nie komplett
+ * scheitern lassen. */
+async function fetchCandidateList(listParams, region) {
+  try {
+    const json = await fetchJson(`${API_BASE}/images?${listParams.toString()}`, region.name);
+    return json?.data || [];
+  } catch (err) {
+    if (!/nonexisting field|unsupported|invalid field/i.test(err.message)) throw err;
+    const minimal = new URLSearchParams(listParams);
+    minimal.set('fields', LIST_FIELDS_MINIMAL);
+    const json = await fetchJson(`${API_BASE}/images?${minimal.toString()}`, region.name);
+    return json?.data || [];
   }
+}
 
+/** Detailabfragen gestaffelt statt alle auf einmal.
+ *
+ * Vorher gingen IMMER alle MAX_DETAIL_ATTEMPTS Anfragen raus
+ * (Promise.allSettled), obwohl anschliessend die erste gueltige genommen
+ * wird - bis zu 7 von 8 waren pro Regionsversuch reine Verschwendung. Ueber
+ * MAX_RESOLVE_ATTEMPTS_CAP (150, siehe pool-loader.js) hochgerechnet war das
+ * der groesste Posten der gesamten API-Last.
+ *
+ * Dreierbatches sind der Kompromiss: das frueher einmal probierte serielle
+ * Abklappern mit 350ms-Pause war spuerbar langsam (Kartenpakete wie Hamburg),
+ * ein Batch von 3 laeuft weiterhin parallel und deckt den Normalfall - der
+ * erste Kandidat ist schon ein Pano - in einem einzigen Roundtrip ab. */
+async function findFirstPanoDetail(ids, detailParams, region) {
+  for (let i = 0; i < ids.length; i += DETAIL_BATCH_SIZE) {
+    const batch = ids.slice(i, i + DETAIL_BATCH_SIZE);
+    const settled = await Promise.allSettled(
+      batch.map((id) => fetchDetailCached(id, detailParams, region.name))
+    );
+    for (const result of settled) {
+      if (result.status !== 'fulfilled') continue;
+      const location = buildLocationFromDetail(result.value, region);
+      if (location) return location;
+    }
+  }
   return null;
 }
 

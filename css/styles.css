@@ -888,15 +888,26 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
 /* ===================== HUD ===================== */
 #screen-hud{ padding:0; min-height:600px; position:relative; overflow:hidden; }
 .pano{ position:absolute; inset:0; overflow:hidden; background:#0d1420; }
-.pano-container{ position:absolute; inset:0; opacity:1; filter:blur(0); transition:opacity 220ms ease, filter 15s linear; will-change:opacity, filter; }
-.pano-container.pano-fade-out{ opacity:0; }
+/* Der Container blendet selbst nicht mehr (das uebernehmen die .pano-layer
+   darin, siehe unten) - er traegt nur noch den Fog-of-War-Weichzeichner.
+   .pano-fade-out ist mit dem Doppelpuffer entfallen. */
+.pano-container{ position:absolute; inset:0; filter:blur(0); transition:filter 15s linear; will-change:filter; }
+/* Doppelpuffer (siehe PanoViewer in js/panorama/pano-viewer.js): die naechste
+   Runde laedt in einer zweiten, unsichtbaren Schicht und wird erst
+   eingeblendet, wenn sie fertig ist - vorher blendete der Container auf
+   Leere und der Spieler sah pro Rundenwechsel ein Schwarzbild, solange das
+   Bild lud. Die Dauer hier muss zu CROSSFADE_MS im Viewer passen, der danach
+   die alte Schicht abraeumt. */
+.pano-layer{ position:absolute; inset:0; opacity:0; transition:opacity 260ms ease; }
+.pano-layer.visible{ opacity:1; }
+@media (prefers-reduced-motion: reduce){ .pano-layer{ transition:none; } }
 /* Fog-of-War-Mutator: startet stark unscharf, die eigentliche 15s-Klarung
    passiert ueber die filter-transition oben, sobald .pano-foggy wieder
    entfernt wird (siehe transitionPanorama() in app.js). */
-.pano-container.pano-foggy{ filter:blur(22px); transition:opacity 220ms ease, filter 0ms; }
+.pano-container.pano-foggy{ filter:blur(22px); transition:filter 0ms; }
 @media (prefers-reduced-motion: reduce){
-  .pano-container{ transition:opacity 220ms ease; }
-  .pano-container.pano-foggy{ filter:blur(8px); transition:opacity 220ms ease; }
+  .pano-container{ transition:none; }
+  .pano-container.pano-foggy{ filter:blur(8px); transition:none; }
 }
 .pano-credit{ position:absolute; left:0; right:0; bottom:7px; z-index:1; text-align:center; font-size:0.6rem; letter-spacing:0.02em; color:rgba(237,239,244,0.55); margin:0; pointer-events:none; }
 

@@ -2080,43 +2080,51 @@ function wireHeatmapPingWheel() {
   });
 }
 
-const PANO_FADE_MS = 180;
 const GUESS_BTN_DEFAULT_LABEL = 'Tipp best&auml;tigen';
 
-// PanoViewer.load() destroys and recreates the whole Pannellum/WebGL
-// instance every round (the library has no "swap image in place" API for a
-// single-scene viewer) - that abrupt teardown was the visible "flackern"
-// between rounds. Cant avoid the destroy/recreate itself, but a short fade-
-// to-black-and-back around it turns the flash into a deliberate transition.
-// Combined with PRELOAD_ROUND (net/host.js + net/client.js), the actual
-// pannellum.viewer() call below almost always resolves from an already-
-// cached image, so onLoad fires near-instantly and the fade is the only
-// perceptible delay left.
+// Der Rundenwechsel laeuft ueber den Doppelpuffer in PanoViewer: das alte
+// Bild bleibt stehen, bis das neue geladen ist, dann wird von Bild zu Bild
+// ueberblendet. Zusammen mit PRELOAD_ROUND (net/host.js + net/client.js)
+// liegt das naechste Bild meist schon im Browser-Cache, der Wechsel ist dann
+// nur noch die Ueberblendung selbst.
+// Der Ladehinweis erscheint erst nach einer kurzen Verzoegerung. Seit dem
+// Doppelpuffer steht waehrenddessen noch das alte Bild, und bei einem
+// vorgewaermten Panorama (PRELOAD_ROUND) ist der Wechsel so schnell, dass ein
+// sofort gezeigter Spinner nur kurz aufblitzen wuerde - das liest sich als
+// Ruckler, obwohl gerade gar nichts hakt.
+const PANO_SPINNER_DELAY_MS = 400;
+
+function showPanoLoadingDelayed() {
+  return setTimeout(() => el('pano-loading').classList.remove('hidden'), PANO_SPINNER_DELAY_MS);
+}
+
+function hidePanoLoading(timer) {
+  clearTimeout(timer);
+  el('pano-loading').classList.add('hidden');
+}
+
 function transitionPanorama() {
   const container = el('pano-container');
   const mutators = state.settings.mutators || {};
-  container.classList.add('pano-fade-out');
-  // Fog of War: startet stark verschwommen und klart ueber PANO_FOG_CLEAR_MS
-  // per CSS-Transition sichtbar auf, statt sofort gestochen scharf zu sein.
+  // Das fruehere Ausblenden-auf-Leere plus PANO_FADE_MS-Wartezeit entfaellt:
+  // der Doppelpuffer im PanoViewer laesst das alte Bild stehen, bis das neue
+  // fertig ist, und blendet dann direkt von Bild zu Bild ueber.
   container.classList.toggle('pano-foggy', Boolean(mutators.fogOfWar));
-  setTimeout(() => {
-    el('pano-loading').classList.remove('hidden');
-    panoViewer.load(state.round.panoramaUrl, {
-      vaov: state.round.vaov,
-      modifier: state.settings.modifier,
-      mutators,
-      onLoad: () => {
-        el('pano-loading').classList.add('hidden');
-        container.classList.remove('pano-fade-out');
-        if (mutators.fogOfWar) {
-          // Reflow erzwingen, damit der Browser den unscharfen Startzustand
-          // tatsaechlich rendert, bevor die lange Clear-Up-Transition beginnt.
-          container.getBoundingClientRect();
-          requestAnimationFrame(() => container.classList.remove('pano-foggy'));
-        }
-      },
-    });
-  }, PANO_FADE_MS);
+  const spinnerTimer = showPanoLoadingDelayed();
+  panoViewer.load(state.round.panoramaUrl, {
+    vaov: state.round.vaov,
+    modifier: state.settings.modifier,
+    mutators,
+    onLoad: () => {
+      hidePanoLoading(spinnerTimer);
+      if (mutators.fogOfWar) {
+        // Reflow erzwingen, damit der Browser den unscharfen Startzustand
+        // tatsaechlich rendert, bevor die lange Clear-Up-Transition beginnt.
+        container.getBoundingClientRect();
+        requestAnimationFrame(() => container.classList.remove('pano-foggy'));
+      }
+    },
+  });
 }
 
 // "Weiterlaufen"-Beta: siehe state.round.walkMeta (net/host.js _startRound())
@@ -2163,12 +2171,12 @@ async function handleWalkStep(direction) {
     // man laeuft.
     state.round.panoramaUrl = location.panoramaUrl;
     await new Promise((resolve) => {
-      el('pano-loading').classList.remove('hidden');
+      const spinnerTimer = showPanoLoadingDelayed();
       panoViewer.load(location.panoramaUrl, {
         modifier: state.settings.modifier,
         mutators: state.settings.mutators,
         onLoad: () => {
-          el('pano-loading').classList.add('hidden');
+          hidePanoLoading(spinnerTimer);
           resolve();
         },
       });
