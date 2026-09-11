@@ -158,7 +158,7 @@ button, a, input, [role="button"]{ touch-action:manipulation; }
   transition:color .15s ease, border-color .15s ease;
 }
 .lang-toggle:hover{ color:var(--text); border-color:var(--accent-2); }
-@media (max-width: 640px){ .lang-toggle{ position:static; margin-top:4px; } }
+@media (max-width: 640px){ .lang-toggle{ position:static; margin-top:4px; padding:14px 13px; } }
 
 /* ===================== Logo (2026 premium wordmark) =====================
    Ersetzt die vorherige kursive Glow-/Glitch-Version: saubere, aufrechte,
@@ -1719,7 +1719,7 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
   width:min(380px, calc(100% - 40px)); display:flex; flex-direction:column; gap:8px;
 }
 .heatmap-search-box{
-  display:flex; align-items:center; gap:10px; padding:12px 16px;
+  display:flex; align-items:center; gap:10px; padding:0 16px;
   background:color-mix(in srgb, var(--surface-raised) 78%, transparent);
   backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%);
   border:1px solid rgba(255,255,255,0.14); border-radius:14px;
@@ -1738,8 +1738,15 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
   /* min-width:0 hebt Flexbox' Default-min-width:auto auf - sonst darf das
      Input nie schmaler als sein Placeholder-Text werden und drueckt das
      .heatmap-guess-counter-Badge daneben ueber den rechten Rand der Box
-     hinaus (auf schmalen Mobile-Breiten reproduzierbar). */
-  flex:1; min-width:0; background:none; border:none; outline:none; color:var(--text); font-size:0.95rem; font-family:var(--font-body);
+     hinaus (auf schmalen Mobile-Breiten reproduzierbar). align-self:stretch
+     hebt fuer dieses eine Kind das .heatmap-search-box{align-items:center}
+     der Eltern-Flexbox wieder auf: ohne das war die tatsaechliche Klick-/
+     Fokus-Flaeche des Inputs nur seine eigene Textzeile (~21px), mittig in
+     der optisch 48px hohen Mobile-Pille zentriert - ein Tipp im oberen/
+     unteren Drittel der sichtbar EINEN Box traf dadurch leise daneben
+     (Touch-Target-Audit-Fund, nicht nur ein Desktop-Kosmetikthema). */
+  flex:1; min-width:0; align-self:stretch; padding-block:12px; box-sizing:border-box;
+  background:none; border:none; outline:none; color:var(--text); font-size:0.95rem; font-family:var(--font-body);
 }
 /* War hartkodiertes Weiss - PulseMaps Glass-Panels liegen (anders als das
    Foto-basierte #screen-hud) ueber der theme-abhaengigen Leaflet-Karte
@@ -2101,6 +2108,35 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
   .pano-walk-btn{ width:48px; height:48px; }
   .pano-walk-btn svg{ width:20px; height:20px; }
 
+  /* --- Rest des Touch-Target-Audits: die Chrome-Leiste (Logo/Exit/Theme/
+     Sound - auf JEDEM Screen praesent) sass bei 19-20px deutlich unter dem
+     44px-Minimum. Erster Versuch war echtes Padding - das vergroesserte
+     aber den LAYOUT-Platzbedarf der drei nebeneinander sitzenden Buttons
+     und quetschte auf 320-360px schmalen Screens den Raum-Code/Status-Text
+     daneben ab (live reproduziert: chrome-bar-interner Overflow). Ein
+     :: before-Pseudo-Element mit negativem inset ist die Standardloesung
+     genau dafuer: es sitzt position:absolute und traegt dadurch NICHTS zum
+     Flex-Layout der Leiste bei, vergroessert aber die tatsaechliche
+     Klickflaeche weit ueber die sichtbare Icon-Groesse hinaus. */
+  .chrome-icon-btn{ position:relative; }
+  .chrome-icon-btn::before{ content:''; position:absolute; inset:-13px; }
+  .brand-link-chrome{ position:relative; }
+  .brand-link-chrome::before{ content:''; position:absolute; inset:-12px; }
+  /* Logo-Wortmarke oben im Menue/Leaderboard - schon 284px breit, aber nur
+     34px hoch; padding:0 + background:none macht die Vergroesserung wieder
+     unsichtbar (kein optischer Unterschied, nur groessere Klickflaeche). */
+  .brand-link{ padding:5px 0; }
+  /* Namenseingabe + Avatarfarb-Kreise im Setup-Schritt der Lobby - beides
+     einmalige, aber fingerbediente Eingaben. */
+  #player-name-input{ padding:14px 12px; }
+  .swatch{ width:40px; height:40px; }
+  /* "Weitere Regeln"-Accordion-Header in der Lobby. */
+  .rules-accordion-toggle{ padding:14px 2px; }
+  /* Kompakter Karten-Stil-Umschalter (Satellit/Karte) in der Minimap-Ecke -
+     die 140px-Bubble selbst bleibt auf Mobile unveraendert gross genug, um
+     eine etwas groessere Schaltflaeche darin bequem zu tragen. */
+  .minimap:not(.expanded) .map-style-toggle{ width:36px; height:36px; }
+
   /* --- Maximaler Platz fuers Panorama: waehrend einer aktiven Runde
      (HUD/Heatmap) brauchen weder das Marketing-Logo/-Kicker ueber der
      "Geraete"-Karte noch die volle 600px-Mindesthoehe wirklich Platz - auf
@@ -2227,7 +2263,11 @@ body:has(#screen-lobby.active) #screen-lobby.screen{
     top:auto; flex-direction:column-reverse;
     bottom:calc(14px + env(safe-area-inset-bottom) + var(--heatmap-keyboard-inset, 0px));
   }
-  .heatmap-search-box{ min-height:48px; padding:13px 16px; }
+  /* Vertikales Padding sitzt jetzt am Input selbst (siehe dortiger
+     Kommentar), nicht mehr an dieser Box - min-height traegt weiterhin die
+     48px-Gesamthoehe, padding hier nur noch horizontal. */
+  .heatmap-search-box{ min-height:48px; padding:0 16px; }
+  .heatmap-search-box input{ padding-block:13px; }
   .heatmap-suggestion{ min-height:48px; display:flex; align-items:center; padding:12px 16px; }
   /* Erst beim Fokussieren/Tippen wirklich "aufschieben" (.expanded wird in
      app.js beim Fokus/Blur des Suchfelds gesetzt) - ungenutzt bleibt die
