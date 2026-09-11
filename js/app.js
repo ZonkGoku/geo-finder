@@ -2113,22 +2113,62 @@ function transitionPanorama() {
   container.classList.toggle('pano-foggy', Boolean(mutators.fogOfWar));
   const spinnerTimer = showPanoLoadingDelayed();
   // Misst NUR den Bild-Download plus Pannellum-Aufbau, nicht die vorherige
-  // Mapillary-Suche - genau die Trennung, die "laedt ewig" braucht: ein
-  // vorgewaermtes Bild (PRELOAD_ROUND) sollte hier nahe null liegen.
+  // Mapillary-Suche - genau die Trennung, die "laedt ewig" braucht.
   const panoStartedAt = performance.now();
-  panoViewer.load(state.round.panoramaUrl, {
+  const roundIndex = state.round.index;
+  const sharpUrl = state.round.panoramaUrl;
+  // Progressiv laden, wenn eine kleinere Vorstufe vorliegt (nur beim Host,
+  // siehe panoramaUrlFast in net/host.js): die Runde startet mit einem
+  // Viertel der Pixel und schaerft danach nach. Ein Viertel der Pixel ist
+  // immer frueher da - das wirkt unabhaengig davon, wo im Netz die Zeit
+  // genau verloren geht. Die Nachschaerfung laeuft ueber den Doppelpuffer
+  // im PanoViewer, ist also ein Ueberblenden und kein sichtbarer Neuaufbau.
+  const fastUrl = state.round.panoramaUrlFast;
+  const useProgressive = Boolean(fastUrl) && fastUrl !== sharpUrl;
+
+  const finishFogIfNeeded = () => {
+    if (!mutators.fogOfWar) return;
+    // Reflow erzwingen, damit der Browser den unscharfen Startzustand
+    // tatsaechlich rendert, bevor die lange Clear-Up-Transition beginnt.
+    container.getBoundingClientRect();
+    requestAnimationFrame(() => container.classList.remove('pano-foggy'));
+  };
+
+  panoViewer.load(useProgressive ? fastUrl : sharpUrl, {
     vaov: state.round.vaov,
     modifier: state.settings.modifier,
     mutators,
     onLoad: () => {
-      logTiming(`Panorama Runde ${state.round.index + 1} geladen`, performance.now() - panoStartedAt);
+      logTiming(
+        `Panorama Runde ${roundIndex + 1} geladen${useProgressive ? ' (Vorstufe)' : ''}`,
+        performance.now() - panoStartedAt
+      );
       hidePanoLoading(spinnerTimer);
-      if (mutators.fogOfWar) {
-        // Reflow erzwingen, damit der Browser den unscharfen Startzustand
-        // tatsaechlich rendert, bevor die lange Clear-Up-Transition beginnt.
-        container.getBoundingClientRect();
-        requestAnimationFrame(() => container.classList.remove('pano-foggy'));
-      }
+      finishFogIfNeeded();
+      if (!useProgressive) return;
+
+      // Nachschaerfen im Hintergrund. Der Rundenindex wird mitgeprueft: bei
+      // einem schnellen Rundenwechsel (oder "Weiterlaufen") darf ein spaet
+      // eintreffendes scharfes Bild nicht ueber das inzwischen aktuelle
+      // Panorama gelegt werden.
+      const sharpStartedAt = performance.now();
+      const upgrade = new Image();
+      upgrade.onload = () => {
+        if (state.round?.index !== roundIndex || state.round?.panoramaUrl !== sharpUrl) return;
+        logTiming(`Panorama Runde ${roundIndex + 1} nachgeschaerft`, performance.now() - sharpStartedAt);
+        panoViewer.load(sharpUrl, {
+          vaov: state.round.vaov,
+          modifier: state.settings.modifier,
+          mutators,
+          // Der Spieler hat sich zu diesem Zeitpunkt meist schon umgesehen -
+          // die Nachschaerfung darf seine Blickrichtung nicht zuruecksetzen.
+          preserveView: true,
+        });
+      };
+      // Fehler still schlucken: die Vorstufe steht bereits, ein
+      // fehlgeschlagenes Nachschaerfen ist kein Spielproblem.
+      upgrade.onerror = () => {};
+      upgrade.src = sharpUrl;
     },
   });
 }

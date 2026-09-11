@@ -148,5 +148,28 @@ calls.length = 0;
   check('echter Serverfehler: kein blinder zweiter Versuch', counts().list === 1, JSON.stringify(counts()));
 }
 
+// ---------------------------------------------------------------- 7
+// Progressive Vorstufe: thumb_1024_url wird als panoramaUrlFast uebernommen,
+// fehlt sie, bleibt der Wert null (dann laedt app.js direkt das grosse Bild).
+calls.length = 0;
+{
+  const withFast = freshIds(3).map((o) => ({
+    ...o, is_pano: true, geometry: GEOM,
+    thumb_2048_url: `big/${o.id}`, thumb_1024_url: `small/${o.id}`,
+  }));
+  responder = () => ({ json: { data: withFast } });
+  const loc = await fetchPanoramaForRegion(region, () => 0.5);
+  check('Vorstufe: panoramaUrlFast aus thumb_1024_url', loc?.panoramaUrlFast?.startsWith('small/'), String(loc?.panoramaUrlFast));
+  check('Vorstufe: panoramaUrl bleibt das grosse Bild', loc?.panoramaUrl?.startsWith('big/'), String(loc?.panoramaUrl));
+}
+calls.length = 0;
+{
+  const noFast = freshIds(3).map((o) => ({ ...o, is_pano: true, geometry: GEOM, thumb_2048_url: `big/${o.id}` }));
+  responder = () => ({ json: { data: noFast } });
+  const loc = await fetchPanoramaForRegion(region, () => 0.5);
+  check('ohne thumb_1024_url: panoramaUrlFast ist null', loc?.panoramaUrlFast === null, String(loc?.panoramaUrlFast));
+  check('ohne thumb_1024_url: Runde loest trotzdem auf', loc !== null);
+}
+
 console.log(`\n${pass} pass, ${fail} fail`);
 process.exit(fail ? 1 : 0);

@@ -451,7 +451,10 @@ export class HostController {
       // preloadImage() lief bisher NUR fuer Runde N+1 (siehe _startRound()),
       // die ERSTE Runde hatte also gar keinen Vorlauf. Rein host-lokal, kein
       // Protokollfeld - an Mitspieler geht dadurch nichts zusaetzlich raus.
-      const preloaded = preloadImage(value.panoramaUrl);
+      // Vorwaermen (und weiter unten: warten) bevorzugt die kleine Vorstufe:
+      // ein Viertel der Pixel ist immer frueher da, und transitionPanorama()
+      // startet die Runde ohnehin damit und schaerft danach nach.
+      const preloaded = preloadImage(value.panoramaUrlFast || value.panoramaUrl);
       if (this.roundLocations.length === 1) firstImageReady = preloaded;
       bus.emit('ui:map-resolving', { found: this.roundLocations.length, target: this._targetRoundCount });
     }
@@ -614,6 +617,12 @@ export class HostController {
       index,
       total: this._targetRoundCount,
       panoramaUrl: location.panoramaUrl,
+      // Bewusst NUR lokal, taucht im ROUND_START-Payload unten nicht auf:
+      // Mitspieler bekommen ihr Bild ueber den Anti-Cheat-Proxy, und eine
+      // zweite Aufloesung waere dort ein zweites Token und ein zweiter
+      // Worker-Aufruf pro Runde und Mitspieler. Der Host haelt die rohen
+      // URLs ohnehin, fuer ihn ist die Vorstufe gratis.
+      panoramaUrlFast: location.panoramaUrlFast ?? null,
       startTimestamp: Date.now(),
       timeLimitMs: state.settings.timeLimitMs,
       actual: { lat: location.lat, lng: location.lng },
@@ -654,7 +663,8 @@ export class HostController {
       )
     );
     bus.emit('ui:round-started');
-    preloadImage(this.roundLocations[index + 1]?.panoramaUrl);
+    const next = this.roundLocations[index + 1];
+    preloadImage(next?.panoramaUrlFast || next?.panoramaUrl);
 
     // Mitspielern denselben Vorsprung geben wie dem Host selbst: nur die
     // rohe Foto-URL der NAECHSTEN Runde, keine Koordinaten/Hinweise/Namen -

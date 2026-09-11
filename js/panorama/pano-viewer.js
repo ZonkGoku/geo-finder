@@ -85,7 +85,25 @@ export class PanoViewer {
     return config;
   }
 
-  load(panoramaUrl, { vaov, modifier = 'free', mutators, onLoad } = {}) {
+  /** Aktuelle Blickrichtung/Zoom der sichtbaren Schicht - fuer
+   * preserveView beim Nachschaerfen. null, wenn nichts laeuft. */
+  _currentView() {
+    const viewer = this.viewer;
+    if (!viewer) return null;
+    try {
+      return { yaw: viewer.getYaw(), pitch: viewer.getPitch(), hfov: viewer.getHfov() };
+    } catch {
+      return null; // Viewer schon abgeraeumt - dann eben Startansicht
+    }
+  }
+
+  /** preserveView: uebernimmt Blickrichtung und Zoom der laufenden Schicht.
+   * Zwingend beim Nachschaerfen der Aufloesung (siehe transitionPanorama() in
+   * app.js) - ohne das wuerde die Ansicht mitten in der Runde auf die
+   * Startrichtung zurueckspringen, sobald das scharfe Bild eintrifft. Das
+   * waere schlimmer als ein etwas weicheres Bild. */
+  load(panoramaUrl, { vaov, modifier = 'free', mutators, onLoad, preserveView = false } = {}) {
+    const carriedView = preserveView ? this._currentView() : null;
     // Einen noch laufenden Ladevorgang verwerfen statt abzuwarten: beim
     // schnellen Weiterlaufen (Walk-Modus) gaebe es sonst zwei konkurrierende
     // Einblendungen, von denen die zuletzt fertige gewinnt - und das kann die
@@ -95,7 +113,9 @@ export class PanoViewer {
 
     const incoming = this._createLayer();
     const outgoing = this.active;
-    const viewer = window.pannellum.viewer(incoming.el.id, this._buildConfig(panoramaUrl, { vaov, modifier, mutators }));
+    const config = this._buildConfig(panoramaUrl, { vaov, modifier, mutators });
+    if (carriedView) Object.assign(config, carriedView);
+    const viewer = window.pannellum.viewer(incoming.el.id, config);
     incoming.viewer = viewer;
     this.pending = incoming;
 

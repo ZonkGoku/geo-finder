@@ -15,7 +15,7 @@ const MAX_DETAIL_ATTEMPTS = 8;
 const DETAIL_BATCH_SIZE = 3;
 // Felder, die die Listenabfrage mitliefern SOLL, damit die Detailrunde
 // entfallen kann. Fallback ist die reine ID-Liste wie bisher.
-const LIST_FIELDS_RICH = 'id,is_pano,geometry,thumb_2048_url';
+const LIST_FIELDS_RICH = 'id,is_pano,geometry,thumb_2048_url,thumb_1024_url';
 const LIST_FIELDS_MINIMAL = 'id';
 
 /**
@@ -101,6 +101,12 @@ function buildLocationFromDetail(detail, regionMeta) {
     lat,
     lng,
     panoramaUrl: detail.thumb_2048_url,
+    // Kleinere Vorstufe (ein Viertel der Pixel) fuer den schnellen
+    // Rundenstart - siehe transitionPanorama() in app.js: die Runde beginnt
+    // mit diesem Bild und schaerft danach unbemerkt auf thumb_2048_url nach.
+    // Opportunistisch wie is_pano: liefert Mapillary das Feld nicht, bleibt
+    // der Wert null und es wird direkt das grosse Bild geladen wie bisher.
+    panoramaUrlFast: detail.thumb_1024_url ?? null,
     attribution: 'Mapillary-Mitwirkende',
     attributionUrl: 'https://www.mapillary.com/',
     coordSource: 'mapillary-live',
@@ -125,7 +131,7 @@ function buildLocationFromDetail(detail, regionMeta) {
  * wenn die ID nicht mehr existiert oder kein Pano (mehr) ist.
  */
 export async function fetchPanoramaById(id, regionMeta) {
-  const fieldsWithSequence = 'id,is_pano,geometry,thumb_2048_url,sequence_id';
+  const fieldsWithSequence = 'id,is_pano,geometry,thumb_2048_url,thumb_1024_url,sequence_id';
   const detailParams = new URLSearchParams({ access_token: MAPILLARY_ACCESS_TOKEN, fields: fieldsWithSequence });
   try {
     const detail = await fetchJson(`${API_BASE}/${id}?${detailParams.toString()}`, regionMeta.name);
@@ -145,7 +151,7 @@ export async function fetchPanoramaById(id, regionMeta) {
     if (/nonexisting field.*sequence_id/i.test(err.message)) {
       const fallbackParams = new URLSearchParams({
         access_token: MAPILLARY_ACCESS_TOKEN,
-        fields: 'id,is_pano,geometry,thumb_2048_url',
+        fields: 'id,is_pano,geometry,thumb_2048_url,thumb_1024_url',
       });
       try {
         const detail = await fetchJson(`${API_BASE}/${id}?${fallbackParams.toString()}`, regionMeta.name);
@@ -220,7 +226,7 @@ export async function fetchPanoramaForRegion(region, rand = Math.random) {
 
   const detailParams = new URLSearchParams({
     access_token: MAPILLARY_ACCESS_TOKEN,
-    fields: 'id,is_pano,geometry,thumb_2048_url',
+    fields: 'id,is_pano,geometry,thumb_2048_url,thumb_1024_url',
   });
   return findFirstPanoDetail(
     items.slice(0, MAX_DETAIL_ATTEMPTS).map((img) => img.id),
