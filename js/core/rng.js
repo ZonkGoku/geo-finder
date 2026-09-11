@@ -1,3 +1,5 @@
+import { pointInGeometry } from './point-in-polygon.js';
+
 // Deterministischer PRNG (mulberry32), damit ein Host bei Bedarf reproduzierbare
 // Rundenfolgen erzeugen kann (z. B. fuer "gleiche Runden fuer alle Gruppen").
 export function mulberry32(seed) {
@@ -35,4 +37,64 @@ export function hashStringToSeed(str) {
     hash = Math.imul(hash, 0x01000193);
   }
   return hash >>> 0;
+}
+
+// Alle [lng, lat]-Ringpunkte einer Polygon/MultiPolygon-Geometrie in eine
+// Bounding-Box falten - Grundlage fuer die Verwerfungsstichprobe unten
+// (Rejection Sampling braucht eine Flaeche, aus der schnell gleichverteilt
+// gezogen werden kann, die Bounding-Box ist die einfachste, die eine
+// beliebig geformte Polygon/Loch-Kombination immer vollstaendig umschliesst).
+function geometryBounds(geometry) {
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  const visitRing = (ring) => {
+    for (const [lng, lat] of ring) {
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+    }
+  };
+  const polygons = geometry.type === 'MultiPolygon' ? geometry.coordinates : [geometry.coordinates];
+  for (const rings of polygons) {
+    // rings[0] (die Aussenkontur) reicht fuer die Bounding-Box - Loecher
+    // (rings[1+]) liegen per Definition innerhalb und koennen sie nie
+    // erweitern.
+    visitRing(rings[0]);
+  }
+  return { minLng, maxLng, minLat, maxLat };
+}
+
+/**
+ * Liefert einen gleichverteilt zufaelligen Punkt INNERHALB einer Polygon-/
+ * MultiPolygon-Geometrie (GeoJSON, [lng,lat]-Ringe) - Grundlage fuer
+ * prozedural erzeugte Zielorte in grossen Kartenpaketen (siehe
+ * AUDIT_ROADMAP.md Abschnitt 5), wo eine rein kuratierte Ortsliste bei
+ * hoher gewuenschter Rundenzahl irgendwann zu Wiederholungen fuehrt.
+ * Verwerfungsstichprobe (Rejection Sampling) statt einer analytischen
+ * Formel: fuer beliebig geformte, ggf. gelochte (z.B. Laender mit
+ * Enklaven) Polygone gibt es keine einfache direkte Formel, aber
+ * Verwerfung ist fuer die kompakten, nicht extrem duennen Landesumrisse
+ * hier schnell genug (typischerweise wenige bis niedrige zweistellige
+ * Versuche, siehe maxAttempts als Notbremse fuer pathologisch duenne
+ * Faelle wie schmale Kuestenstreifen-Staaten).
+ *
+ * rand: eine 0-1-Zufallsfunktion (z.B. mulberry32(seed)) statt Math.random,
+ * damit dieselbe Ortsziehung bei Bedarf reproduzierbar bleibt (gleiche
+ * Praemisse wie pickUniqueLocations oben). Gibt bei Ueberschreiten von
+ * maxAttempts null zurueck statt einen Punkt AUSSERHALB der Geometrie
+ * vorzutaeuschen - Aufrufer entscheiden selbst ueber einen Fallback
+ * (z.B. Centroid oder ein kuratierter Ersatzort).
+ */
+export function getRandomPointInPolygon(geometry, rand = Math.random, maxAttempts = 200) {
+  if (!geometry) return null;
+  const { minLng, maxLng, minLat, maxLat } = geometryBounds(geometry);
+  for (let i = 0; i < maxAttempts; i++) {
+    const lng = minLng + rand() * (maxLng - minLng);
+    const lat = minLat + rand() * (maxLat - minLat);
+    if (pointInGeometry(lat, lng, geometry)) return { lat, lng };
+  }
+  return null;
 }
